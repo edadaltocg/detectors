@@ -1,4 +1,6 @@
 import argparse
+import json
+import logging
 import os
 
 import detectors
@@ -9,8 +11,7 @@ from detectors.data.cifar_wrapper import default_cifar10_test_transform
 from detectors.trainer import trainer_classification
 from detectors.trainer_utils import get_criterion_cls, get_optimizer_cls, get_scheduler_cls
 from detectors.utils import str_to_dict
-import logging
-import json
+
 
 logger = logging.getLogger(__name__)
 

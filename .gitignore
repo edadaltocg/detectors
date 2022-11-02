@@ -151,3 +151,6 @@ dmypy.json
 
 # .lock
 *.lock
+
+# github releases
+/releases

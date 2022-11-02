@@ -1,7 +1,9 @@
 from typing import Optional, Union
+
 import torch
 import torch.nn as nn
 import torchvision
+
 from . import register_model
 
 

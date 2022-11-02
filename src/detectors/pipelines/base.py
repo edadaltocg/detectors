@@ -1,6 +1,6 @@
-from abc import ABC, abstractmethod
 import logging
-from typing import Any
+from abc import ABC, abstractmethod
+from typing import Any, Tuple
 
 
 logger = logging.getLogger(__name__)
@@ -12,18 +12,22 @@ class Pipeline(ABC):
 
     def save_pretrained(self, path):
         raise NotImplementedError
-    
+
     def preprocess(self, text):
         raise NotImplementedError
-    
+
     def forward(self, text):
         raise NotImplementedError
-    
+
     def postprocess(self, text):
         raise NotImplementedError
-    
-    def __call__(self, *args: Any, **kwds: Any) -> Any:
-        pass
 
-    def eval(self):
-        pass
+    def _setup(self):
+        raise NotImplementedError
+
+    def benchmark(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def __call__(self, *args: Any, **kwds: Any):
+        raise NotImplementedError
