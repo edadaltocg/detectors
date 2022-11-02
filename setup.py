@@ -2,6 +2,7 @@ import re
 
 from setuptools import find_packages, setup
 
+
 _deps = [
     "Pillow",
     "accelerate>=0.10.0",
@@ -22,6 +23,10 @@ _deps = [
     "timm",
     "torch>=1.7,!=1.12.0,<1.13.0",
     "tqdm>=4.27",
+    "torchmetrics",
+    "torchvision==0.13.0",
+    "scipy",
+    "accelerate",
 ]
 deps = {b: a for a, b in (re.findall(r"^(([^!=<>~ ]+)(?:[!=<>~ ].*)?$)", x)[0] for x in _deps)}
 
@@ -29,6 +34,9 @@ install_requires = [
     deps["numpy"],
     deps["pyyaml"],  # used for the model cards metadata
     deps["requests"],  # for downloading models over HTTPS
+    deps["tqdm"],
+    deps["torchmetrics"],
+    deps["scipy"],
 ]
 
 setup(
@@ -55,9 +63,9 @@ setup(
         "Intended Audience :: Science/Research",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
 )

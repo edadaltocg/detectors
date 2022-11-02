@@ -128,4 +128,26 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# mac
 .DS_Store
+
+# pycharm
+.idea
+
+# vscode
+.vscode
+
+# data
+/data
+
+# cluster
+/cluster
+
+# logs
+/results
+/storage
+/logs
+/checkpoints
+
+# .lock
+*.lock
