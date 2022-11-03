@@ -22,9 +22,10 @@ def trainer_classification(
     training_function=training_iteration,
     validation_function=validation_iteration,
     save_root: Optional[str] = None,
+    logging_dir: Optional[str] = None,
 ):
     accelerate.utils.set_seed(seed)
-    accelerator = Accelerator()
+    accelerator = Accelerator(log_with=["all"], logging_dir=logging_dir)
 
     model, optimizer, train_loader, scheduler = accelerator.prepare(model, optimizer, train_loader, scheduler)
     val_loader = accelerator.prepare(val_loader)
@@ -43,7 +44,7 @@ def trainer_classification(
             progress_bar.set_description_str(f"Epoch: {epoch+1}/{max_train_epochs}, Loss: {tr_obj['loss']:.4f}")
 
         # validate
-        if epoch % validation_frequency == 0:
+        if (epoch + 1) % validation_frequency == 0 or epoch == 0 or epoch == max_train_epochs - 1:
             model.eval()
             accuracy = 0
             loss = 0

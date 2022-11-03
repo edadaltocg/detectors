@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Optional, Union
 
 import timm
 import torch
@@ -30,45 +30,32 @@ def register_model(name: str):
     return decorator
 
 
-def _create_model(model_name: str, num_classes: int = 10, weights: Optional[str] = None, **kwargs):
-    model = model_registry[model_name](num_classes=num_classes, **kwargs)
-
-    if weights:
-        checkpoints = torch.load(weights, map_location="cpu", weights_only=True)
-        model.load_state_dict(checkpoints)
-
-    return model
-
-
-def create_model(model_name: str, num_classes: int = 10, weights: Optional[str] = None, **kwargs) -> nn.Module:
+def create_model(model_name: str, weights: Optional[Union[str, bool]] = None, **kwargs) -> nn.Module:
     """
     Create a model
 
     Args:
         model_name (str): name of model to instantiate
         num_classes (int, optional): _description_. Defaults to 10.
-        pretrained (bool): load pretrained ImageNet-1k weights if true
+        weights (bool | str): load pretrained weights if true or load from path if str.
         checkpoint_path (str): path of checkpoint to load after model is initialized
 
     Returns:
         model (nn.Module):
     """
 
-    if model_name in torch.hub.list("pytorch/vision"):
-        logger.warning("`num_classes` is ignored when using torchvision models")
-        return torch.hub.load("pytorch/vision", model=model_name, weights=weights, **kwargs)
+    if model_name in list(model_registry.keys()):
+        return model_registry[model_name](weights, **kwargs)
     if model_name in timm.list_models(pretrained=weights is not None):
         return timm.create_model(
             model_name,
-            num_classes=num_classes,
             pretrained=weights is not None,
             checkpoint_path=weights or "",
             **kwargs,
         )
     else:
-        model = _create_model(model_name, num_classes, weights, **kwargs)
-
-    return model
+        logger.warning("`num_classes` is ignored when using torchvision models")
+        return torch.hub.load("pytorch/vision", model=model_name, weights=weights, **kwargs)
 
 
 from . import resnet
