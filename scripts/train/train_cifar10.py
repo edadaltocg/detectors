@@ -58,6 +58,7 @@ def main(args: argparse.Namespace):
         validation_frequency=args.validation_frequency,
         seed=args.seed,
         save_root=save_root,
+        logging_dir=os.path.join(args.logging_dir, folder_name, str(args.seed)),
     )
 
     # save hyper parameters
@@ -90,6 +91,7 @@ if __name__ == "__main__":
     parser.add_argument("--scheduler_kwargs", type=str_to_dict, default={"step_size": 1, "gamma": 0.7})
 
     parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--logging_dir", type=str, default="logs/")
 
     args = parser.parse_args()
 
