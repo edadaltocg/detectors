@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Tuple
+from typing import Any, Dict, Tuple, Callable
 
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class Pipeline(ABC):
     def _setup(self):
         raise NotImplementedError
 
-    def benchmark(self):
+    def benchmark(self, methods: Dict[str, Callable]):
         raise NotImplementedError
 
     @abstractmethod

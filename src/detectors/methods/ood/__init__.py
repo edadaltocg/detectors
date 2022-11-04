@@ -1,8 +1,10 @@
 from functools import partial
+from torch import nn
 
-from detectors.models import create_model
+
 from .msp import msp
 from .odin import odin
+
 
 ood_detector_registry = {
     "msp": msp,
@@ -18,17 +20,29 @@ def register_ood_detector(name: str):
     return decorator
 
 
-def create_ood_detector(detector_name: str, model_name: str, **kwargs):
+def create_ood_detector(detector_name: str, model: nn.Module, **kwargs):
     if detector_name not in ood_detector_registry:
         raise ValueError(f"Unknown OOD detector: {detector_name}")
-    weights = kwargs.pop("weights", False)
-    method = partial(ood_detector_registry[detector_name], model=create_model(model_name, weights=weights), **kwargs)
+    method = partial(ood_detector_registry[detector_name], model=model, **kwargs)
     return method
 
 
 if __name__ == "__main__":
     import torch
 
-    detector = create_ood_detector("msp", "resnet34_cifar10")
+    class Model(nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.conv = nn.Conv2d(3, 3, 3)
+            self.fc = nn.Linear(2700, 10)
+
+        def forward(self, x):
+            x = self.conv(x)
+            x = x.view(x.size(0), -1)
+            return self.fc(x)
+
+    model = Model()
+    detector = create_ood_detector("msp", model)
     x = torch.randn(1, 3, 32, 32)
     print(detector(x))
+    assert detector(x).shape == (1,)

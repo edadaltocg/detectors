@@ -1,14 +1,32 @@
-from typing import Any, Optional, Union
+from typing import Optional, Union
 
 import torch
+
+from detectors.pipelines.base import Pipeline
+
+pipeline_registry = {}
+
+
+def register_pipeline(name: str):
+    """
+    Registers a new pipeline in the registry.
+
+    Args:
+        name (str): The name of the pipeline to register.
+    """
+
+    def decorator(f):
+        pipeline_registry[name] = f
+        return f
+
+    return decorator
 
 
 def pipeline(
     task: str,
-    method: Optional,
     device: Optional[Union[int, str, "torch.device"]] = None,
     **kwargs,
-):
+) -> Pipeline:
     """
     Utility factory method to build a [`Pipeline`].
 
@@ -44,9 +62,7 @@ def pipeline(
     ```
     """
 
-    if task == "ood-cifar10":
-        from .ood import OODPipeline
+    return pipeline_registry[task](device=device, **kwargs)
 
-        return OODPipeline(method, device, **kwargs)
 
-    return
+from . import ood

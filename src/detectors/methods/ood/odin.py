@@ -1,12 +1,9 @@
 import torch
-from torch import Tensor
-from torch import nn
 import torch.nn.functional as F
+from torch import Tensor, nn
 
 
-def odin_baseline_implementation(
-    x: Tensor, model: nn.Module, temperature: float = 1, eps: float = 0.0, *args, **kwargs
-):
+def odin(x: Tensor, model: nn.Module, temperature: float = 1, eps: float = 0.0, *args, **kwargs):
     x.requires_grad_(True)
     model.eval()
     if eps > 0:
@@ -16,7 +13,6 @@ def odin_baseline_implementation(
         loss.backward()
 
         grad_sign = x.grad.data.sign()
-
         # Adding small perturbations to images
         x = x - eps * grad_sign
 
@@ -43,5 +39,5 @@ if __name__ == "__main__":
             return x
 
     model = Model()
-    scores = odin_baseline_implementation(x, model, temperature=1, eps=0.0)
+    scores = odin(x, model, temperature=1, eps=0.0)
     assert scores.shape == (batch_size,)
