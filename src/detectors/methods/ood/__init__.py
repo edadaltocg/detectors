@@ -4,11 +4,13 @@ from torch import nn
 
 from .msp import msp
 from .odin import odin
+from .energy import energy
 
 
 ood_detector_registry = {
     "msp": msp,
     "odin": odin,
+    "energy": energy,
 }
 
 

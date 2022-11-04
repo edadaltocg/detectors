@@ -34,16 +34,16 @@ def main(args):
     with open(os.path.join(save_root, "ood-cifar10.json"), "w") as f:
         json.dump(results, f)
 
-    ## json to csv
-    df = pd.DataFrame.from_dict(results)
-    df.to_csv(os.path.join(save_root, "ood-cifar10.csv"), index=False)
+    # TODO: save in a csv file
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--methods", nargs="+", default=["msp", "odin"])
-    parser.add_argument("--methods_kwargs", type=str_to_dict, default={})
+    parser.add_argument(
+        "--methods_kwargs", type=str_to_dict, default={}, help='{"odin": {"temperature":1000, "eps":0.00014}}'
+    )
 
     parser.add_argument("--model", type=str, default="resnet18_cifar10")
     parser.add_argument("--batch_size", type=int, default=64)

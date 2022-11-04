@@ -36,6 +36,8 @@ def resnet18_cifar10(pretrained=False, **kwargs):
 def ResNet34Small(num_classes=10):
     model = torchvision.models.resnet34(weights=None)
     model.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+    model.maxpool = nn.Identity()
+    model.avgpool = nn.AvgPool2d(4)
     model.fc = nn.Linear(512, num_classes)
     return model
 

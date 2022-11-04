@@ -93,6 +93,10 @@ class OODPipeline(Pipeline):
         if any([hasattr(m, "fit") for m in methods.values()]):
             logger.info("Fitting methods...")
 
+            for method in methods.values():
+                if hasattr(method, "on_fit_start"):
+                    method.on_fit_start()
+
             for x, y in tqdm(self.fit_dataloader, "Fitting methods"):
                 x = x.to(self.device, non_blocking=True)
                 y = y.to(self.device, non_blocking=True)
@@ -101,6 +105,10 @@ class OODPipeline(Pipeline):
                     # TODO: parallelize this loop
                     if hasattr(method, "fit"):
                         method.fit(x, y)
+
+            for method in methods.values():
+                if hasattr(method, "on_fit_end"):
+                    method.on_fit_end()
 
         test_labels = []
         test_scores = defaultdict(list)
@@ -158,6 +166,16 @@ class OODPipeline(Pipeline):
                     "aupr_out": aupr_out,
                     "thr": thr,
                 }
+
+            results[method]["average"] = {
+                "fpr_at_0.95_tpr": np.mean([results[method][ds]["fpr_at_0.95_tpr"] for ds in ood_datasets]),
+                "tnr_at_0.95_tpr": np.mean([results[method][ds]["tnr_at_0.95_tpr"] for ds in ood_datasets]),
+                "detection_error": np.mean([results[method][ds]["detection_error"] for ds in ood_datasets]),
+                "auroc": np.mean([results[method][ds]["auroc"] for ds in ood_datasets]),
+                "aupr_in": np.mean([results[method][ds]["aupr_in"] for ds in ood_datasets]),
+                "aupr_out": np.mean([results[method][ds]["aupr_out"] for ds in ood_datasets]),
+                "thr": np.mean([results[method][ds]["thr"] for ds in ood_datasets]),
+            }
 
         return results
 
