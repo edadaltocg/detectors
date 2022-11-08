@@ -1,16 +1,27 @@
+import types
 from functools import partial
+
+from detectors.methods.ood.igeood import IgeoodLogits
 from torch import nn
 
-
+from .dice import Dice
+from .energy import energy
+from .knn_euclides import KnnEuclides
+from .mahalanobis import Mahalanobis
 from .msp import msp
 from .odin import odin
-from .energy import energy
+from .react import ReAct
 
 
 ood_detector_registry = {
     "msp": msp,
     "odin": odin,
     "energy": energy,
+    "mahalanobis": Mahalanobis,
+    "react": ReAct,
+    "dice": Dice,
+    "knn_euclides": KnnEuclides,
+    "igeood_logits": IgeoodLogits,
 }
 
 
@@ -25,8 +36,9 @@ def register_ood_detector(name: str):
 def create_ood_detector(detector_name: str, model: nn.Module, **kwargs):
     if detector_name not in ood_detector_registry:
         raise ValueError(f"Unknown OOD detector: {detector_name}")
-    method = partial(ood_detector_registry[detector_name], model=model, **kwargs)
-    return method
+    if not isinstance(ood_detector_registry[detector_name], types.FunctionType):
+        return ood_detector_registry[detector_name](model, **kwargs)
+    return partial(ood_detector_registry[detector_name], model=model, **kwargs)
 
 
 if __name__ == "__main__":

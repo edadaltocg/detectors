@@ -2,7 +2,7 @@ import logging
 from typing import Optional, Union
 
 import timm
-import torch
+import torchvision
 from torch import nn
 
 
@@ -46,16 +46,17 @@ def create_model(model_name: str, weights: Optional[Union[str, bool]] = None, **
 
     if model_name in list(model_registry.keys()):
         return model_registry[model_name](weights, **kwargs)
-    if model_name in timm.list_models(pretrained=weights is not None):
-        return timm.create_model(
-            model_name,
-            pretrained=weights is not None,
-            checkpoint_path=weights or "",
-            **kwargs,
-        )
+    if hasattr(torchvision.models, model_name):
+        return getattr(torchvision.models, model_name)(weights=weights, **kwargs)
+    elif model_name in timm.list_models(pretrained=weights is not None):
+        return timm.create_model(model_name, pretrained=weights is not None, **kwargs)
     else:
-        logger.warning("`num_classes` is ignored when using torchvision models")
-        return torch.hub.load("pytorch/vision", model=model_name, weights=weights, **kwargs)
+        raise ValueError(
+            f"Model {model_name} not found in model registry, or torchvision.models, or in timm.list_models"
+        )
+    # else:
+    #     logger.warning("`num_classes` is ignored when using torchvision models")
+    #     return torch.hub.load("pytorch/vision", model=model_name, weights=weights, skip_validation=True, **kwargs)
 
 
-from . import resnet
+from . import densenet, resnet

@@ -7,6 +7,7 @@ from detectors.data.mos_inaturalist import MOSiNaturalist
 from detectors.data.mos_places365 import MOSPlaces365
 from detectors.data.mos_sun import MOSSUN
 from torch.utils.data import Dataset
+from torchvision import transforms
 from torchvision.datasets import STL10, SVHN, ImageNet, StanfordCars
 
 from ..config import DATASETS_DIR, IMAGENET_ROOT
@@ -58,11 +59,11 @@ def register_dataset(dataset_name: str):
     return register_model_cls
 
 
-def get_dataset(dataset_name: Optional[str] = None, root: str = DATASETS_DIR, **kwargs):
+def get_dataset(dataset_name: Optional[str] = None, root: str = DATASETS_DIR, transform=None, **kwargs):
     if dataset_name is not None:
         if dataset_name in ["imagenet1k", "ilsvrc2012"]:
             root = IMAGENET_ROOT
-        return datasets_registry[dataset_name](root=root, **kwargs)
+        return datasets_registry[dataset_name](root=root, transform=transform, **kwargs)
 
     raise ValueError("Dataset name is not specified")
 
@@ -73,3 +74,16 @@ def get_dataset_cls(dataset_name: str) -> Type[Dataset]:
 
 def get_datasets_names():
     return list(datasets_registry.keys())
+
+
+def default_imagenet_test_transforms():
+    statistics = ((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+    test_transforms = transforms.Compose(
+        [
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(*statistics),
+        ]
+    )
+    return test_transforms
