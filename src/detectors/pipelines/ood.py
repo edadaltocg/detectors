@@ -1,18 +1,20 @@
 import logging
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import Any, Callable, Dict, List
 
+import numpy as np
 import torch
 import torch.utils.data
 import torchmetrics.functional as metrics
-from tqdm import tqdm
 from detectors.data.cifar_wrapper import default_cifar10_test_transform
 from detectors.pipelines import register_pipeline
 from detectors.pipelines.base import Pipeline
 from detectors.utils import ConcatDatasetsDim1
 from torch import Tensor
-import numpy as np
-from ..data import get_dataset
+from tqdm import tqdm
+
+from ..data import default_imagenet_test_transforms, get_dataset
 
 
 logger = logging.getLogger(__name__)
@@ -47,38 +49,57 @@ METRICS_NAMES_PRETTY = {
 }
 
 
-class OODPipeline(Pipeline):
+class OODPipeline(Pipeline, ABC):
     def __init__(
-        self, in_dataset_name: str, ood_datasets_names: List[str], device, batch_size: int, num_workers: int
+        self,
+        in_dataset_name: str,
+        ood_datasets_names: List[str],
+        device,
+        limit_fit: int,
+        batch_size: int,
+        num_workers: int,
     ) -> None:
         self.in_dataset = in_dataset_name
         self.ood_datasets = ood_datasets_names
         self.device = device
+        self.limit_fit = limit_fit
         self.batch_size = batch_size
         self.num_workers = num_workers
 
-    def _setup(self):
-        logger.info("Loading In-distribution dataset...")
-        transform = default_cifar10_test_transform()
-        in_distribution_train = get_dataset(self.in_dataset, split="train", transform=transform, download=True)
-        in_distribution_test = get_dataset(self.in_dataset, split="test", transform=transform, download=True)
+        self.in_dist_train_dataset = None
+        self.in_dist_test_dataset = None
+        self.out_distribution_datasets = None
+        self.fit_dataloader = None
+        self.test_dataloader = None
 
-        logger.info("Loading OOD datasets...")
-        out_distribution_datasets = {
-            ds: get_dataset(ds, split="test", transform=transform, download=True) for ds in self.ood_datasets
-        }
+    @abstractmethod
+    def _setup(self):
+        ...
+
+    def set_dataloaders(self):
+        if (
+            self.in_dist_train_dataset is None
+            or self.in_dist_test_dataset is None
+            or self.out_distribution_datasets is None
+        ):
+            raise ValueError("Data loaders are not set.")
+
+        if self.limit_fit is None:
+            self.limit_fit = len(self.in_dist_train_dataset)
+
+        self.in_dist_train_dataset = torch.utils.data.Subset(self.in_dist_train_dataset, range(self.limit_fit))
 
         self.fit_dataloader = torch.utils.data.DataLoader(
-            in_distribution_train, batch_size=self.batch_size, shuffle=True, num_workers=4
+            self.in_dist_train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=4
         )
 
         test_images_dataset = torch.utils.data.ConcatDataset(
-            [in_distribution_test] + list(out_distribution_datasets.values())
+            [self.in_dist_test_dataset] + list(self.out_distribution_datasets.values())
         )
         test_labels = torch.utils.data.TensorDataset(
             torch.cat(
-                [torch.zeros(len(in_distribution_test))]  # type: ignore
-                + [torch.ones(len(d)) * (i + 1) for i, d in enumerate(out_distribution_datasets.values())]  # type: ignore
+                [torch.zeros(len(self.in_dist_test_dataset))]  # type: ignore
+                + [torch.ones(len(d)) * (i + 1) for i, d in enumerate(self.out_distribution_datasets.values())]  # type: ignore
             ).long()
         )
 
@@ -89,6 +110,9 @@ class OODPipeline(Pipeline):
 
     def benchmark(self, methods: Dict[str, Callable]):
         self._setup()
+        self.set_dataloaders()
+        if self.fit_dataloader is None or self.test_dataloader is None:
+            raise ValueError("Data loaders are not set.")
 
         if any([hasattr(m, "fit") for m in methods.values()]):
             logger.info("Fitting methods...")
@@ -195,7 +219,7 @@ class OODPipeline(Pipeline):
 
 @register_pipeline("ood-cifar10")
 class OODCifar10Pipeline(OODPipeline):
-    def __init__(self, device, batch_size=128, num_workers=4) -> None:
+    def __init__(self, device, limit_fit=10000, batch_size=128, num_workers=4) -> None:
         super().__init__(
             "cifar10",
             [
@@ -210,7 +234,52 @@ class OODCifar10Pipeline(OODPipeline):
                 "places365",
                 "english_chars",
             ],
-            device,
-            batch_size,
-            num_workers,
+            device=device,
+            limit_fit=limit_fit,
+            batch_size=batch_size,
+            num_workers=num_workers,
         )
+
+    def _setup(self):
+        logger.info("Loading In-distribution dataset...")
+        transform = default_cifar10_test_transform()
+        self.in_distribution_train = get_dataset(self.in_dataset, split="train", transform=transform, download=True)
+        self.fit_dataloaderin_distribution_test = get_dataset(
+            self.in_dataset, split="test", transform=transform, download=True
+        )
+
+        logger.info("Loading OOD datasets...")
+        self.out_distribution_datasets = {
+            ds: get_dataset(ds, split="test", transform=transform, download=True) for ds in self.ood_datasets
+        }
+
+
+@register_pipeline("ood-imagenet")
+class OODImageNettPipeline(OODPipeline):
+    def __init__(self, device, limit_fit=10000, batch_size=64, num_workers=4, transform=None) -> None:
+        super().__init__(
+            "ilsvrc2012",
+            [
+                "textures",
+                "mos_inaturalist",
+                "mos_places365",
+                "mos_sun",
+            ],
+            device=device,
+            limit_fit=limit_fit,
+            batch_size=batch_size,
+            num_workers=num_workers,
+        )
+        self.transform = transform
+        if self.transform is None:
+            self.transform = default_imagenet_test_transforms()
+
+    def _setup(self):
+        logger.info("Loading In-distribution dataset...")
+        self.in_dist_train_dataset = get_dataset(self.in_dataset, split="train", transform=self.transform)
+        self.in_dist_test_dataset = get_dataset(self.in_dataset, split="val", transform=self.transform)
+
+        logger.info("Loading OOD datasets...")
+        self.out_distribution_datasets = {
+            ds: get_dataset(ds, split="test", transform=self.transform, download=True) for ds in self.ood_datasets
+        }

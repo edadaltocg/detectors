@@ -1,8 +1,8 @@
 from typing import Optional, Union
 
 import torch
-
 from detectors.pipelines.base import Pipeline
+
 
 pipeline_registry = {}
 

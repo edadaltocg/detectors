@@ -1,5 +1,5 @@
 {
-    "max_train_epochs": 10,
+    "max_train_epochs": 300,
     "validation_frequency": 5,
     "batch_size": 64,
     "criterion": "CrossEntropyLoss",

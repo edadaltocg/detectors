@@ -7,5 +7,3 @@ CHECKPOINTS_DIR = os.environ.get("CHECKPOINTS_DIR", "checkpoints/")
 TENSORS_DIR = os.environ.get("TENSORS_DIR", "tensors/")
 
 RESULTS_DIR = os.environ.get("RESULTS_DIR", "results/")
-
-os.environ["TORCH_HOME"] = CHECKPOINTS_DIR
