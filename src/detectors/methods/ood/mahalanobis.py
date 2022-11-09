@@ -48,14 +48,14 @@ class Mahalanobis:
     def __init__(
         self,
         model: torch.nn.Module,
-        feature_nodes: List[str],
+        features_nodes: List[str],
         reduction_method: str = "pseudo",
         aggregation_method=None,
         *args,
         **kwargs
     ) -> None:
         self.model = model
-        self.feature_extractor = create_feature_extractor(model, feature_nodes)
+        self.feature_extractor = create_feature_extractor(model, features_nodes)
         self.reduction_method = reduction_method
         self.aggregation_method = aggregation_method
 

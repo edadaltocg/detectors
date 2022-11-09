@@ -4,6 +4,7 @@ from functools import partial
 from detectors.methods.ood.igeood import IgeoodLogits
 from torch import nn
 
+from .random import random_score
 from .dice import Dice
 from .energy import energy
 from .knn_euclides import KnnEuclides
@@ -14,6 +15,7 @@ from .react import ReAct
 
 
 ood_detector_registry = {
+    "random": random_score,
     "msp": msp,
     "odin": odin,
     "energy": energy,

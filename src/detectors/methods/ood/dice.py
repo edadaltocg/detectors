@@ -1,4 +1,5 @@
 from functools import reduce
+import torch.nn.functional as F
 from typing import List
 
 import torch
@@ -41,9 +42,12 @@ class Dice:
         top_k_weights = torch.topk(self.weight.abs(), top_k, dim=1)[0]
         self.mask[self.weight.abs() <= top_k_weights[:, -1].unsqueeze(1)] = 0
 
+        self.weight = self.weight * self.mask
+
     def __call__(self, x: Tensor) -> Tensor:
         with torch.no_grad():
-            logits = self.feature_extractor(x)[self.penultimate_node] @ (self.weight * self.mask).T + self.bias
+            # logits = self.feature_extractor(x)[self.penultimate_node] @ (self.weight).T + self.bias
+            logits = F.linear(self.feature_extractor(x)[self.penultimate_node], self.weight, self.bias)
         return torch.logsumexp(logits, dim=-1)
 
 

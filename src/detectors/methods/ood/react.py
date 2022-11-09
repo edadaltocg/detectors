@@ -24,6 +24,7 @@ def reactify(
     for node in graph.nodes:
         if condition_fn(node):
             insert_fn(node, graph)
+
     # Return new Module
     return fx.GraphModule(m, graph)
 
@@ -37,6 +38,10 @@ def condition_fn(node, equals_to: str):
 def insert_fn(node, graph: fx.Graph, thr: float = 1.0):
     with graph.inserting_after(node):
         new_node = graph.call_function(torch.clip, args=(node,), kwargs={"max": thr})
+
+        # change inputs of the next node and keep the input from the new node
+        node.replace_all_uses_with(new_node)
+        new_node.replace_input_with(new_node, node)
 
 
 @torch.no_grad()
@@ -54,7 +59,7 @@ def compute_thresholds(feature_extractor, dataloader, device, limit=2000, p=0.9)
             break
 
     scores = {k: torch.cat([s[k] for s in scores]) for k in scores[0].keys()}
-    thrs = {k: torch.quantile(scores[k], 0.9).item() for k in scores.keys()}
+    thrs = {k: torch.quantile(scores[k], p).item() for k in scores.keys()}
     return thrs
 
 
@@ -99,7 +104,7 @@ class ReAct:
             condition_fn=partial(condition_fn, equals_to=self.penultimate_node),
             insert_fn=partial(insert_fn, thr=self.thr),
         )
-        logger.info(f"ReAct: threshold for {self.penultimate_node} is {self.thr}")
+        logger.info(f"ReAct: threshold = {self.thr:.4f}")
 
     def __call__(self, x: Tensor) -> Tensor:
         with torch.no_grad():
@@ -107,21 +112,17 @@ class ReAct:
         return torch.logsumexp(logits, dim=-1)
 
 
-if __name__ == "__main__":
-    my_module = models.resnet18()
-    print(get_graph_node_names(my_module)[0])
-    my_module_transformed = reactify(my_module, condition_fn, partial(insert_fn, thr=1.0))
+def test():
+    model = models.resnet18()
+    print(get_graph_node_names(model)[0])
+    transformed_model = reactify(model, partial(condition_fn, equals_to="flatten"), partial(insert_fn, thr=1.0))
+    print(transformed_model.graph)
+    print(transformed_model.code)
 
-    new_graph = fx.symbolic_trace(my_module_transformed)
-    print(new_graph.graph)
-    print(new_graph.code)
+    x = torch.randn(5, 3, 224, 224)
+    torch.allclose(model(x), transformed_model(x))
 
-    input_value = torch.randn(5, 3, 224, 224)
-
-    print(my_module(input_value))
-    print(my_module_transformed(input_value))
-
-    feature_extractor = create_feature_extractor(my_module, ["flatten"])
+    feature_extractor = create_feature_extractor(model, ["flatten"])
     transform = torchvision.transforms.Compose(
         [
             torchvision.transforms.ToTensor(),
@@ -134,5 +135,13 @@ if __name__ == "__main__":
     dataset = torchvision.datasets.CIFAR10(root="data", train=True, download=True, transform=transform)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True, num_workers=4)
 
-    thrs = compute_thresholds(feature_extractor, dataloader, device="mps", limit=200, p=0.9)
+    thrs = compute_thresholds(feature_extractor, dataloader, device="cpu", limit=100, p=0.7)
     print(thrs)
+    react_model = reactify(model, partial(condition_fn, equals_to="flatten"), partial(insert_fn, thr=thrs["flatten"]))
+    print(react_model)
+    print(react_model(x).max(), model(x).max())
+    assert not torch.allclose(react_model(x), model(x))
+
+
+if __name__ == "__main__":
+    test()

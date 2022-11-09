@@ -1,39 +1,58 @@
+from typing import List
+from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
 import torch
 from torch import Tensor, nn
 
 
 class KnnEuclides:
-    def __init__(self, feature_extractor: nn.Module, alpha: float = 1, k: int = 100, *args, **kwargs):
-        self.feature_extractor = feature_extractor
+    def __init__(
+        self,
+        model: nn.Module,
+        features_nodes: List[str],
+        alpha: float = 1,
+        k: int = 10,
+        aggregation_method=None,
+        *args,
+        **kwargs
+    ):
+        self.model = model
+        self.feature_nodes = features_nodes
+        self.feature_extractor = create_feature_extractor(model, features_nodes)
 
         self.alpha = alpha
         self.k = k
+        self.aggregation_method = aggregation_method
+
         self.X = None
 
         assert 0 < self.alpha <= 1, "alpha must be in the interval (0, 1]"
 
     def on_fit_start(self, *args, **kwargs):
         self.X = None
-        pass
 
     def fit(self, x: Tensor, *args, **kwargs):
         with torch.no_grad():
             features = self.feature_extractor(x)
 
+        for k in features:
+            features[k] = features[k].cpu()
+
         if self.X is None:
             self.X = features
         else:
-            self.X = torch.cat((self.X, features), dim=0)
+            for k in features:
+                self.X[k] = torch.cat((self.X[k], features[k]), dim=0)
 
     def on_fit_end(self, *args, **kwargs):
         if self.X is None:
             raise ValueError(f"You must properly fit {self.__class__.__name__ } method first.")
 
         # random choice of alpha percent of X
-        self.X = self.X[torch.randperm(self.X.shape[0])[: int(self.alpha * self.X.shape[0])]]
-        self.X = self.X / torch.norm(self.X, p=2, dim=-1, keepdim=True)  # type: ignore
+        for k in self.X:
+            self.X[k] = self.X[k][torch.randperm(self.X[k].shape[0])[: int(self.alpha * self.X[k].shape[0])]]
+            self.X[k] = self.X[k] / torch.norm(self.X[k], p=2, dim=-1, keepdim=True)  # type: ignore
 
-    def __call__(self, x: Tensor, *args, **kwargs):
+    def __call__(self, x: Tensor):
         if self.X is None:
             raise ValueError(f"You must properly fit {self.__class__.__name__ } method first.")
 
@@ -41,16 +60,27 @@ class KnnEuclides:
             features = self.feature_extractor(x)
 
         # normalize test features
-        features = features / torch.norm(features, p=2, dim=-1, keepdim=True)  # type: ignore
+        for k in features:
+            features[k] = features[k] / torch.norm(features[k], p=2, dim=-1, keepdim=True)  # type: ignore
 
         # pairwise euclidean distance between x and X
-        dist = torch.cdist(features, self.X)
+        stack = []
+        for k in features:
+            features[k] = torch.cdist(features[k], self.X[k].to(features[k].device), p=2)
+            # take smallest k distance for each test sample
+            topk, _ = torch.topk(features[k], k=self.k, dim=-1, largest=False)
+            stack.append(-topk[:, -1].view(-1, 1))
+            # stack.append(-topk.mean(dim=-1, keepdim=True))
 
-        # take smallest k distance for each test sample
-        topk = torch.topk(dist, k=self.k, dim=-1, largest=False).values
+        stack = torch.cat(stack, dim=1)
 
-        # return mean of top k distances
-        return -topk.mean(-1)
+        if stack.shape[1] > 1 and self.aggregation_method is None:
+            stack = stack.mean(1, keepdim=True)
+        elif stack.shape[1] > 1 and self.aggregation_method is not None:
+            # TODO: validation combine stack
+            stack = self.aggregation_method(stack)
+
+        return stack.view(-1)
 
 
 def test():
@@ -58,7 +88,8 @@ def test():
 
     x = torch.randn(10, 3, 224, 224)
     model = torchvision.models.resnet18(pretrained=True)
-    knn_euclides = KnnEuclides(model, alpha=1, k=5)
+    print(get_graph_node_names(model)[0])
+    knn_euclides = KnnEuclides(model, features_nodes=["flatten"], alpha=1, k=2)
     knn_euclides.on_fit_start()
     knn_euclides.fit(x)
     knn_euclides.on_fit_end()
