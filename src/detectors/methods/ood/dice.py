@@ -1,8 +1,8 @@
 from functools import reduce
-import torch.nn.functional as F
 from typing import List
 
 import torch
+import torch.nn.functional as F
 import torch.utils.data
 import torchvision.models as models
 from torch import Tensor
@@ -47,7 +47,9 @@ class Dice:
     def __call__(self, x: Tensor) -> Tensor:
         with torch.no_grad():
             # logits = self.feature_extractor(x)[self.penultimate_node] @ (self.weight).T + self.bias
-            logits = F.linear(self.feature_extractor(x)[self.penultimate_node], self.weight, self.bias)
+            logits = torch.flatten(
+                F.linear(self.feature_extractor(x)[self.penultimate_node], self.weight, self.bias), 1
+            )
         return torch.logsumexp(logits, dim=-1)
 
 

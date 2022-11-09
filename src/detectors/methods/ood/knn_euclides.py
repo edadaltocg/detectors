@@ -1,7 +1,8 @@
 from typing import List
-from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
+
 import torch
 from torch import Tensor, nn
+from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
 
 
 class KnnEuclides:
@@ -35,6 +36,7 @@ class KnnEuclides:
             features = self.feature_extractor(x)
 
         for k in features:
+            features[k] = torch.flatten(features[k], start_dim=1)
             features[k] = features[k].cpu()
 
         if self.X is None:
@@ -61,6 +63,7 @@ class KnnEuclides:
 
         # normalize test features
         for k in features:
+            features[k] = torch.flatten(features[k], start_dim=1)
             features[k] = features[k] / torch.norm(features[k], p=2, dim=-1, keepdim=True)  # type: ignore
 
         # pairwise euclidean distance between x and X

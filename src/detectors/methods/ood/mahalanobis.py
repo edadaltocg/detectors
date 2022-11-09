@@ -3,6 +3,40 @@ from typing import List
 import torch
 from torch import Tensor
 from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
+from torch import nn
+
+
+def flatten(data: Tensor, *args, **kwargs):
+    return torch.flatten(data, 1)
+
+
+def adaptive_avg_pool2d(data: Tensor, *args, **kwargs):
+    if len(data.shape) > 2:
+        return torch.flatten(nn.AdaptiveAvgPool2d((1, 1))(data), 1)
+    return data
+
+
+def adaptive_max_pool2d(data: Tensor, *args, **kwargs):
+    if len(data.shape) > 2:
+        return torch.flatten(nn.AdaptiveMaxPool2d((1, 1))(data), 1)
+    return data
+
+
+def getitem(data: Tensor, *args, **kwargs):
+    return data[:, 0].clone().contiguous()
+
+
+def none_reduction(data: Tensor, *args, **kwargs):
+    return data
+
+
+reductions_registry = {
+    "flatten": flatten,
+    "avg": adaptive_avg_pool2d,
+    "max": adaptive_max_pool2d,
+    "getitem": getitem,
+    "none": none_reduction,
+}
 
 
 def mahalanobis_distance_inv(x: Tensor, y: Tensor, inverse: Tensor):
@@ -50,6 +84,7 @@ class Mahalanobis:
         model: torch.nn.Module,
         features_nodes: List[str],
         reduction_method: str = "pseudo",
+        pooling_name: str = "max",
         aggregation_method=None,
         *args,
         **kwargs
@@ -58,6 +93,8 @@ class Mahalanobis:
         self.feature_extractor = create_feature_extractor(model, features_nodes)
         self.reduction_method = reduction_method
         self.aggregation_method = aggregation_method
+        self.pooling_name = pooling_name
+        self.pooling_op = reductions_registry[pooling_name]
 
         self.mus = []
         self.invs = []
@@ -99,6 +136,9 @@ class Mahalanobis:
         with torch.no_grad():
             features = self.feature_extractor(x)
 
+        for k in features:
+            features[k] = self.pooling_op(features[k])
+
         features_keys = list(features.keys())
         stack = None
         for i, (mu, inv) in enumerate(zip(self.mus, self.invs)):
@@ -117,3 +157,23 @@ class Mahalanobis:
             stack = self.aggregation_method(stack)
 
         return stack
+
+
+def test():
+    import torchvision.models as models
+
+    model = models.resnet18(pretrained=True)
+    model.fc = torch.nn.Linear(512, 10)
+    model.eval()
+    x = torch.rand(10, 3, 224, 224)
+    y = torch.arange(10)
+    method = Mahalanobis(model, ["layer4"], reduction_method="pseudo", aggregation_method=None)
+    method.fit(x, y)
+    method.on_fit_end()
+    scores = method(x)
+    print(scores.shape)
+    assert scores.shape == (10,)
+
+
+if __name__ == "__main__":
+    test()

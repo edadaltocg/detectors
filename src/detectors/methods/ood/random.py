@@ -26,3 +26,4 @@ if __name__ == "__main__":
 
     model = Model()
     print(random_score(x, model))
+    assert random_score(x, model).shape == (10,)
