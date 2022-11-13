@@ -78,7 +78,7 @@ class ReAct:
         self.model.eval()
         self.features_nodes = features_nodes
         self.graph_nodes_names = graph_nodes_names
-        self.feature_extractor = create_feature_extractor(model, features_nodes)
+        self.feature_extractor = create_feature_extractor(model, self.features_nodes)
         self.insert_node_fn = insert_node_fn
         self.p = p
 

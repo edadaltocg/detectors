@@ -5,6 +5,7 @@ from torchvision.models.feature_extraction import create_feature_extractor, get_
 import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
+from tqdm import tqdm
 
 
 def flatten(data: Tensor, *args, **kwargs):
@@ -66,7 +67,8 @@ class Projection:
         self.n_classes = None
         self.mus = None
         self.max_trajectory = None
-        self.mean_trajectory = None
+        self.ref_trajectory = None
+        self.scale = 1.0
 
         self.all_train_features = {}
 
@@ -74,7 +76,6 @@ class Projection:
         self.all_train_features = {}
 
     def fit(self, x: Tensor, y: Tensor):
-        # TODO: accumulate data more efficiently
         with torch.no_grad():
             features = self.feature_extractor(x)
 
@@ -96,7 +97,8 @@ class Projection:
         self.mus = defaultdict(list)
         targets = self.all_train_features.pop("targets")
         unique_classes = torch.unique(targets).detach().cpu().numpy().tolist()
-        for c in unique_classes:
+        print(len(unique_classes))
+        for c in tqdm(unique_classes):
             filt = targets == c
             if filt.sum() == 0:
                 continue
@@ -105,45 +107,41 @@ class Projection:
 
         for k in self.mus:
             self.mus[k] = torch.cat(self.mus[k], dim=0)
-
+        print(self.mus[k].shape)
         # build trajectories
         logits = self.all_train_features[list(self.all_train_features.keys())[-1]]
-        pred = logits.argmax(dim=-1, keepdim=True)
-        n_classes = logits.shape[-1]
+        probs = torch.softmax(logits, 1)
         trajectories = {}
         for k in self.mus:
-            print(self.mus[k].shape)
             trajectories[k] = projection_layer_score(self.all_train_features[k], self.mus[k])
-            predicted_mask_coordinate = torch.vstack(
-                [torch.arange(n_classes, device=targets.device)] * len(targets)
-            ) == targets.unsqueeze(-1)
-            trajectories[k] = trajectories[k][predicted_mask_coordinate].view(-1, 1)
+            print(trajectories[k].shape, probs.shape)
+            trajectories[k] = torch.sum(trajectories[k] * probs, 1, keepdim=True)
 
         trajectories = torch.cat(list(trajectories.values()), dim=-1)
 
         self.max_trajectory = trajectories.max(dim=0, keepdim=True)[0]
-        self.mean_trajectory = trajectories.mean(dim=0, keepdim=True) / self.max_trajectory
+        self.ref_trajectory = trajectories.mean(dim=0, keepdim=True) / self.max_trajectory
+        self.scale = torch.sum(self.ref_trajectory**2)  # type: ignore
+
+        del self.all_train_features
 
     def __call__(self, x: Tensor):
         with torch.no_grad():
             features = self.feature_extractor(x)
 
         logits = features[list(features.keys())[-1]]
-        pred = logits.argmax(dim=-1, keepdim=True)
-        n_classes = logits.shape[-1]
-
+        probs = torch.softmax(logits, 1)
         scores = {}
         for k in features:
             features[k] = self.pooling_op(features[k])
             scores[k] = projection_layer_score(features[k], self.mus[k].to(features[k].device))  # type: ignore
-            predicted_mask_coordinate = torch.vstack([torch.arange(n_classes, device=pred.device)] * len(pred)) == pred
-
-            scores[k] = scores[k][predicted_mask_coordinate].view(-1, 1)
+            scores[k] = torch.sum(scores[k] * probs, 1, keepdim=True)
+            print(scores[k].device)
 
         # combine scores
         scores = torch.cat(list(scores.values()), dim=-1)
         scores = scores / self.max_trajectory
-        scores = torch.sum(scores * self.mean_trajectory, -1) / torch.sum(self.mean_trajectory**2)  # type: ignore
+        scores = torch.sum(scores * self.ref_trajectory, -1) / self.scale  # type: ignore
 
         return scores
 
@@ -154,13 +152,13 @@ def test():
     model = models.resnet18(pretrained=True)
     model.fc = torch.nn.Linear(512, 10)
     model.eval()
-    x = torch.rand(10, 3, 224, 224)
-    y = torch.arange(10)
+    x = torch.rand(32, 3, 224, 224)
+    y = torch.randint(0, 10, (32,))
     projection = Projection(model, ["layer4", "fc"], "max")
     projection.fit(x, y)
     projection.on_fit_end()
     print(projection(x))
-    assert projection(x).shape == (10,)
+    assert projection(x).shape == (32,)
 
 
 if __name__ == "__main__":

@@ -22,6 +22,7 @@ def main(args):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = detectors.create_model(args.model, weights=None)
     model.to(device)
+    model.eval()
     methods = {
         m: detectors.create_ood_detector(m, model, **(args.methods_kwargs[m] if m in args.methods_kwargs else {}))
         for m in args.methods

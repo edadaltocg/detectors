@@ -1,7 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 import torch
@@ -56,6 +56,7 @@ class OODPipeline(Pipeline, ABC):
         ood_datasets_names: List[str],
         device,
         limit_fit: int,
+        transform: Optional[Callable],
         batch_size: int,
         num_workers: int,
     ) -> None:
@@ -63,6 +64,7 @@ class OODPipeline(Pipeline, ABC):
         self.ood_datasets = ood_datasets_names
         self.device = device
         self.limit_fit = limit_fit
+        self.transform = transform
         self.batch_size = batch_size
         self.num_workers = num_workers
 
@@ -87,15 +89,22 @@ class OODPipeline(Pipeline, ABC):
         if self.limit_fit is None:
             self.limit_fit = len(self.in_dist_train_dataset)
 
-        self.in_dist_train_dataset = torch.utils.data.Subset(self.in_dist_train_dataset, range(self.limit_fit))
-
+        # random indices
+        subset = np.random.choice(np.arange(len(self.in_dist_train_dataset)), self.limit_fit, replace=False).tolist()
+        self.in_dist_train_dataset = torch.utils.data.Subset(self.in_dist_train_dataset, subset)
+        logger.info(f"Using {len(self.in_dist_train_dataset)} samples for fitting.")
         self.fit_dataloader = torch.utils.data.DataLoader(
-            self.in_dist_train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=4
+            self.in_dist_train_dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=self.num_workers,
+            pin_memory=True,
         )
 
         test_images_dataset = torch.utils.data.ConcatDataset(
             [self.in_dist_test_dataset] + list(self.out_distribution_datasets.values())
         )
+        logger.info(f"Using {len(test_images_dataset)} samples for testing.")
         test_labels = torch.utils.data.TensorDataset(
             torch.cat(
                 [torch.zeros(len(self.in_dist_test_dataset))]  # type: ignore
@@ -105,7 +114,7 @@ class OODPipeline(Pipeline, ABC):
 
         test_dataset = ConcatDatasetsDim1([test_images_dataset, test_labels])
         self.test_dataloader = torch.utils.data.DataLoader(
-            test_dataset, batch_size=self.batch_size, shuffle=True, num_workers=4
+            test_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers, pin_memory=True
         )
 
     def benchmark(self, methods: Dict[str, Callable]):
@@ -144,9 +153,20 @@ class OODPipeline(Pipeline, ABC):
                 # TODO: parallelize this loop
                 test_scores[method_name].append(method(x).detach().cpu())
 
-        test_labels = torch.cat(test_labels)
+        test_labels = torch.cat(test_labels).view(-1)
         test_scores = {k: torch.cat(v) for k, v in test_scores.items()}
-
+        try:
+            assert all(
+                len(test_labels) == len(v) for v in test_scores.values()
+            ), "Scores () and labels have different lengths."
+        except AssertionError as e:
+            logger.error(
+                "Scores has shape %s and labels has length %s",
+                [v.shape for v in test_scores.values()],
+                test_labels.shape,
+            )
+            logger.error(e)
+            raise
         res_obj = self.eval(test_scores, test_labels, self.ood_datasets)
         self.report(res_obj)
 
@@ -219,7 +239,9 @@ class OODPipeline(Pipeline, ABC):
 
 @register_pipeline("ood-cifar10")
 class OODCifar10Pipeline(OODPipeline):
-    def __init__(self, device, limit_fit=10000, batch_size=128, num_workers=4) -> None:
+    def __init__(
+        self, device, limit_fit=10000, batch_size=128, num_workers=4, transform: Optional[Callable] = None
+    ) -> None:
         super().__init__(
             "cifar10",
             [
@@ -236,41 +258,47 @@ class OODCifar10Pipeline(OODPipeline):
             ],
             device=device,
             limit_fit=limit_fit,
+            transform=transform,
             batch_size=batch_size,
             num_workers=num_workers,
         )
+        if self.transform is None:
+            self.transform = default_cifar10_test_transform()
 
     def _setup(self):
         logger.info("Loading In-distribution dataset...")
-        transform = default_cifar10_test_transform()
-        self.in_distribution_train = get_dataset(self.in_dataset, split="train", transform=transform, download=True)
+        self.in_distribution_train = get_dataset(
+            self.in_dataset, split="train", transform=self.transform, download=True
+        )
         self.fit_dataloaderin_distribution_test = get_dataset(
-            self.in_dataset, split="test", transform=transform, download=True
+            self.in_dataset, split="test", transform=self.transform, download=True
         )
 
         logger.info("Loading OOD datasets...")
         self.out_distribution_datasets = {
-            ds: get_dataset(ds, split="test", transform=transform, download=True) for ds in self.ood_datasets
+            ds: get_dataset(ds, split="test", transform=self.transform, download=True) for ds in self.ood_datasets
         }
 
 
 @register_pipeline("ood-imagenet")
 class OODImageNettPipeline(OODPipeline):
-    def __init__(self, device, limit_fit=10000, batch_size=64, num_workers=4, transform=None) -> None:
+    def __init__(
+        self, device, limit_fit=10000, batch_size=64, num_workers=4, transform: Optional[Callable] = None
+    ) -> None:
         super().__init__(
             "ilsvrc2012",
             [
-                "textures",
                 "mos_inaturalist",
-                "mos_places365",
                 "mos_sun",
+                "mos_places365",
+                "textures",
             ],
             device=device,
             limit_fit=limit_fit,
+            transform=transform,
             batch_size=batch_size,
             num_workers=num_workers,
         )
-        self.transform = transform
         if self.transform is None:
             self.transform = default_imagenet_test_transforms()
 

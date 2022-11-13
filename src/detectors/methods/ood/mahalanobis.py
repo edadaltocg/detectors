@@ -128,6 +128,8 @@ class Mahalanobis:
             )
             self.mus.append(mu)
             self.invs.append(inv)
+        
+        del self.all_training_features
 
     def __call__(self, x: Tensor) -> Tensor:
         if len(self.invs) == 0 or len(self.mus) == 0:

@@ -4,6 +4,8 @@ from typing import Optional, Union
 import timm
 import torchvision
 from torch import nn
+from timm.data import resolve_data_config
+from timm.data.transforms_factory import create_transform as timm_create_transform
 
 
 logger = logging.getLogger(__name__)
@@ -59,4 +61,26 @@ def create_model(model_name: str, weights: Optional[Union[str, bool]] = None, **
     #     return torch.hub.load("pytorch/vision", model=model_name, weights=weights, skip_validation=True, **kwargs)
 
 
+def list_models():
+    """
+    List all models available in model registry, torchvision.models, and timm.list_models
+
+    Returns:
+        list: list of model names
+    """
+    return list(model_registry.keys()) + timm.list_models()
+
+
+def create_transform(model):
+    config = resolve_data_config({}, model=model)
+    config["is_training"] = False
+    transform = timm_create_transform(**config)
+
+    return transform
+
+
 from . import densenet, resnet
+
+
+if __name__ == "__main__":
+    print(list_models())
