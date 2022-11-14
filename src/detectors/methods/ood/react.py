@@ -75,6 +75,7 @@ class ReAct:
         **kwargs
     ) -> None:
         self.model = model
+        self.device = next(self.model.parameters()).device
         self.model.eval()
         self.features_nodes = features_nodes
         self.graph_nodes_names = graph_nodes_names
@@ -104,7 +105,7 @@ class ReAct:
     def on_fit_end(self, *args, **kwargs):
         self.thrs = list(
             {
-                k: torch.quantile(self.all_training_features[k], self.p).item()
+                k: torch.quantile(self.all_training_features[k].to(self.device).view(-1)[:2_560_000], self.p).item()
                 for k in self.all_training_features.keys()
             }.values()
         )
@@ -115,8 +116,8 @@ class ReAct:
                 condition_fn=partial(condition_fn, equals_to=node_name),
                 insert_fn=partial(insert_fn, thr=self.thrs[i]),
             )
-        logger.info(f"ReAct: thresholds = {self.thrs}")
-        logger.info(self.model.code)
+        logger.info(f"ReAct thresholds = {self.thrs}")
+        logger.debug(self.model.code)
 
     def __call__(self, x: Tensor) -> Tensor:
         self.model.eval()

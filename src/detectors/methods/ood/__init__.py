@@ -13,6 +13,7 @@ from .odin import odin
 from .random import random_score
 from .react import ReAct
 from .projection import Projection
+from .react_projection import ReActProjection
 
 ood_detector_registry = {
     "random": random_score,
@@ -25,6 +26,7 @@ ood_detector_registry = {
     "knn_euclides": KnnEuclides,
     "igeood_logits": IgeoodLogits,
     "projection": Projection,
+    "react_projection": ReActProjection,
 }
 
 

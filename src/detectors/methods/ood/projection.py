@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import List
+from typing import List, Union
 from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
 
 import torch
@@ -41,7 +41,7 @@ reductions_registry = {
 }
 
 
-def projection_layer_score(x: Tensor, mus: Tensor):
+def projection_layer_score(x: Tensor, mus: Union[Tensor, List[Tensor]]):
     stack = torch.zeros(x.shape[0], len(mus), device=x.device, dtype=x.dtype)
     for i, mu in enumerate(mus):
         stack[:, i] = F.cosine_similarity(x, mu.unsqueeze(0), dim=-1)
@@ -59,7 +59,9 @@ class Projection:
         **kwargs
     ):
         self.model = model
+        self.model.eval()
         self.name = pooling_name
+        self.device = next(self.model.parameters()).device
         self.features_nodes = features_nodes
         self.feature_extractor = create_feature_extractor(model, features_nodes)
         self.pooling_op = reductions_registry[pooling_name]
@@ -97,24 +99,21 @@ class Projection:
         self.mus = defaultdict(list)
         targets = self.all_train_features.pop("targets")
         unique_classes = torch.unique(targets).detach().cpu().numpy().tolist()
-        print(len(unique_classes))
-        for c in tqdm(unique_classes):
+        for c in unique_classes:
             filt = targets == c
             if filt.sum() == 0:
                 continue
             for k in self.all_train_features:
-                self.mus[k].append(self.all_train_features[k][filt].mean(0, keepdim=True))
+                self.mus[k].append(self.all_train_features[k][filt].to(self.device).mean(0, keepdim=True))
 
         for k in self.mus:
             self.mus[k] = torch.cat(self.mus[k], dim=0)
-        print(self.mus[k].shape)
         # build trajectories
         logits = self.all_train_features[list(self.all_train_features.keys())[-1]]
-        probs = torch.softmax(logits, 1)
+        probs = torch.softmax(logits, 1).to(self.device)
         trajectories = {}
         for k in self.mus:
-            trajectories[k] = projection_layer_score(self.all_train_features[k], self.mus[k])
-            print(trajectories[k].shape, probs.shape)
+            trajectories[k] = projection_layer_score(self.all_train_features[k].to(self.device), self.mus[k])
             trajectories[k] = torch.sum(trajectories[k] * probs, 1, keepdim=True)
 
         trajectories = torch.cat(list(trajectories.values()), dim=-1)
@@ -134,9 +133,8 @@ class Projection:
         scores = {}
         for k in features:
             features[k] = self.pooling_op(features[k])
-            scores[k] = projection_layer_score(features[k], self.mus[k].to(features[k].device))  # type: ignore
+            scores[k] = projection_layer_score(features[k], self.mus[k])  # type: ignore
             scores[k] = torch.sum(scores[k] * probs, 1, keepdim=True)
-            print(scores[k].device)
 
         # combine scores
         scores = torch.cat(list(scores.values()), dim=-1)
