@@ -33,7 +33,7 @@ class FashionMNISTWrapped(FashionMNIST):
     def __init__(
         self,
         root: str,
-        split: str = "all",
+        split: str = "test",
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
         download: bool = False,

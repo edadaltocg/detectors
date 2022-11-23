@@ -11,7 +11,7 @@ class CIFAR10Wrapped(CIFAR10):
     def __init__(
         self,
         root: str,
-        split: str = "all",
+        split: str = "test",
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
         download: bool = False,
@@ -34,7 +34,7 @@ class CIFAR100Wrapped(CIFAR100):
     def __init__(
         self,
         root: str,
-        split: str = "all",
+        split: str = "test",
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
         download: bool = False,

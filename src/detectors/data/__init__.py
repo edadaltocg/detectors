@@ -63,6 +63,7 @@ def get_dataset(dataset_name: Optional[str] = None, root: str = DATASETS_DIR, tr
     if dataset_name is not None:
         if dataset_name in ["imagenet1k", "ilsvrc2012"]:
             root = IMAGENET_ROOT
+            kwargs.pop("download", None)
         return datasets_registry[dataset_name](root=root, transform=transform, **kwargs)
 
     raise ValueError("Dataset name is not specified")
