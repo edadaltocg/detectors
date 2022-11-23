@@ -29,8 +29,6 @@ def main(args):
         logger.debug(get_graph_node_names(model)[0])
         # logger.debug(torch.fx.symbolic_trace(model).code)
 
-    # TODO: fetch the good transform for the model
-
     model.to(device)
     model.eval()
     methods = {
@@ -38,7 +36,7 @@ def main(args):
         for m in args.methods
     }
     for m in methods.values():
-        logger.info(m)
+        logger.debug(m)
 
     transform = torchvision.transforms.Compose(
         [

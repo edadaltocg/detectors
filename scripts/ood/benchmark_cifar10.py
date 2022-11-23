@@ -7,7 +7,7 @@ import detectors
 import pandas as pd
 import torch
 from detectors.utils import str_to_dict
-
+from detectors.resnet18 import resnet18_cifar
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,10 @@ def main(args):
     os.makedirs(save_root, exist_ok=True)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = detectors.create_model(args.model, weights=None)
+    # model = detectors.create_model(args.model, weights=None)
+    w = torch.load("checkpoints_knn/CIFAR-10/resnet18/checkpoint_100.pth.tar", map_location="cpu")
+    model = resnet18_cifar()  # TODO: remove, manual load from knn model
+    model.load_state_dict(w["state_dict"])
     model.to(device)
     model.eval()
     methods = {
@@ -40,7 +43,8 @@ def main(args):
     with open(os.path.join(save_root, "ood-cifar10.json"), "w") as f:
         json.dump(results, f)
 
-    # TODO: save in a csv file
+    # append results to csv file
+    # TODO
 
 
 if __name__ == "__main__":
@@ -54,7 +58,7 @@ if __name__ == "__main__":
     parser.add_argument("--model", type=str, default="resnet18_cifar10")
     parser.add_argument("--limit_fit", type=int, default=None)
 
-    parser.add_argument("--batch_size", type=int, default=64)
+    parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--num_workers", type=int, default=4)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--debug", action="store_true")
