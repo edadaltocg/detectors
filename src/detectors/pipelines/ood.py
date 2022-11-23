@@ -267,12 +267,10 @@ class OODCifar10Pipeline(OODPipeline):
 
     def _setup(self):
         logger.info("Loading In-distribution dataset...")
-        self.in_distribution_train = get_dataset(
+        self.in_dist_train_dataset = get_dataset(
             self.in_dataset, split="train", transform=self.transform, download=True
         )
-        self.fit_dataloaderin_distribution_test = get_dataset(
-            self.in_dataset, split="test", transform=self.transform, download=True
-        )
+        self.in_dist_test_dataset = get_dataset(self.in_dataset, split="test", transform=self.transform, download=True)
 
         logger.info("Loading OOD datasets...")
         self.out_distribution_datasets = {
@@ -301,6 +299,8 @@ class OODImageNettPipeline(OODPipeline):
         )
         if self.transform is None:
             self.transform = default_imagenet_test_transforms()
+
+        logger.info(self.transform)
 
     def _setup(self):
         logger.info("Loading In-distribution dataset...")

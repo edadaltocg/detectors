@@ -5,6 +5,9 @@ import torch
 import torch.utils.data
 import torchvision.models as models
 from torch import Tensor
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def get_composed_attr(model, attrs: List[str]):
@@ -16,21 +19,24 @@ class Dice:
         self.model = model
         self.p = p
 
+        self.weight_backup = get_composed_attr(self.model, last_layer_name.split(".")).weight.clone()
+
         self.last_layer_name = last_layer_name
         self.last_layer_nodes = self.last_layer_name.split(".")
 
-        weight = get_composed_attr(self.model, self.last_layer_nodes).weight
+        weight = get_composed_attr(self.model, self.last_layer_nodes).weight.clone()
 
         m = weight.shape[1]
         top_k = int(m * (1 - self.p))
+        logger.info("Dice top_k: %s ", top_k)
 
         self.mask = torch.ones_like(weight)
         top_k_weights = torch.topk(weight.abs(), top_k, dim=1)[0]
         self.mask[weight.abs() <= top_k_weights[:, -1].unsqueeze(1)] = 0
 
-        weight = weight * self.mask
+        get_composed_attr(self.model, self.last_layer_nodes).weight.data *= self.mask
 
-        get_composed_attr(self.model, self.last_layer_nodes).weight.data = weight
+        assert not torch.allclose(get_composed_attr(self.model, self.last_layer_nodes).weight, self.weight_backup)
 
     def __call__(self, x: Tensor) -> Tensor:
         with torch.no_grad():
@@ -40,12 +46,14 @@ class Dice:
 
 def test():
     x = torch.randn(2, 3, 224, 224, requires_grad=False)
-    model = models.vit_b_16(pretrained=True)
-    model_cp = models.vit_b_16(pretrained=True)
-    print(model.heads.head)
-    print(getattr(model, "heads"))
-    print(getattr(getattr(model, "heads"), "head").weight)
-    method = Dice(model, last_layer_name="heads.head", p=0.7)
+    model = models.densenet121(pretrained=True)
+    logits = model(x)
+    energy1 = torch.logsumexp(logits, dim=-1)
+    model_cp = models.densenet121(pretrained=True)
+    logits = model_cp(x)
+    energy2 = torch.logsumexp(logits, dim=-1)
+    assert torch.allclose(energy1, energy2)
+    method = Dice(model, last_layer_name="classifier", p=0.7)
     scores = method(x)
     logits = model_cp(x)
     energy = torch.logsumexp(logits, dim=-1)
@@ -55,3 +63,4 @@ def test():
 
 if __name__ == "__main__":
     test()
+    test2()
