@@ -20,9 +20,9 @@ class ReActProjection(Projection):
         *args,
         **kwargs
     ):
-        self.graph_nodes_names = graph_nodes_names_thr
+        self.graph_nodes_names_thr = graph_nodes_names_thr
         self.insert_node_fn = insert_node_fn
-        for node_name, thr in self.graph_nodes_names.items():
+        for node_name, thr in self.graph_nodes_names_thr.items():
             model = reactify(
                 model,
                 condition_fn=partial(condition_fn, equals_to=node_name),

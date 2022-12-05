@@ -28,11 +28,11 @@ def pipeline(
     **kwargs,
 ) -> Pipeline:
     """
+    # TODO: rewrite docs
     Utility factory method to build a [`Pipeline`].
 
     Pipelines are made of:
 
-        - A [tokenizer](tokenizer) in charge of mapping raw textual input to token.
         - A [model](model) to make predictions from the inputs.
         - Some (optional) post processing for enhancing model's output.
 

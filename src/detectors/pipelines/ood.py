@@ -1,6 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
+import time
 from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
@@ -14,7 +15,7 @@ from detectors.utils import ConcatDatasetsDim1
 from torch import Tensor
 from tqdm import tqdm
 
-from ..data import default_imagenet_test_transforms, get_dataset
+from ..data import default_imagenet_test_transforms, create_dataset
 
 
 logger = logging.getLogger(__name__)
@@ -143,6 +144,8 @@ class OODPipeline(Pipeline, ABC):
                 if hasattr(method, "on_fit_end"):
                     method.on_fit_end()
 
+        self.time_dict = defaultdict(list)
+
         test_labels = []
         test_scores = defaultdict(list)
         for x, y, labels in tqdm(self.test_dataloader, "Computing scores"):
@@ -151,8 +154,12 @@ class OODPipeline(Pipeline, ABC):
             test_labels.append(labels)
             for method_name, method in methods.items():
                 # TODO: parallelize this loop
+                t1 = time.time()
                 test_scores[method_name].append(method(x).detach().cpu())
+                t2 = time.time()
 
+                self.time_dict[method_name].append(t2 - t1)
+        self.time_dict = {k: np.mean(v) for k, v in self.time_dict.items()}
         test_labels = torch.cat(test_labels).view(-1)
         test_scores = {k: torch.cat(v) for k, v in test_scores.items()}
         try:
@@ -232,6 +239,7 @@ class OODPipeline(Pipeline, ABC):
                 print(f"\t{ood_dataset}:")
                 for metric, val in res.items():
                     print(f"\t\t{METRICS_NAMES_PRETTY[metric]}: {val:.4f}")
+            print("\t\tTime:", self.time_dict[method])
 
     def __call__(self, *args: Any, **kwds: Any):
         return super().__call__(*args, **kwds)
@@ -267,14 +275,16 @@ class OODCifar10Pipeline(OODPipeline):
 
     def _setup(self):
         logger.info("Loading In-distribution dataset...")
-        self.in_dist_train_dataset = get_dataset(
+        self.in_dist_train_dataset = create_dataset(
             self.in_dataset, split="train", transform=self.transform, download=True
         )
-        self.in_dist_test_dataset = get_dataset(self.in_dataset, split="test", transform=self.transform, download=True)
+        self.in_dist_test_dataset = create_dataset(
+            self.in_dataset, split="test", transform=self.transform, download=True
+        )
 
         logger.info("Loading OOD datasets...")
         self.out_distribution_datasets = {
-            ds: get_dataset(ds, split="test", transform=self.transform, download=True) for ds in self.ood_datasets
+            ds: create_dataset(ds, split="test", transform=self.transform, download=True) for ds in self.ood_datasets
         }
 
 
@@ -304,10 +314,10 @@ class OODImageNettPipeline(OODPipeline):
 
     def _setup(self):
         logger.info("Loading In-distribution dataset...")
-        self.in_dist_train_dataset = get_dataset(self.in_dataset, split="train", transform=self.transform)
-        self.in_dist_test_dataset = get_dataset(self.in_dataset, split="val", transform=self.transform)
+        self.in_dist_train_dataset = create_dataset(self.in_dataset, split="train", transform=self.transform)
+        self.in_dist_test_dataset = create_dataset(self.in_dataset, split="val", transform=self.transform)
 
         logger.info("Loading OOD datasets...")
         self.out_distribution_datasets = {
-            ds: get_dataset(ds, split="test", transform=self.transform, download=True) for ds in self.ood_datasets
+            ds: create_dataset(ds, split="test", transform=self.transform, download=True) for ds in self.ood_datasets
         }
