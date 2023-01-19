@@ -17,6 +17,7 @@ class KnnEuclides:
         **kwargs
     ):
         self.model = model
+        self.device = next(model.parameters()).device
         self.feature_nodes = features_nodes
         self.feature_extractor = create_feature_extractor(model, features_nodes)
 
@@ -53,6 +54,7 @@ class KnnEuclides:
         for k in self.X:
             self.X[k] = self.X[k][torch.randperm(self.X[k].shape[0])[: int(self.alpha * self.X[k].shape[0])]]
             self.X[k] = self.X[k] / torch.norm(self.X[k], p=2, dim=-1, keepdim=True)  # type: ignore
+            self.X[k] = self.X[k].to(self.device)
 
     def __call__(self, x: Tensor):
         if self.X is None:
@@ -67,15 +69,13 @@ class KnnEuclides:
             features[k] = features[k] / torch.norm(features[k], p=2, dim=-1, keepdim=True)  # type: ignore
 
         # pairwise euclidean distance between x and X
-        stack = []
-        for k in features:
-            features[k] = torch.cdist(features[k], self.X[k].to(features[k].device), p=2)
+        stack = torch.zeros((x.shape[0], len(features)), device=self.device)
+        for i, k in enumerate(features):
+            features[k] = torch.cdist(features[k], self.X[k], p=2)
             # take smallest k distance for each test sample
             topk, _ = torch.topk(features[k], k=self.k, dim=-1, largest=False)
-            stack.append(-topk[:, -1].view(-1, 1))
+            stack[:, i] = -topk[:, -1]
             # stack.append(-topk.mean(dim=-1, keepdim=True))
-
-        stack = torch.cat(stack, dim=1)
 
         if stack.shape[1] > 1 and self.aggregation_method is None:
             stack = stack.mean(1, keepdim=True)

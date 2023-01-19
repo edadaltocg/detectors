@@ -5,6 +5,7 @@ from accelerate import Accelerator
 from torch import Tensor, nn, optim
 
 
+# TODO: timm's create_optimizer?
 def get_criterion_cls(criterion_name: str) -> nn.modules.loss._Loss:
     return getattr(nn, criterion_name)
 

@@ -6,7 +6,7 @@ import os
 import detectors
 import torch
 import torch.utils.data
-from detectors.data import get_dataset
+from detectors.data import create_dataset
 from detectors.data.cifar_wrapper import default_cifar10_test_transform
 from detectors.trainer import trainer_classification
 from detectors.trainer_utils import get_criterion_cls, get_optimizer_cls, get_scheduler_cls
@@ -24,8 +24,8 @@ def main(args: argparse.Namespace):
     train_transform = default_cifar10_test_transform()
     test_transform = default_cifar10_test_transform()
 
-    train_dataset = get_dataset(args.dataset, split="train", download=True, transform=train_transform)
-    val_dataset = get_dataset(args.dataset, split="test", download=True, transform=test_transform)
+    train_dataset = create_dataset(args.dataset, split="train", download=True, transform=train_transform)
+    val_dataset = create_dataset(args.dataset, split="test", download=True, transform=test_transform)
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,

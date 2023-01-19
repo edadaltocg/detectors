@@ -47,6 +47,7 @@ METRICS_NAMES_PRETTY = {
     "aupr_in": "AUPR in",
     "aupr_out": "AUPR out",
     "thr": "Threshold",
+    "time": "Time",
 }
 
 
@@ -155,8 +156,9 @@ class OODPipeline(Pipeline, ABC):
             for method_name, method in methods.items():
                 # TODO: parallelize this loop
                 t1 = time.time()
-                test_scores[method_name].append(method(x).detach().cpu())
+                s = method(x)
                 t2 = time.time()
+                test_scores[method_name].append(s.detach().cpu())
 
                 self.time_dict[method_name].append(t2 - t1)
         self.time_dict = {k: np.mean(v) for k, v in self.time_dict.items()}
@@ -226,6 +228,7 @@ class OODPipeline(Pipeline, ABC):
                 "aupr_in": np.mean([results[method][ds]["aupr_in"] for ds in ood_datasets]),
                 "aupr_out": np.mean([results[method][ds]["aupr_out"] for ds in ood_datasets]),
                 "thr": np.mean([results[method][ds]["thr"] for ds in ood_datasets]),
+                "time": self.time_dict[method],
             }
 
         return results
@@ -238,8 +241,7 @@ class OODPipeline(Pipeline, ABC):
             for ood_dataset, res in results.items():
                 print(f"\t{ood_dataset}:")
                 for metric, val in res.items():
-                    print(f"\t\t{METRICS_NAMES_PRETTY[metric]}: {val:.4f}")
-            print("\t\tTime:", self.time_dict[method])
+                    print(f"\t\t{METRICS_NAMES_PRETTY.get(metric, metric)}: {val:.4f}")
 
     def __call__(self, *args: Any, **kwds: Any):
         return super().__call__(*args, **kwds)

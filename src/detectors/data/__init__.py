@@ -59,7 +59,8 @@ def register_dataset(dataset_name: str):
     return register_model_cls
 
 
-def get_dataset(dataset_name: Optional[str] = None, root: str = DATASETS_DIR, transform=None, **kwargs):
+def create_dataset(dataset_name: Optional[str] = None, root: str = DATASETS_DIR, transform=None, **kwargs):
+    # TODO: incoorporate timm's create_dataset
     if dataset_name is not None:
         if dataset_name in ["imagenet1k", "ilsvrc2012"]:
             root = IMAGENET_ROOT
