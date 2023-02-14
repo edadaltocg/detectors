@@ -147,7 +147,7 @@ dmypy.json
 /results
 /storage
 /logs
-/checkpoints
+/checkpoints*
 
 # .lock
 *.lock
