@@ -19,7 +19,7 @@ _logger = logging.getLogger(__name__)
 
 def main(args: argparse.Namespace):
     # save destination
-    folder_name = args.model if args.dataset in args.model else f"{args.model}_{args.dataset}" + f"_{args.seed}"
+    folder_name = args.model + f"_{args.seed}"
     save_root = os.path.join(detectors.config.CHECKPOINTS_DIR, folder_name)
 
     # model
