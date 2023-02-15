@@ -1,15 +1,12 @@
 {
-    "max_train_epochs": 300,
-    "validation_frequency": 5,
-    "batch_size": 64,
-    "criterion": "CrossEntropyLoss",
+    "epochs": 150,
+    "batch_size":  256,
     "optimizer": "SGD",
     "lr": 0.1,
-    "scheduler": "CosineAnnealingLR",
     "optimizer_kwargs": {
         "momentum": 0.9,
-        "weight_decay": 5e-4,
-        "nesterov": "True"
+        "weight_decay": 5e-4
     },
-    "scheduler_kwargs": {"T_max": 280}
+    "scheduler": "StepLR",
+    "scheduler_kwargs": {"gamma": 0.1, "step_size": 30}
 }
