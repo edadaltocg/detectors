@@ -154,3 +154,5 @@ dmypy.json
 
 # github releases
 /releases
+
+/deprecated
