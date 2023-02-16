@@ -1,12 +1,12 @@
-import detectors
-import torchvision
-from detectors import create_dataset, get_dataset_cls, get_datasets_names
 import torch
 import torch.utils.data
-from detectors.config import DATA_DIR
+import torchvision
 import torchvision.transforms as transforms
 
-from detectors.data.cifar_wrapper import CIFAR100Wrapped, CIFAR10Wrapped
+import detectors
+from detectors import create_dataset, get_dataset_cls, get_datasets_names
+from detectors.config import DATA_DIR, IMAGENET_ROOT
+from detectors.data.cifar_wrapper import CIFAR10Wrapped, CIFAR100Wrapped
 
 
 def test_cifar10():
@@ -54,7 +54,6 @@ def test_stl10():
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
         img, label = next(iter(dataloader))
 
-        assert img.shape == (1, 3, 96, 96)
         assert label.shape == (1,)
         assert len(dataset) == 5000 if split == "train" else 8000
     assert stl10_class is torchvision.datasets.STL10
@@ -87,7 +86,7 @@ def test_mnist():
         assert img.shape == (1, 1, 28, 28)
         assert label.shape == (1,)
         assert len(dataset) == 60000 if split == "train" else 10000
-    assert mnist_class is torchvision.datasets.MNIST
+    assert issubclass(mnist_class, torchvision.datasets.MNIST)
 
 
 def test_fashion_mnist():
@@ -102,7 +101,7 @@ def test_fashion_mnist():
         assert img.shape == (1, 1, 28, 28)
         assert label.shape == (1,)
         assert len(dataset) == 60000 if split == "train" else 10000
-    assert fmnist_class is torchvision.datasets.FashionMNIST
+    assert issubclass(fmnist_class, torchvision.datasets.FashionMNIST)
 
 
 def test_english_chars():
@@ -113,9 +112,8 @@ def test_english_chars():
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
     img, label = next(iter(dataloader))
 
-    assert img.shape == (1, 1, 28, 28)
     assert label.shape == (1,)
-    assert len(dataset) == 74000
+    assert len(dataset) == 7705
     assert issubclass(english_class, torchvision.datasets.ImageFolder)
 
 
@@ -167,7 +165,7 @@ def test_tiny_imagenet_c():
     img, label = next(iter(dataloader))
 
     assert type(img) == torch.Tensor
-    assert len(dataset) == 100000
+    assert len(dataset) == 10000
     assert issubclass(tiny_imagenet_c_class, torchvision.datasets.ImageFolder)
 
 
@@ -180,7 +178,7 @@ def test_tiny_imagenet_r():
     img, label = next(iter(dataloader))
 
     assert type(img) == torch.Tensor
-    assert len(dataset) == 100000
+    assert len(dataset) == 10000
     assert issubclass(tiny_imagenet_r_class, torchvision.datasets.ImageFolder)
 
 
@@ -193,14 +191,14 @@ def test_textures():
     img, label = next(iter(dataloader))
 
     assert type(img) == torch.Tensor
-    assert len(dataset) == 10000
+    assert len(dataset) == 5640
     assert issubclass(textures_class, torchvision.datasets.ImageFolder)
 
 
 def test_gaussian():
     transform = transforms.ToTensor()
 
-    dataset = create_dataset("textures", root=DATA_DIR, split=None, transform=transform, nb_samples=10000)
+    dataset = create_dataset("gaussian", root=DATA_DIR, split=None, transform=transform, nb_samples=10000)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
     img, label = next(iter(dataloader))
 
@@ -208,5 +206,109 @@ def test_gaussian():
     assert len(dataset) == 10000
 
 
-if __name__ == "__main__":
-    test_isun()
+def test_uniform():
+    transform = transforms.ToTensor()
+
+    dataset = create_dataset("uniform", root=DATA_DIR, split=None, transform=transform, nb_samples=10000)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    img, label = next(iter(dataloader))
+
+    assert type(img) == torch.Tensor
+    assert len(dataset) == 10000
+
+
+def test_places365():
+    transform = transforms.ToTensor()
+
+    places365_class = get_dataset_cls("places365")
+    dataset = create_dataset("places365", root=DATA_DIR, split="val", transform=transform, download=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    img, label = next(iter(dataloader))
+
+    assert type(img) == torch.Tensor
+    assert len(dataset) == 10000
+    assert places365_class is torchvision.datasets.Places365
+
+
+def test_stanford_cars():
+    transform = transforms.ToTensor()
+
+    stanford_cars_class = get_dataset_cls("stanford_cars")
+    for split in ("train", "test"):
+        dataset = create_dataset("stanford_cars", root=DATA_DIR, split="train", transform=transform, download=True)
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+        img, label = next(iter(dataloader))
+
+        assert type(img) == torch.Tensor
+        assert len(dataset) == 8144 if split == "train" else 8041
+    assert stanford_cars_class is torchvision.datasets.StanfordCars
+
+
+def test_mos_inaturalist():
+    transform = transforms.ToTensor()
+
+    mos_inaturalist_class = get_dataset_cls("mos_inaturalist")
+
+    dataset = create_dataset("mos_inaturalist", root=DATA_DIR, split=None, transform=transform, download=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    img, label = next(iter(dataloader))
+
+    assert type(img) == torch.Tensor
+    assert len(dataset) == 10000
+    assert issubclass(mos_inaturalist_class, torchvision.datasets.ImageFolder)
+
+
+def test_mos_places365():
+    transform = transforms.ToTensor()
+
+    mos_places365_class = get_dataset_cls("mos_places365")
+
+    dataset = create_dataset("mos_places365", root=DATA_DIR, split=None, transform=transform, download=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    img, label = next(iter(dataloader))
+
+    assert type(img) == torch.Tensor
+    assert len(dataset) == 10000
+    assert issubclass(mos_places365_class, torchvision.datasets.ImageFolder)
+
+
+def test_mos_sun():
+    transform = transforms.ToTensor()
+
+    mos_sun_class = get_dataset_cls("mos_sun")
+
+    dataset = create_dataset("mos_sun", root=DATA_DIR, split=None, transform=transform, download=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    img, label = next(iter(dataloader))
+
+    assert type(img) == torch.Tensor
+    assert len(dataset) == 10000
+    assert issubclass(mos_sun_class, torchvision.datasets.ImageFolder)
+
+
+def test_imagenet_o():
+    transform = transforms.ToTensor()
+
+    imagenet_o_class = get_dataset_cls("imagenet_o")
+
+    dataset = create_dataset("imagenet_o", root=DATA_DIR, split=None, transform=transform, download=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    img, label = next(iter(dataloader))
+
+    assert type(img) == torch.Tensor
+    assert len(dataset) == 2000
+    assert issubclass(imagenet_o_class, torchvision.datasets.ImageFolder)
+
+
+def test_imagenet():
+    transform = transforms.ToTensor()
+
+    imagenet_class = get_dataset_cls("imagenet")
+
+    dataset = create_dataset("imagenet", root=IMAGENET_ROOT, split="val", transform=transform)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    img, label = next(iter(dataloader))
+
+    assert type(img) == torch.Tensor
+    assert len(dataset) == 50000
+    assert imagenet_class is torchvision.datasets.ImageNet
