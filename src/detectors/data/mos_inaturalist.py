@@ -12,8 +12,9 @@ class MOSiNaturalist(ImageFolder):
     filename = "iNaturalist.tar.gz"
     file_md5 = "5be6ea8aa027d7b631916427b32cb335"
     url = "http://pages.cs.wisc.edu/~huangrui/imagenet_ood_dataset/iNaturalist.tar.gz"
-    splits = ("all", "test")
+    splits = ("all",)
     # size: 10000
+
     def __init__(
         self,
         root: str,
@@ -25,7 +26,6 @@ class MOSiNaturalist(ImageFolder):
         is_valid_file: Optional[Callable[[str], bool]] = None,
     ) -> None:
         self.root = os.path.expanduser(root)
-        self.split = verify_str_arg(split, "split", self.splits)
 
         if download:
             self.download()
@@ -67,24 +67,3 @@ class MOSiNaturalist(ImageFolder):
             remove_finished=False,
             md5=self.file_md5,
         )
-
-
-def test():
-    import torch.utils.data
-    import torchvision
-
-    transforms = torchvision.transforms.ToTensor()
-    dataset = MOSiNaturalist("./data", split="all", download=True, transform=transforms)
-    print(MOSiNaturalist)
-    print(dataset._dataset_folder)
-    print(dataset[0])
-    print(len(dataset))
-    data_loader = torch.utils.data.DataLoader(dataset)
-    for img, label in data_loader:
-        print(img.shape)
-        print(label)
-        break
-
-
-if __name__ == "__main__":
-    test()

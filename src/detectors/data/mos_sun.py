@@ -12,7 +12,7 @@ class MOSSUN(ImageFolder):
     filename = "SUN.tar.gz"
     file_md5 = "8469c3ada62211477954ec1be53b12d0"
     url = "http://pages.cs.wisc.edu/~huangrui/imagenet_ood_dataset/SUN.tar.gz"
-    splits = ("all", "test")
+    splits = ("all",)
     # size: 10000
 
     def __init__(
@@ -26,7 +26,6 @@ class MOSSUN(ImageFolder):
         is_valid_file: Optional[Callable[[str], bool]] = None,
     ) -> None:
         self.root = os.path.expanduser(root)
-        self.split = verify_str_arg(split, "split", self.splits)
 
         if download:
             self.download()
@@ -68,24 +67,3 @@ class MOSSUN(ImageFolder):
             remove_finished=False,
             md5=self.file_md5,
         )
-
-
-def test():
-    import torch.utils.data
-    import torchvision
-
-    transforms = torchvision.transforms.ToTensor()
-    dataset = MOSSUN("./data", split="all", download=True, transform=transforms)
-    print(MOSSUN)
-    print(dataset._dataset_folder)
-    print(dataset[0])
-    print(len(dataset))
-    data_loader = torch.utils.data.DataLoader(dataset)
-    for img, label in data_loader:
-        print(img.shape)
-        print(label)
-        break
-
-
-if __name__ == "__main__":
-    test()

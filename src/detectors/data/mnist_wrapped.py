@@ -48,15 +48,3 @@ class FashionMNISTWrapped(FashionMNIST):
             target_transform=target_transform,
             download=download,
         )
-
-
-def test():
-    dataset = MNISTWrapped("data", split="train", download=True)
-    print(len(dataset))
-
-    dataset = FashionMNISTWrapped("data", split="train", download=True)
-    print(len(dataset))
-
-
-if __name__ == "__main__":
-    test()

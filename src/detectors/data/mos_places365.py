@@ -12,8 +12,9 @@ class MOSPlaces365(ImageFolder):
     filename = "Places.tar.gz"
     file_md5 = "b5cb5eba2754ae2a28beea8718db699a"
     url = "http://pages.cs.wisc.edu/~huangrui/imagenet_ood_dataset/Places.tar.gz"
-    splits = ("all", "test")
+    splits = ("all",)
     # size: 10000
+
     def __init__(
         self,
         root: str,
@@ -25,7 +26,6 @@ class MOSPlaces365(ImageFolder):
         is_valid_file: Optional[Callable[[str], bool]] = None,
     ) -> None:
         self.root = os.path.expanduser(root)
-        self.split = verify_str_arg(split, "split", self.splits)
 
         if download:
             self.download()
@@ -67,24 +67,3 @@ class MOSPlaces365(ImageFolder):
             remove_finished=False,
             md5=self.file_md5,
         )
-
-
-def test():
-    import torch.utils.data
-    import torchvision
-
-    transforms = torchvision.transforms.ToTensor()
-    dataset = MOSPlaces365("./data", split="all", download=True, transform=transforms)
-    print(MOSPlaces365)
-    print(dataset._dataset_folder)
-    print(dataset[0])
-    print(len(dataset))
-    data_loader = torch.utils.data.DataLoader(dataset)
-    for img, label in data_loader:
-        print(img.shape)
-        print(label)
-        break
-
-
-if __name__ == "__main__":
-    test()

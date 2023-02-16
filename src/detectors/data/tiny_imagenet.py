@@ -57,7 +57,7 @@ class TinyImageNet(ImageFolder):
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
         download=False,
-        **kwargs
+        **kwargs,
     ):
         self.data_root = os.path.expanduser(root)
         self.split = verify_str_arg(split, "split", self.splits)
@@ -95,12 +95,3 @@ class TinyImageNet(ImageFolder):
         )
         assert "val" in self.splits
         normalize_tin_val_folder_structure(os.path.join(self.dataset_folder, "val"))
-
-
-def test():
-    dataset = TinyImageNet(root="data", split="val", download=True)
-    print(len(dataset))
-
-
-if __name__ == "__main__":
-    test()

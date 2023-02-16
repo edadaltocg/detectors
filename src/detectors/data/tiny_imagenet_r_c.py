@@ -12,7 +12,7 @@ class TinyImageNetResized(ImageFolder):
     filename = "Imagenet_resize.tar.gz"
     file_md5 = "0f9ff11d45babf2eff5fe12281d1ac31"
     url = "https://www.dropbox.com/s/kp3my3412u5k9rl/Imagenet_resize.tar.gz"
-    splits = ("all", "test")
+    splits = ("all",)
 
     def __init__(
         self,
@@ -24,8 +24,6 @@ class TinyImageNetResized(ImageFolder):
         **kwargs,
     ) -> None:
         self.root = os.path.expanduser(root)
-        self.split = verify_str_arg(split, "split", self.splits)
-        print(self.split_folder)
         if download:
             self.download()
 
@@ -74,7 +72,7 @@ class TinyImageNetCroped(ImageFolder):
     filename = "Imagenet.tar.gz"
     file_md5 = "7c0827e4246c3718a5ee076e999e52e5"
     url = "https://www.dropbox.com/s/avgm2u562itwpkl/Imagenet.tar.gz"
-    splits = ("all", "test")
+    splits = ("all",)
 
     def __init__(
         self,
@@ -86,8 +84,6 @@ class TinyImageNetCroped(ImageFolder):
         **kwargs,
     ) -> None:
         self.root = os.path.expanduser(root)
-        self.split = verify_str_arg(split, "split", self.splits)
-        print(self.split_folder)
         if download:
             self.download()
 
@@ -128,35 +124,3 @@ class TinyImageNetCroped(ImageFolder):
             text=True,
         )
         extract_archive(archive, self.dataset_folder, False)
-
-
-def test():
-    import torch.utils.data
-    import torchvision
-
-    transforms = torchvision.transforms.ToTensor()
-    dataset = TinyImageNetResized("./data", download=True, transform=transforms)
-    print(TinyImageNetResized)
-    print(dataset.dataset_folder)
-    print(dataset[0])
-    print(len(dataset))
-    data_loader = torch.utils.data.DataLoader(dataset)
-    for img, label in data_loader:
-        print(img.shape)
-        print(label)
-        break
-
-    dataset = TinyImageNetCroped("./data", download=True, transform=transforms)
-    print(TinyImageNetCroped)
-    print(dataset.dataset_folder)
-    print(dataset[0])
-    print(len(dataset))
-    data_loader = torch.utils.data.DataLoader(dataset)
-    for img, label in data_loader:
-        print(img.shape)
-        print(label)
-        break
-
-
-if __name__ == "__main__":
-    test()

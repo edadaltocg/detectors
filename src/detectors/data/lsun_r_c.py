@@ -12,7 +12,7 @@ class LSUNResized(ImageFolder):
     filename = "LSUN_resize.tar.gz"
     file_md5 = "278b7b31c8cb7e804a1465a8ce03a2dc"
     url = "https://www.dropbox.com/s/moqh2wh8696c3yl/LSUN_resize.tar.gz"
-    splits = ("all", "test")
+    splits = ("all",)
 
     def __init__(
         self,
@@ -24,8 +24,6 @@ class LSUNResized(ImageFolder):
         **kwargs,
     ) -> None:
         self.root = os.path.expanduser(root)
-        self.split = verify_str_arg(split, "split", self.splits)
-        print(self.split_folder)
         if download:
             self.download()
 
@@ -74,7 +72,7 @@ class LSUNCroped(ImageFolder):
     filename = "LSUN.tar.gz"
     file_md5 = "458a0a0ab8e5f1cb4516d7400568e460"
     url = "https://www.dropbox.com/s/fhtsw1m3qxlwj6h/LSUN.tar.gz"
-    splits = ("all", "test")
+    splits = ("all",)
 
     def __init__(
         self,
@@ -86,8 +84,6 @@ class LSUNCroped(ImageFolder):
         **kwargs,
     ) -> None:
         self.root = os.path.expanduser(root)
-        self.split = verify_str_arg(split, "split", self.splits)
-        print(self.split_folder)
         if download:
             self.download()
 
@@ -128,35 +124,3 @@ class LSUNCroped(ImageFolder):
             text=True,
         )
         extract_archive(archive, self.dataset_folder, False)
-
-
-def test():
-    import torch.utils.data
-    import torchvision
-
-    transforms = torchvision.transforms.ToTensor()
-    dataset = LSUNResized("./data", download=True, transform=transforms)
-    print(LSUNResized)
-    print(dataset.dataset_folder)
-    print(dataset[0])
-    print(len(dataset))
-    data_loader = torch.utils.data.DataLoader(dataset)
-    for img, label in data_loader:
-        print(img.shape)
-        print(label)
-        break
-
-    dataset = LSUNCroped("./data", download=True, transform=transforms)
-    print(LSUNCroped)
-    print(dataset.dataset_folder)
-    print(dataset[0])
-    print(len(dataset))
-    data_loader = torch.utils.data.DataLoader(dataset)
-    for img, label in data_loader:
-        print(img.shape)
-        print(label)
-        break
-
-
-if __name__ == "__main__":
-    test()
