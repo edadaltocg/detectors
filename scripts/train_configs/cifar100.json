@@ -1,12 +1,12 @@
 {
-    "epochs": 90,
-    "batch_size":  256,
+    "epochs": 200,
+    "batch_size": 64,
     "optimizer": "SGD",
     "lr": 0.1,
     "optimizer_kwargs": {
         "momentum": 0.9,
         "weight_decay": 5e-4
     },
-    "scheduler": "StepLR",
-    "scheduler_kwargs": {"gamma": 0.1, "step_size": 30}
+    "scheduler": "CosineAnnealingLR",
+    "scheduler_kwargs": {"T_max": 190}
 }

@@ -1,0 +1,11 @@
+{
+    "epochs": 10,
+    "batch_size":  128,
+    "optimizer": "SGD",
+    "lr": 0.00005,
+    "optimizer_kwargs": {
+        "momentum": 0.9
+    },
+    "scheduler": "MultiStepLR",
+    "scheduler_kwargs": {"gamma": 0.1, "milestones": [25, 50, 100, 125]}
+}

@@ -1,9 +1,7 @@
 import json
-from typing import Any, Dict, Iterable, List, Tuple, Type, Union
+from typing import Any, Dict, List
 
-import torch
-from torch import Tensor
-from torch.utils.data import Dataset, Subset
+from torch.utils.data import Dataset
 
 
 def str_to_dict(string: str) -> Dict[str, Any]:

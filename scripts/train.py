@@ -3,16 +3,16 @@ import json
 import logging
 import os
 
-import detectors
 import timm
 import timm.data
-from torchvision import transforms
 import torch
 import torch.utils.data
-from detectors.data import create_dataset
-from detectors.trainer import trainer_classification, get_criterion_cls, get_optimizer_cls, get_scheduler_cls
-from detectors.utils import str_to_dict
+from torchvision import transforms
 
+import detectors
+from detectors.data import create_dataset
+from detectors.trainer import get_criterion_cls, get_optimizer_cls, get_scheduler_cls, trainer_classification
+from detectors.utils import str_to_dict
 
 _logger = logging.getLogger(__name__)
 

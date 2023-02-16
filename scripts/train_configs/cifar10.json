@@ -1,0 +1,12 @@
+{
+    "epochs": 300,
+    "batch_size": 256,
+    "optimizer": "SGD",
+    "lr": 0.1,
+    "optimizer_kwargs": {
+        "momentum": 0.9,
+        "weight_decay": 5e-4
+    },
+    "scheduler": "ReduceLROnPlateau",
+    "scheduler_kwargs": {"factor": 0.1, "patience": 2, "threshold": 0.001, "mode": "max"}
+}
