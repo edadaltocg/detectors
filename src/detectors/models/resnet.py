@@ -2,10 +2,11 @@ import timm
 import timm.models
 import torch
 import torch.nn as nn
+from timm.models import register_model as timm_register_model
+
 from detectors.data import CIFAR10_DEFAULT_MEAN, CIFAR10_DEFAULT_STD
 from detectors.data.constants import CIFAR100_DEFAULT_MEAN, CIFAR100_DEFAULT_STD
 from detectors.models.utils import ModelDefaultConfig
-from timm.models import register_model as timm_register_model
 
 
 def _cfg(url="", **kwargs):
@@ -40,6 +41,7 @@ default_cfgs = {
     "resnet50_cifar100": _cfg(
         url="", num_classes=100, mean=CIFAR100_DEFAULT_MEAN, std=CIFAR100_DEFAULT_STD, architecture="resnet50"
     ),
+    "resnet18_svhn": _cfg(url="", architecture="resnet18"),
 }
 
 
@@ -96,22 +98,6 @@ def resnet50_cifar100(pretrained=False, **kwargs):
     return _create_resnet_small("resnet50_cifar100", features_dim=2048, pretrained=pretrained, **kwargs)
 
 
-if __name__ == "__main__":
-    model_obj_1 = timm.create_model("resnet18", pretrained=False)
-    model_obj_2 = timm.create_model("resnet18_cifar10", pretrained=False)
-    print(model_obj_1.conv1)
-    print(model_obj_2.conv1)
-
-    import torch.fx as fx
-    from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
-
-    model = timm.create_model("resnet18_cifar10", pretrained=False)
-    print(get_graph_node_names(model)[0])
-    graph: fx.Graph = fx.Tracer().trace(model)
-    import timm.data
-
-    data_config = timm.data.resolve_data_config(model.default_cfg)
-    train_transforms = timm.data.create_transform(**data_config, is_training=True, color_jitter=0)
-    test_transforms = timm.data.create_transform(**data_config)
-    print(train_transforms)
-    print(test_transforms)
+@timm_register_model
+def resnet18_svhn(pretrained=False, **kwargs):
+    return _create_resnet_small("resnet18_svhn", features_dim=512, pretrained=pretrained, **kwargs)
