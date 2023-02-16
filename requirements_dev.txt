@@ -1,0 +1,8 @@
+setuptools
+black
+isort
+pytest
+pytest-timeout
+pytest-xdist
+coverage
+twine
