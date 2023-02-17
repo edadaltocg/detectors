@@ -1,11 +1,11 @@
-from collections import defaultdict
 import logging
+from collections import defaultdict
 from typing import List, Union
-from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
 
 import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
+from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ class Projection:
         pooling_name: str = "max",
         aggregation_method=None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         self.model = model
         self.model.eval()
@@ -88,10 +88,10 @@ class Projection:
 
         self.all_train_features = {}
 
-    def on_fit_start(self, *args, **kwargs):
+    def start(self, *args, **kwargs):
         self.all_train_features = {}
 
-    def fit(self, x: Tensor, y: Tensor):
+    def update(self, x: Tensor, y: Tensor):
         with torch.no_grad():
             features = self.feature_extractor(x)
 
@@ -109,7 +109,7 @@ class Projection:
         else:
             self.all_train_features["targets"] = torch.cat([self.all_train_features["targets"], y], dim=0)
 
-    def on_fit_end(self):
+    def end(self):
         self.mus = defaultdict(list)
         targets = self.all_train_features.pop("targets")
         unique_classes = torch.unique(targets).detach().cpu().numpy().tolist()
@@ -189,7 +189,7 @@ def test():
     y = torch.randint(0, 10, (128,))
     projection = Projection(model, ["layer4", "fc"], "max")
     projection.fit(x, y)
-    projection.on_fit_end()
+    projection.end()
     print(projection(x))
     assert projection(x).shape == (128,)
 

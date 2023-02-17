@@ -1,9 +1,12 @@
-from typing import List
-
+import logging
+from typing import List, Literal, Optional
+from functools import partial
+import numpy as np
 import torch
-from torch import Tensor
-from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
-from torch import nn
+from torch import Tensor, nn
+from torchvision.models.feature_extraction import create_feature_extractor
+
+_logger = logging.getLogger(__name__)
 
 
 def flatten(data: Tensor, *args, **kwargs):
@@ -52,6 +55,7 @@ def mahalanobis_inv_layer_score(x: Tensor, mus: Tensor, inv: Tensor):
 
 
 def torch_reduction_matrix(sigma: Tensor, reduction_method="pseudo"):
+    import torch
 
     if reduction_method == "cholesky":
         C = torch.linalg.cholesky(sigma)
@@ -61,18 +65,51 @@ def torch_reduction_matrix(sigma: Tensor, reduction_method="pseudo"):
         return u @ torch.diag(torch.sqrt(1 / s))
     elif reduction_method == "pseudo":
         return torch.linalg.pinv(sigma)
+    elif reduction_method == "inverse":
+        return torch.linalg.inv(sigma)
+    else:
+        raise ValueError(f"Unknown reduction method {reduction_method}")
 
 
-def class_cond_mus_cov_inv_matrix(x: Tensor, targets: Tensor, inv_method="pseudo"):
+def sklearn_cov_matrix_estimarion(
+    x: np.ndarray,
+    method: Literal[
+        "EmpiricalCovariance",
+        "GraphicalLasso",
+        "GraphicalLassoCV",
+        "LedoitWolf",
+        "MinCovDet",
+        "ShrunkCovariance",
+        "OAS",
+    ] = "EmpiricalCovariance",
+    **method_kwargs,
+):
+    import sklearn.covariance
+
+    try:
+        method = getattr(sklearn.covariance, method)(**method_kwargs)
+    except AttributeError:
+        raise ValueError(f"Unknown method {method}")
+
+    method.fit(x)
+    return method.location_, method.covariance_, method.precision_
+
+
+def class_cond_mus_cov_inv_matrix(
+    x: Tensor, targets: Tensor, cov_method="EmpiricalCovariance", inv_method="pseudo", device="cpu"
+):
     unique_classes = torch.unique(targets).detach().cpu().numpy().tolist()
-    class_cond_dot = {}
+    class_cond_cov = {}
     class_cond_mean = {}
     for c in unique_classes:
         filt = targets == c
+        if filt.sum() == 0:
+            continue
         temp = x[filt]
-        class_cond_dot[c] = torch.cov(temp.T)
-        class_cond_mean[c] = temp.mean(0, keepdim=True)
-    cov_mat = sum(list(class_cond_dot.values())) / x.shape[0]
+        mu, cov, inv = sklearn_cov_matrix_estimarion(temp.detach().cpu().numpy(), method=cov_method)
+        class_cond_cov[c] = torch.from_numpy(cov).float().to(device)
+        class_cond_mean[c] = torch.from_numpy(mu).float().to(device)
+    cov_mat = sum(list(class_cond_cov.values())) / x.shape[0]
     inv_mat = torch_reduction_matrix(cov_mat, reduction_method=inv_method)
     mus = torch.vstack(list(class_cond_mean.values()))
     return mus, cov_mat, inv_mat
@@ -82,54 +119,76 @@ class Mahalanobis:
     def __init__(
         self,
         model: torch.nn.Module,
-        features_nodes: List[str],
-        reduction_method: str = "pseudo",
-        pooling_name: str = "max",
+        features_nodes: Optional[List[str]] = None,
+        cov_mat_method: Literal[
+            "EmpiricalCovariance",
+            "GraphicalLasso",
+            "GraphicalLassoCV",
+            "LedoitWolf",
+            "MinCovDet",
+            "ShrunkCovariance",
+            "OAS",
+        ] = "EmpiricalCovariance",
+        inv_mat_method: Literal["cholesky", "svd", "pseudo", "inverse"] = "pseudo",
+        pooling_op_name: Literal["max", "avg", "flatten", "getitem", "none"] = "avg",
         aggregation_method=None,
+        mu_cov_inv_est_fn=class_cond_mus_cov_inv_matrix,
         *args,
-        **kwargs
+        **kwargs,
     ) -> None:
         self.model = model
-        self.feature_extractor = create_feature_extractor(model, features_nodes)
-        self.reduction_method = reduction_method
+        self.features_nodes = features_nodes
+        if self.features_nodes is None:
+            self.features_nodes = [self.model.feature_info[-1]["module"]]
+        self.feature_extractor = create_feature_extractor(self.model, self.features_nodes)
+        self.reduction_method = inv_mat_method
         self.aggregation_method = aggregation_method
-        self.pooling_name = pooling_name
-        self.pooling_op = reductions_registry[pooling_name]
+        if aggregation_method is not None and features_nodes is not None and len(features_nodes) > 1:
+            _logger.warning("Disabling aggregation method because only one feature is used.")
+            self.aggregation_method = None
+
+        self.pooling_name = pooling_op_name
+        self.pooling_op = reductions_registry[pooling_op_name]
+        self.device = next(self.model.parameters()).device
+        self.mu_cov_inv_est_fn = partial(mu_cov_inv_est_fn, cov_method=cov_mat_method, inv_method=inv_mat_method)
 
         self.mus = []
         self.invs = []
 
-        self.all_training_features = {}
+        self.training_features = {}
 
-    def on_fit_start(self, *args, **kwargs):
-        self.all_training_features = {}
+    def start(self, *args, **kwargs):
+        self.training_features = {}
 
-    def fit(self, x: Tensor, y: Tensor) -> None:
-        # TODO: make accumulation of features more efficient (sum and sum squared)
-        with torch.no_grad():
-            features = self.feature_extractor(x)
+    @torch.no_grad()
+    def update(self, x: Tensor, y: Tensor) -> None:
+        features = self.feature_extractor(x)
+
+        for k in features:
+            features[k] = self.pooling_op(features[k])
 
         # accumulate training features
-        if len(self.all_training_features) == 0:
+        if len(self.training_features) == 0:
             for k in features:
-                self.all_training_features[k] = features[k]
-            self.all_training_features["targets"] = y
+                self.training_features[k] = features[k].cpu()
+            self.training_features["targets"] = y.cpu()
         else:
             for k in features:
-                self.all_training_features[k] = torch.cat((self.all_training_features[k], features[k]), dim=0)
-            self.all_training_features["targets"] = torch.cat((self.all_training_features["targets"], y), dim=0)
+                self.training_features[k] = torch.cat((self.training_features[k], features[k].cpu()), dim=0)
+            self.training_features["targets"] = torch.cat((self.training_features["targets"], y.cpu()), dim=0)
 
-    def on_fit_end(self, *args, **kwargs):
-        for k in self.all_training_features:
+    def end(self, *args, **kwargs):
+        for k in self.training_features:
             if k == "targets":
                 continue
-            mu, cov, inv = class_cond_mus_cov_inv_matrix(
-                self.all_training_features[k], self.all_training_features["targets"], self.reduction_method
+
+            mu, cov, inv = self.mu_cov_inv_est_fn(
+                self.training_features[k], self.training_features["targets"], device=self.device
             )
-            self.mus.append(mu)
-            self.invs.append(inv)
-        
-        del self.all_training_features
+            self.mus.append(mu.to(self.device))
+            self.invs.append(inv.to(self.device))
+
+        del self.training_features
 
     def __call__(self, x: Tensor) -> Tensor:
         if len(self.invs) == 0 or len(self.mus) == 0:
@@ -143,39 +202,45 @@ class Mahalanobis:
 
         features_keys = list(features.keys())
         stack = None
-        for i, (mu, inv) in enumerate(zip(self.mus, self.invs)):
-            scores = mahalanobis_inv_layer_score(features[features_keys[i]], mu, inv)
-            if i == 0:
+        for k, mu, inv in zip(features_keys, self.mus, self.invs):
+            device = features[k].device
+            scores = mahalanobis_inv_layer_score(features[k], mu.to(device), inv.to(device))
+            if stack is None:
                 stack = scores
             else:
                 stack = torch.cat((stack, scores), dim=1)  # type: ignore
+
         if stack is None:
             raise ValueError("Stack is None, this should not happen.")
 
         if stack.shape[1] > 1 and self.aggregation_method is None:
             stack = stack.mean(1, keepdim=True)
         elif stack.shape[1] > 1 and self.aggregation_method is not None:
-            # TODO: validation combine stack
             stack = self.aggregation_method(stack)
 
-        return stack
+        return stack.view(-1)
 
 
-def test():
-    import torchvision.models as models
+def inverse_estimation():
+    X = torch.rand(100, 10)
+    batch_size = 5
+    cov_true = torch.cov(X.T)
+    inv_true = torch.inverse(cov_true)
+    print(inv_true)
+    n = X.shape[1]
+    lbd = 0.999
+    lbd_sum = 0
+    inv = torch.eye(n)
+    mu = torch.zeros(n)
 
-    model = models.resnet18(pretrained=True)
-    model.fc = torch.nn.Linear(512, 10)
-    model.eval()
-    x = torch.rand(10, 3, 224, 224)
-    y = torch.arange(10)
-    method = Mahalanobis(model, ["layer4"], reduction_method="pseudo", aggregation_method=None)
-    method.fit(x, y)
-    method.on_fit_end()
-    scores = method(x)
-    print(scores.shape)
-    assert scores.shape == (10,)
+    for i in range(0, X.shape[0], batch_size):
+        batch = X[i : i + batch_size]
+        lbd_sum = lbd * lbd_sum + (1 - lbd) * batch.shape[0]
+        delta = batch - mu
+        mu = mu + delta / lbd_sum
+        inv = lbd * inv + delta
+        sigma = inv / lbd_sum
 
-
-if __name__ == "__main__":
-    test()
+        # estimation of the inverse
+        num = 1 / (lbd**2)
+    return
