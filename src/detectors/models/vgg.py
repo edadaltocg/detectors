@@ -53,7 +53,7 @@ def _create_vgg_small(variant, features_dim=512, pretrained=False, **kwargs):
     default_cfg = default_cfgs[variant]
 
     # load timm model
-    architecture = default_cfg.architecture or variant.split("_")[0]
+    architecture = default_cfg.architecture
     model = timm.create_model(architecture, pretrained=False)
 
     # override timm config

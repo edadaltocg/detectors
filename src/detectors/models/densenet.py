@@ -54,8 +54,8 @@ def _create_densenet_small(variant, block_config, pretrained=False, **kwargs):
     default_cfg = default_cfgs[variant]
 
     # load timm model
-    architecture = default_cfg.architecture or variant.split("_")[0]
-    model = _create_densenet(architecture, growth_rate=12, block_config=block_config, pretrained=pretrained, **kwargs)
+    architecture = default_cfg.architecture
+    model = _create_densenet(architecture, growth_rate=12, block_config=block_config, pretrained=False, **kwargs)
 
     # override timm config
     model.default_cfg = default_cfg
@@ -69,8 +69,9 @@ def _create_densenet_small(variant, block_config, pretrained=False, **kwargs):
 
     # load weights
     if pretrained:
-        checkpoint = model.default_cfg.url
-        model.load_state_dict(torch.hub.load_state_dict_from_url(checkpoint, progress=True, map_location="cpu"))
+        model.load_state_dict(
+            torch.hub.load_state_dict_from_url(model.default_cfg.url, map_location="cpu", file_name=f"{variant}.pth")
+        )
 
     return model
 
