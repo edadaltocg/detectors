@@ -21,6 +21,7 @@ install_requires = [
     "evaluate",
     "datasets",
     "psutil",
+    "jinja2",
 ]
 
 

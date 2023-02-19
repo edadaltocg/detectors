@@ -1,6 +1,6 @@
 {
-    "epochs": 200,
-    "batch_size": 64,
+    "epochs": 300,
+    "batch_size": 128,
     "optimizer": "SGD",
     "lr": 0.1,
     "optimizer_kwargs": {
@@ -8,5 +8,5 @@
         "weight_decay": 5e-4
     },
     "scheduler": "CosineAnnealingLR",
-    "scheduler_kwargs": {"T_max": 190}
+    "scheduler_kwargs": {"T_max": 280}
 }

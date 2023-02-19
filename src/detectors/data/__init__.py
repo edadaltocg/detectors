@@ -52,6 +52,9 @@ datasets_registry = {
     "cifar10lt": ...,
     "cifar100lt": ...,
     "imagenet1klt": ...,
+    "cifar10c": ...,
+    "cifar100c": ...,
+    "imagenet1kc": ...,
 }
 
 

@@ -5,8 +5,8 @@ import torch.nn as nn
 from timm.models import register_model as timm_register_model
 
 from detectors.data import CIFAR10_DEFAULT_MEAN, CIFAR10_DEFAULT_STD
-from detectors.data.constants import CIFAR100_DEFAULT_MEAN, CIFAR100_DEFAULT_STD
-from detectors.models.utils import ModelDefaultConfig
+from detectors.data.constants import CIFAR100_DEFAULT_MEAN, CIFAR100_DEFAULT_STD, SVHN_DEFAULT_MEAN, SVHN_DEFAULT_STD
+from detectors.models.utils import ModelDefaultConfig, hf_hub_url_template
 
 
 def _cfg(url="", **kwargs):
@@ -29,10 +29,22 @@ def _cfg(url="", **kwargs):
 
 
 default_cfgs = {
-    "vgg16_cifar10": _cfg(url="", architecture="vgg16"),
-    "vgg16_bn_cifar10": _cfg(url="", architecture="vgg16_bn"),
-    "vgg16_cifar100": _cfg(
-        url="", num_classes=100, mean=CIFAR100_DEFAULT_MEAN, std=CIFAR100_DEFAULT_STD, architecture="vgg16"
+    "vgg16_bn_cifar10": _cfg(
+        url=hf_hub_url_template("vgg16_bn_cifar10"),
+        architecture="vgg16_bn",
+    ),
+    "vgg16_bn_cifar100": _cfg(
+        url=hf_hub_url_template("vgg16_bn_cifar100"),
+        num_classes=100,
+        mean=CIFAR100_DEFAULT_MEAN,
+        std=CIFAR100_DEFAULT_STD,
+        architecture="vgg16_bn",
+    ),
+    "vgg16_bn_svhn": _cfg(
+        url=hf_hub_url_template("vgg16_bn_svhn"),
+        mean=SVHN_DEFAULT_MEAN,
+        std=SVHN_DEFAULT_STD,
+        architecture="vgg16_bn",
     ),
 }
 
@@ -46,6 +58,7 @@ def _create_vgg_small(variant, features_dim=512, pretrained=False, **kwargs):
 
     # override timm config
     model.default_cfg = default_cfg
+    model.pretrained_cfg = default_cfg
 
     # override model
     model.pre_logits = nn.Identity()  # type: ignore
@@ -60,23 +73,15 @@ def _create_vgg_small(variant, features_dim=512, pretrained=False, **kwargs):
 
 
 @timm_register_model
-def vgg16_cifar10(pretrained=False, **kwargs):
-    return _create_vgg_small("vgg16_cifar10", pretrained=pretrained, **kwargs)
-
-
-@timm_register_model
 def vgg16_bn_cifar10(pretrained=False, **kwargs):
     return _create_vgg_small("vgg16_bn_cifar10", pretrained=pretrained, **kwargs)
 
 
 @timm_register_model
-def vgg16_cifar100(pretrained=False, **kwargs):
-    return _create_vgg_small("vgg16_cifar100", pretrained=pretrained, **kwargs)
+def vgg16_bn_cifar100(pretrained=False, **kwargs):
+    return _create_vgg_small("vgg16_bn_cifar100", pretrained=pretrained, **kwargs)
 
 
-if __name__ == "__main__":
-    model = timm.create_model("vgg16_bn", pretrained=False)
-    print(model.default_cfg)
-    print(model)
-    model2 = vgg16_bn_cifar10(pretrained=False)
-    print(model2)
+@timm_register_model
+def vgg16_bn_svhn(pretrained=False, **kwargs):
+    return _create_vgg_small("vgg16_bn_svhn", pretrained=pretrained, **kwargs)

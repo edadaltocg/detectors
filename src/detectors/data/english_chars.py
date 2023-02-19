@@ -28,7 +28,7 @@ class EnglishChars(ImageFolder):
     def __init__(
         self,
         root: str,
-        split: str = "test",
+        split: Optional[str] = None,
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
         download: bool = False,

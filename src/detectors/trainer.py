@@ -133,6 +133,12 @@ def trainer_classification(
                 if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                     scheduler.step(val_acc)
 
+            # finish training if method not learning
+            num_classes = model(batch[0]).shape[1]  # temporary fix
+            if val_acc < 1 / num_classes:
+                _logger.warning("Accuracy is too low, stopping training")
+                break
+
         # sync accelerator after epoch
         accelerator.wait_for_everyone()
         progress_bar.update(1)

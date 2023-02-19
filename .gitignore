@@ -156,3 +156,4 @@ dmypy.json
 /releases
 
 /deprecated
+/scripts/bash

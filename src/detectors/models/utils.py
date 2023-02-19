@@ -1,11 +1,16 @@
 from typing import Optional, Tuple, Union
 
 
+def hf_hub_url_template(model_name: str):
+    return f"https://huggingface.co/edadaltocg/{model_name}/resolve/main/pytorch_model.bin"
+
+
 class ModelDefaultConfig(dict):
     """
     Default configuration for models from `timm` library.
 
     Example:
+    --------
     ```
     {
         'url': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
