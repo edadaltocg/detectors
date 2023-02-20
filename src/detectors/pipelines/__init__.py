@@ -1,8 +1,4 @@
-from typing import Optional, Union
-
-import torch
 from detectors.pipelines.base import Pipeline
-
 
 pipeline_registry = {}
 
@@ -22,19 +18,11 @@ def register_pipeline(name: str):
     return decorator
 
 
-def pipeline(
-    task: str,
-    device: Optional[Union[int, str, "torch.device"]] = None,
-    **kwargs,
-) -> Pipeline:
+def create_pipeline(task: str, **kwargs) -> Pipeline:
     """
     # TODO: rewrite docs
     Utility factory method to build a [`Pipeline`].
 
-    Pipelines are made of:
-
-        - A [model](model) to make predictions from the inputs.
-        - Some (optional) post processing for enhancing model's output.
 
     Args:
         task (str, optional):
@@ -42,27 +30,17 @@ def pipeline(
 
             - `"ood-cifar"`: will return a [`OODCIFARPipeline`].
 
-        method (Optional, optional):
-            _description_. Defaults to None.
-
-
-        device (Optional[Union[int, str, &quot;torch.device&quot;]], optional):
-            Defines the device (*e.g.*, `"cpu"`, `"cuda:1"`, `"mps"`, or a GPU ordinal rank like `1`) on which this
-            pipeline will be allocated.
-
     Returns:
         [Pipeline]: A suitable pipeline for the task.
 
     Examples:
 
     ```python
-    >>> x = torch.rand(1, 3, 32, 32)
-    >>> pipe = pipeline("ood-cifar10")
-    >>> pipe(x)
+    >>> pipe = pipeline("ood_cifar10")
     ```
     """
 
-    return pipeline_registry[task](device=device, **kwargs)
+    return pipeline_registry[task](**kwargs)
 
 
-from . import ood
+from .ood import *

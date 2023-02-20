@@ -1,8 +1,9 @@
+import logging
 import types
-from torch import Tensor
 from functools import partial
+from typing import Optional
 
-from torch import nn
+from torch import Tensor, nn
 
 from detectors.methods.ood.igeood import IgeoodLogits
 
@@ -16,7 +17,6 @@ from .projection import Projection
 from .random import random_score
 from .react import ReAct
 from .react_projection import ReActProjection
-import logging
 
 _logger = logging.getLogger(__name__)
 ood_detector_registry = {
@@ -49,19 +49,19 @@ class OODDetector:
 
     def start(self, *args, **kwargs):
         if not hasattr(self.detector, "start"):
-            _logger.warning(f"Detector {self.detector} does not have a start method")
+            _logger.warning("Detector does not have a start method")
             return
         self.detector.start()
 
     def update(self, x: Tensor, y: Tensor):
         if not hasattr(self.detector, "update"):
-            _logger.warning(f"Detector {self.detector} does not have an update method")
+            _logger.warning("Detector does not have an update method")
             return
         self.detector.update(x, y)
 
     def end(self, *args, **kwargs):
         if not hasattr(self.detector, "end"):
-            _logger.warning(f"Detector {self.detector} does not have an end method")
+            _logger.warning("Detector  does not have an end method")
             return
         self.detector.end()
 
@@ -97,7 +97,7 @@ def register_ood_detector(name: str):
     return decorator
 
 
-def create_ood_detector(detector_name: str, model: nn.Module, **kwargs) -> OODDetector:
+def create_ood_detector(detector_name: str, model: Optional[nn.Module] = None, **kwargs) -> OODDetector:
     if detector_name not in ood_detector_registry:
         raise ValueError(f"Unknown OOD detector: {detector_name}")
     if not isinstance(ood_detector_registry[detector_name], types.FunctionType):

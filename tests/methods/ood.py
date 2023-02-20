@@ -1,9 +1,10 @@
+import logging
+
 import torch
 from torch import Tensor
 
 import detectors
 from detectors import create_ood_detector
-import logging
 
 
 class Model(torch.nn.Module):

@@ -1,6 +1,7 @@
 import logging
-from typing import List, Literal, Optional
 from functools import partial
+from typing import List, Literal, Optional
+
 import numpy as np
 import torch
 from torch import Tensor, nn
