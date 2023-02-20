@@ -6,3 +6,6 @@ pytest-timeout
 pytest-xdist
 coverage
 twine
+sphinx
+six
+myst-parser
