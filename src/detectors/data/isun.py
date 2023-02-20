@@ -8,7 +8,7 @@ from torchvision.datasets.utils import check_integrity, extract_archive, verify_
 
 class iSUN(ImageFolder):
     base_folder = "iSUN"
-    images_folder = ""
+    images_folder = "iSUN"
     filename = "iSUN.tar.gz"
     file_md5 = "be77b0f2c26fda898afac5f99645ee70"
     url = "https://www.dropbox.com/s/ssz7qxfqae0cca5/iSUN.tar.gz"

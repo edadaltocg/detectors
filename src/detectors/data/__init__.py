@@ -5,6 +5,7 @@ from torch.utils.data import Dataset
 from torchvision.datasets import STL10, SVHN, ImageNet, Places365, StanfordCars
 
 from detectors.data.cifar_wrapper import CIFAR10Wrapped, CIFAR100Wrapped
+from detectors.data.cifarc import CIFAR10_C, CIFAR100_C
 from detectors.data.imagenet_o import ImageNet_O
 from detectors.data.mnist_wrapped import FashionMNISTWrapped, MNISTWrapped
 from detectors.data.mos_inaturalist import MOSiNaturalist
@@ -52,8 +53,8 @@ datasets_registry = {
     "cifar10lt": ...,
     "cifar100lt": ...,
     "imagenet1klt": ...,
-    "cifar10c": ...,
-    "cifar100c": ...,
+    "cifar10c": CIFAR10_C,
+    "cifar100c": CIFAR100_C,
     "imagenet1kc": ...,
 }
 

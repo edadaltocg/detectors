@@ -59,9 +59,5 @@ class Textures(ImageFolder):
         if self._check_integrity() and self._check_exists():
             return
         download_and_extract_archive(
-            self.url,
-            download_root=self.root,
-            extract_root=self.dataset_folder,
-            remove_finished=False,
-            md5=self.file_md5,
+            self.url, download_root=self.root, extract_root=self.dataset_folder, md5=self.file_md5
         )
