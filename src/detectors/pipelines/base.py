@@ -1,33 +1,34 @@
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, Tuple
-
+from typing import Any, Callable, Dict
 
 logger = logging.getLogger(__name__)
 
 
 class Pipeline(ABC):
     def __init__(self) -> None:
-        pass
+        self.setup()
 
     def save_pretrained(self, path):
         raise NotImplementedError
 
-    def preprocess(self, text):
+    def load_pretrained(self, path):
         raise NotImplementedError
 
-    def forward(self, text):
+    def setup(self, *args, **kwargs):
+        return
+
+    def preprocess(self, *args, **kwargs) -> Any:
+        return
+
+    def forward(self, *args, **kwargs):
         raise NotImplementedError
 
-    def postprocess(self, text):
+    def postprocess(self, *args, **kwargs):
+        return
+
+    def benchmark(self, method: Callable) -> Dict[str, Any]:
         raise NotImplementedError
 
-    def _setup(self):
-        raise NotImplementedError
-
-    def benchmark(self, methods: Dict[str, Callable]) -> Dict[str, Any]:
-        raise NotImplementedError
-
-    @abstractmethod
-    def __call__(self, *args: Any, **kwds: Any):
+    def report(self):
         raise NotImplementedError

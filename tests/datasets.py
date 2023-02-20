@@ -312,3 +312,42 @@ def test_imagenet():
     assert type(img) == torch.Tensor
     assert len(dataset) == 50000
     assert imagenet_class is torchvision.datasets.ImageNet
+
+
+def test_cifar10c():
+    transform = transforms.ToTensor()
+
+    cifar10c_class = get_dataset_cls("cifar10c")
+
+    for intensity in [1, 2, 3, 4, 5]:
+        dataset = create_dataset(
+            "cifar10c", root=DATA_DIR, split="gaussian_blur", intensity=intensity, transform=transform
+        )
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+        img, label = next(iter(dataloader))
+
+        assert type(img) == torch.Tensor
+        assert len(dataset) == 10000
+        assert issubclass(cifar10c_class, torch.utils.data.Dataset)
+
+
+def test_cifar100c():
+    transform = transforms.ToTensor()
+
+    cifar10c_class = get_dataset_cls("cifar100c")
+
+    for intensity in [1, 2, 3, 4, 5]:
+        dataset = create_dataset(
+            "cifar100c", root=DATA_DIR, split="gaussian_blur", intensity=intensity, transform=transform
+        )
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+        img, label = next(iter(dataloader))
+
+        assert type(img) == torch.Tensor
+        assert len(dataset) == 10000
+        assert issubclass(cifar10c_class, torch.utils.data.Dataset)
+
+
+if __name__ == "__main__":
+    test_cifar10c()
+    test_cifar100c()
