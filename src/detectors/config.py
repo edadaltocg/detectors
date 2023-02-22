@@ -1,3 +1,9 @@
+"""
+config.py
+---------
+
+This file contains the configuration for the project.
+"""
 import os
 
 DATA_DIR = os.environ.get("DATA_DIR", "data/")

@@ -1,3 +1,5 @@
+import logging
+
 import timm
 import timm.models
 import torch
@@ -7,8 +9,6 @@ from timm.models import register_model as timm_register_model
 from detectors.data import CIFAR10_DEFAULT_MEAN, CIFAR10_DEFAULT_STD
 from detectors.data.constants import CIFAR100_DEFAULT_MEAN, CIFAR100_DEFAULT_STD, SVHN_DEFAULT_MEAN, SVHN_DEFAULT_STD
 from detectors.models.utils import ModelDefaultConfig, hf_hub_url_template
-import logging
-
 
 _logger = logging.getLogger(__name__)
 

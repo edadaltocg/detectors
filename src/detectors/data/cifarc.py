@@ -3,8 +3,8 @@ from typing import Callable, Optional
 
 import numpy as np
 import torch.utils.data.dataset as dataset
+from PIL import Image
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive, verify_str_arg
-
 
 CORRUPTIONS = [
     "brightness",
@@ -41,7 +41,7 @@ class CIFAR10_C(dataset.Dataset):
     ) -> None:
         self.root = os.path.expanduser(root)
         self.corruption = verify_str_arg(split, "split", self.corruptions)
-        self.intensity = intensity
+        self.intensity = int(intensity)
         self.transform = transform
         if download:
             self.download()
@@ -56,6 +56,9 @@ class CIFAR10_C(dataset.Dataset):
 
     def __getitem__(self, index):
         x = self.arrays[0][index]
+
+        # to PIL image
+        x = Image.fromarray(x)
 
         if self.transform:
             x = self.transform(x)

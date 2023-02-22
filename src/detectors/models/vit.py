@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from timm.models import register_model as timm_register_model
 
-from detectors.models.utils import ModelDefaultConfig
+from detectors.models.utils import ModelDefaultConfig, hf_hub_url_template
 
 
 def _cfg(url, architecture: str, **kwargs):
@@ -20,11 +20,19 @@ def _cfg(url, architecture: str, **kwargs):
 
 
 default_cfgs = {
-    "vit_base_patch16_224_in21k_ft_cifar10": _cfg(url="", architecture="timm/vit_base_patch16_224.orig_in21k_ft_in1k"),
-    "vit_base_patch16_224_in21k_ft_cifar100": _cfg(
-        url="", num_classes=100, architecture="timm/vit_base_patch16_224.orig_in21k_ft_in1k"
+    "vit_base_patch16_224_in21k_ft_cifar10": _cfg(
+        url=hf_hub_url_template("vit_base_patch16_224_in21k_ft_cifar10"),
+        architecture="timm/vit_base_patch16_224.orig_in21k_ft_in1k",
     ),
-    "vit_base_patch16_224_in21k_ft_svhn": _cfg(url="", architecture="timm/vit_base_patch16_224.orig_in21k_ft_in1k"),
+    "vit_base_patch16_224_in21k_ft_cifar100": _cfg(
+        url=hf_hub_url_template("vit_base_patch16_224_in21k_ft_cifar100"),
+        num_classes=100,
+        architecture="timm/vit_base_patch16_224.orig_in21k_ft_in1k",
+    ),
+    "vit_base_patch16_224_in21k_ft_svhn": _cfg(
+        url=hf_hub_url_template("vit_base_patch16_224_in21k_ft_svhn"),
+        architecture="timm/vit_base_patch16_224.orig_in21k_ft_in1k",
+    ),
 }
 
 
@@ -32,7 +40,7 @@ def _create_vit_ft(variant, pretrained=False, **kwargs):
     default_cfg = default_cfgs[variant]
 
     # load timm model
-    model = timm.create_model(default_cfg["architecture"], pretrained=True)
+    model = timm.create_model(default_cfg["architecture"], pretrained=not pretrained)
     # override timm config
     model.default_cfg = default_cfg
 
@@ -40,7 +48,9 @@ def _create_vit_ft(variant, pretrained=False, **kwargs):
     model.head = nn.Linear(model.head.in_features, default_cfg["num_classes"])
 
     if pretrained:
-        model.load_state_dict(torch.hub.load_state_dict_from_url(default_cfg["url"]))
+        model.load_state_dict(
+            torch.hub.load_state_dict_from_url(default_cfg["url"], map_location="cpu", file_name=f"{variant}.pth")
+        )
 
     return model
 

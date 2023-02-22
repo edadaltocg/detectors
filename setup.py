@@ -5,8 +5,6 @@ install_requires = [
     "numpy>=1.17",
     "optuna",
     "pyyaml>=5.1",
-    "python>=3.8.0",
-    "ray[tune]",
     "regex!=2019.12.17",
     "requests",
     "scikit-learn",
@@ -18,10 +16,9 @@ install_requires = [
     "scipy",
     "transformers",
     "accelerate",
-    "evaluate",
-    "datasets",
     "psutil",
     "jinja2",
+    "matplotlib",
 ]
 
 

@@ -3,20 +3,20 @@
 - Jinja2 installed
 - Git LFS installed
 """
-import json
-
 import argparse
+import json
+import logging
 import os
 from typing import Optional
 
 import timm
 import timm.models
 import torch
+from huggingface_hub.hf_api import create_repo, upload_file, whoami
 from huggingface_hub.repocard import ModelCard
 from huggingface_hub.repocard_data import EvalResult, ModelCardData
-import logging
+
 import detectors
-from huggingface_hub.hf_api import create_repo, whoami, upload_file
 
 _logger = logging.getLogger(__name__)
 

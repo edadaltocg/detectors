@@ -10,7 +10,6 @@ from detectors.models.resnet import default_cfgs as resnet_default_cfgs
 from detectors.models.vgg import default_cfgs as vgg_default_cfgs
 from detectors.models.vit import default_cfgs as vit_default_cfgs
 
-
 all_models = set(timm.list_models("*cifar10") + timm.list_models("*cifar100") + timm.list_models("*svhn"))
 img = np.random.randint(0, 255, size=(32, 32, 3), dtype=np.uint8)
 img = Image.fromarray(img)

@@ -67,7 +67,7 @@ def _create_vgg_small(variant, features_dim=512, pretrained=False, **kwargs):
     # load weights
     if pretrained:
         checkpoint = model.default_cfg.url
-        model.load_state_dict(torch.hub.load_state_dict_from_url(checkpoint, progress=True, map_location="cpu"))
+        model.load_state_dict(torch.hub.load_state_dict_from_url(checkpoint, progress=True, map_location="cpu", file_name=f"{variant}.pth"))
 
     return model
 

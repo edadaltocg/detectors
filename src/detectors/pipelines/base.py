@@ -21,14 +21,12 @@ class Pipeline(ABC):
     def preprocess(self, *args, **kwargs) -> Any:
         return
 
-    def forward(self, *args, **kwargs):
-        raise NotImplementedError
-
     def postprocess(self, *args, **kwargs):
         return
 
-    def benchmark(self, method: Callable) -> Dict[str, Any]:
+    def run(self, *args, **kwargs) -> Dict[str, Any]:
         raise NotImplementedError
 
-    def report(self):
+    @classmethod
+    def report(cls, *args, **kwargs) -> str:
         raise NotImplementedError

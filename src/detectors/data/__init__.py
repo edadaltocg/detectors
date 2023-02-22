@@ -12,7 +12,7 @@ from detectors.data.mos_inaturalist import MOSiNaturalist
 from detectors.data.mos_places365 import MOSPlaces365
 from detectors.data.mos_sun import MOSSUN
 
-from ..config import DATA_DIR
+from ..config import DATA_DIR, IMAGENET_ROOT
 from .constants import *
 from .english_chars import EnglishChars
 from .isun import iSUN
@@ -79,7 +79,7 @@ def create_dataset(
 ):
     try:
         if dataset_name in ["imagenet", "imagenet1k", "ilsvrc2012"]:
-            return datasets_registry[dataset_name](root=root, split=split, transform=transform, **kwargs)
+            return datasets_registry[dataset_name](root=IMAGENET_ROOT, split=split, transform=transform, **kwargs)
         return datasets_registry[dataset_name](root=root, split=split, transform=transform, download=download, **kwargs)
     except KeyError:
         raise ValueError("Dataset name is not specified")

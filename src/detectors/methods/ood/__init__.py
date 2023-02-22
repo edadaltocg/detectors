@@ -42,7 +42,7 @@ ood_detector_registry = {
 
 
 class OODDetector:
-    def __init__(self, detector, model: nn.Module, **kwargs):
+    def __init__(self, detector, model: Optional[nn.Module] = None, **kwargs):
         self.detector = detector
         self.model = model
         self.keywords = kwargs
@@ -70,10 +70,6 @@ class OODDetector:
 
     def set_params(self, **params):
         """Set the parameters of this detector.
-        The method works on simple estimators as well as on nested objects
-        (such as :class:`~sklearn.pipeline.Pipeline`). The latter have
-        parameters of the form ``<component>__<parameter>`` so that it's
-        possible to update each component of a nested object.
 
         Parameters
         ----------
@@ -82,10 +78,13 @@ class OODDetector:
 
         Returns
         -------
-        self : estimator instance
-            Estimator instance.
+        self : detector instance
         """
-        raise NotImplementedError
+        self.keywords.update(params)
+        if hasattr(self.detector, "keywords"):
+            self.detector.keywords.update(**params)
+        else:
+            self.detector = self.detector.__class__(model=self.model, **self.keywords)
         return self
 
 

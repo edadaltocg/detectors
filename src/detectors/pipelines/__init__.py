@@ -43,4 +43,5 @@ def create_pipeline(task: str, **kwargs) -> Pipeline:
     return pipeline_registry[task](**kwargs)
 
 
+from .covariate_drift import *
 from .ood import *
