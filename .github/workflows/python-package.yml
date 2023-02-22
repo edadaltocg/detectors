@@ -40,4 +40,5 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
     - name: Test with pytest
       run: |
-        coverage run -m pytest -vv tests/**/*.py
+        coverage run -m pytest -vv tests/models.py
+        coverage run -m pytest -vv tests/datasets.py
