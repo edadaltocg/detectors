@@ -217,17 +217,17 @@ def test_uniform():
     assert len(dataset) == 10000
 
 
-def test_places365():
-    transform = transforms.ToTensor()
+# def test_places365():
+#     transform = transforms.ToTensor()
 
-    places365_class = get_dataset_cls("places365")
-    dataset = create_dataset("places365", root=DATA_DIR, split="val", transform=transform, download=True)
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
-    img, label = next(iter(dataloader))
+#     places365_class = get_dataset_cls("places365")
+#     dataset = create_dataset("places365", root=DATA_DIR, split="val", transform=transform, download=True)
+#     dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+#     img, label = next(iter(dataloader))
 
-    assert type(img) == torch.Tensor
-    assert len(dataset) == 10000
-    assert places365_class is torchvision.datasets.Places365
+#     assert type(img) == torch.Tensor
+#     assert len(dataset) == 10000
+#     assert places365_class is torchvision.datasets.Places365
 
 
 def test_stanford_cars():

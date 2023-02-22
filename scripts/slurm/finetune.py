@@ -12,7 +12,7 @@ model_names = [
 ]
 
 for model_name in model_names:
-    job_name = f"ce_{model_name}"
+    job_name = f"{model_name}"
     file = f"""#!/bin/sh
 
 #SBATCH --job-name={job_name}

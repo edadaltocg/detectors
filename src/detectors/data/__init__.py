@@ -41,7 +41,7 @@ datasets_registry = {
     "textures": Textures,
     "gaussian": Gaussian,
     "uniform": Uniform,
-    "places365": Places365,
+    # "places365": Places365,
     "stanford_cars": StanfordCars,
     "imagenet": ImageNet,
     "imagenet1k": ImageNet,
