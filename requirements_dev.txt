@@ -9,3 +9,4 @@ twine
 sphinx
 six
 myst-parser
+flake8

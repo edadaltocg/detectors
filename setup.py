@@ -2,15 +2,12 @@ from setuptools import find_packages, setup
 
 install_requires = [
     "Pillow",
-    "numpy>=1.17",
+    "numpy",
     "optuna",
-    "pyyaml>=5.1",
-    "regex!=2019.12.17",
-    "requests",
     "scikit-learn",
-    "timm>=0.8.11",
+    "timm>=0.8.11.dev0",
     "torch>=1.7",
-    "tqdm>=4.27",
+    "tqdm",
     "torchmetrics",
     "torchvision",
     "scipy",
