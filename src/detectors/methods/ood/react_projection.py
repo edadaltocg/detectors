@@ -1,11 +1,12 @@
 from functools import partial
-import torch.fx as fx
 from typing import Callable, Dict, List
-from torchvision.models.feature_extraction import get_graph_node_names
 
 import torch
+import torch.fx as fx
+from torchvision.models.feature_extraction import get_graph_node_names
+
 from detectors.methods.ood.projection import Projection
-from detectors.methods.ood.react import condition_fn, reactify, insert_fn
+from detectors.methods.ood.react import condition_fn, insert_fn, reactify
 
 
 class ReActProjection(Projection):
@@ -18,7 +19,7 @@ class ReActProjection(Projection):
         insert_node_fn: Callable = insert_fn,
         aggregation_method=None,
         *args,
-        **kwargs
+        **kwargs,
     ):
         self.graph_nodes_names_thr = graph_nodes_names_thr
         self.insert_node_fn = insert_node_fn
@@ -60,7 +61,7 @@ def test():
         model, ["clip", "clip_1", "clip_2", "clip_3", "clip_4", "classifier"], "max", graph_nodes_names_thr
     )
     projection.fit(x, y)
-    projection.on_fit_end()
+    projection.end()
     print(projection(x))
     assert projection(x).shape == (32,)
 

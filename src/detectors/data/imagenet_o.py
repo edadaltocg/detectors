@@ -12,7 +12,7 @@ class ImageNet_O(ImageFolder):
     filename = "imagenet-o.tar"
     file_md5 = "86bd7a50c1c4074fb18fc5f219d6d50b"
     url = "https://people.eecs.berkeley.edu/~hendrycks/imagenet-o.tar"
-    splits = ("all", "test")
+    splits = ("all",)
 
     def __init__(
         self,
@@ -25,7 +25,6 @@ class ImageNet_O(ImageFolder):
         is_valid_file: Optional[Callable[[str], bool]] = None,
     ) -> None:
         self.root = os.path.expanduser(root)
-        self.split = verify_str_arg(split, "split", self.splits)
 
         if download:
             self.download()
@@ -60,30 +59,5 @@ class ImageNet_O(ImageFolder):
         if self._check_integrity() and self._check_exists():
             return
         download_and_extract_archive(
-            self.url,
-            download_root=self.root,
-            extract_root=self._dataset_folder,
-            remove_finished=False,
-            md5=self.file_md5,
+            self.url, download_root=self.root, extract_root=self._dataset_folder, md5=self.file_md5
         )
-
-
-def test():
-    import torch.utils.data
-    import torchvision
-
-    transforms = torchvision.transforms.ToTensor()
-    dataset = ImageNet_O("./data", split="all", download=True, transform=transforms)
-    print(ImageNet_O)
-    print(dataset._dataset_folder)
-    print(dataset[0])
-    print(len(dataset))
-    data_loader = torch.utils.data.DataLoader(dataset)
-    for img, label in data_loader:
-        print(img.shape)
-        print(label)
-        break
-
-
-if __name__ == "__main__":
-    test()

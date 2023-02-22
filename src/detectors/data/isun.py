@@ -8,11 +8,11 @@ from torchvision.datasets.utils import check_integrity, extract_archive, verify_
 
 class iSUN(ImageFolder):
     base_folder = "iSUN"
-    images_folder = ""
+    images_folder = "iSUN"
     filename = "iSUN.tar.gz"
     file_md5 = "be77b0f2c26fda898afac5f99645ee70"
     url = "https://www.dropbox.com/s/ssz7qxfqae0cca5/iSUN.tar.gz"
-    splits = ("all", "test")
+    splits = ("all",)
     # size 8925
 
     def __init__(
@@ -25,8 +25,6 @@ class iSUN(ImageFolder):
         **kwargs,
     ) -> None:
         self.root = os.path.expanduser(root)
-        self.split = verify_str_arg(split, "split", self.splits)
-        print(self.split_folder)
         if download:
             self.download()
 
@@ -67,24 +65,3 @@ class iSUN(ImageFolder):
             text=True,
         )
         extract_archive(archive, self.dataset_folder, False)
-
-
-def test():
-    import torch.utils.data
-    import torchvision
-
-    transforms = torchvision.transforms.ToTensor()
-    dataset = iSUN("./data", download=True, transform=transforms)
-    print(iSUN)
-    print(dataset.dataset_folder)
-    print(dataset[0])
-    print(len(dataset))
-    data_loader = torch.utils.data.DataLoader(dataset)
-    for img, label in data_loader:
-        print(img.shape)
-        print(label)
-        break
-
-
-if __name__ == "__main__":
-    test()

@@ -57,7 +57,7 @@ class TinyImageNet(ImageFolder):
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
         download=False,
-        **kwargs
+        **kwargs,
     ):
         self.data_root = os.path.expanduser(root)
         self.split = verify_str_arg(split, "split", self.splits)
@@ -86,21 +86,6 @@ class TinyImageNet(ImageFolder):
     def download(self):
         if self._check_exists():
             return
-        download_and_extract_archive(
-            self.url,
-            self.data_root,
-            filename=self.filename,
-            remove_finished=False,
-            md5=self.zip_md5,
-        )
+        download_and_extract_archive(self.url, self.data_root, filename=self.filename, md5=self.zip_md5)
         assert "val" in self.splits
         normalize_tin_val_folder_structure(os.path.join(self.dataset_folder, "val"))
-
-
-def test():
-    dataset = TinyImageNet(root="data", split="val", download=True)
-    print(len(dataset))
-
-
-if __name__ == "__main__":
-    test()

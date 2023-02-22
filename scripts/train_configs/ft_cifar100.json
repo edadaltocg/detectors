@@ -1,0 +1,13 @@
+{
+    "epochs": 10,
+    "batch_size":  64,
+    "optimizer": "SGD",
+    "validation_frequency": 1,
+    "lr": 0.01,
+    "optimizer_kwargs": {
+        "momentum": 0.9,
+        "weight_decay": 0.0
+    },
+    "scheduler": "CosineAnnealingLR",
+    "scheduler_kwargs": {"T_max": 10}
+}

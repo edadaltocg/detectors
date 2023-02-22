@@ -1,6 +1,6 @@
 import logging
 from functools import partial
-from typing import Callable, List
+from typing import Callable, List, Optional
 
 import torch
 import torch.fx as fx
@@ -10,8 +10,7 @@ import torchvision.models as models
 from torch import Tensor
 from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
 
-
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 def reactify(
@@ -64,104 +63,82 @@ def _compute_thresholds(feature_extractor, dataloader, device, limit=2000, p=0.9
 
 
 class ReAct:
+    LIMIT = 2_560_000
+
     def __init__(
         self,
         model: torch.nn.Module,
-        features_nodes: List[str] = ["flatten"],
-        graph_nodes_names: List[str] = ["flatten"],
+        features_nodes: Optional[List[str]] = ["flatten"],
+        graph_nodes_names: Optional[List[str]] = None,  # annoying parameter
         insert_node_fn: Callable = insert_fn,
         p=0.9,
         *args,
-        **kwargs
+        **kwargs,
     ) -> None:
         self.model = model
         self.device = next(self.model.parameters()).device
         self.model.eval()
         self.features_nodes = features_nodes
         self.graph_nodes_names = graph_nodes_names
-        self.feature_extractor = create_feature_extractor(model, self.features_nodes)
+        if self.features_nodes is None:
+            self.features_nodes = [self.model.feature_info[-1]["module"]]
+        if self.graph_nodes_names is None and not hasattr(self.model, "forward_head"):
+            raise ValueError(
+                "You must pass graph_nodes_names if the model does not have forward_head attribute implemented."
+            )
+        if len(self.features_nodes) > 1 and self.graph_nodes_names is None:
+            raise ValueError("The number of features nodes must be equal to the number of graph nodes.")
+        self.feature_extractor = create_feature_extractor(self.model, self.features_nodes)
         self.insert_node_fn = insert_node_fn
         self.p = p
 
         self.thr = None
-        self.all_training_features = {}
+        self.training_features = {}
 
-        assert len(self.features_nodes) == len(
-            self.graph_nodes_names
-        ), "features_nodes and graph_nodes_names must have the same length"
+    def start(self, *args, **kwargs):
+        self.training_features = {}
 
-    def fit(self, x: Tensor, y: Tensor) -> None:
+    def update(self, x: Tensor, y: Tensor) -> None:
+        if len(self.training_features.keys()) > 0:
+            k = list(self.training_features.keys())[0]
+            if self.training_features[k].view(-1).shape[0] > self.LIMIT:
+                return
+
         with torch.no_grad():
             features = self.feature_extractor(x)
 
         # accumulate training features
-        if len(self.all_training_features) == 0:
+        if len(self.training_features) == 0:
             for k in features:
-                self.all_training_features[k] = features[k].cpu()
+                self.training_features[k] = features[k].cpu()
         else:
             for k in features:
-                self.all_training_features[k] = torch.cat((self.all_training_features[k], features[k].cpu()), dim=0)
+                self.training_features[k] = torch.cat((self.training_features[k], features[k].cpu()), dim=0)
 
-    def on_fit_end(self, *args, **kwargs):
+    def end(self, *args, **kwargs):
         self.thrs = list(
             {
-                k: torch.quantile(self.all_training_features[k].view(-1)[:2_560_000].to(self.device), self.p).item()
-                for k in self.all_training_features.keys()
+                k: torch.quantile(self.training_features[k].view(-1)[: self.LIMIT].to(self.device), self.p).item()
+                for k in self.training_features.keys()
             }.values()
         )
-        for i, node_name in enumerate(self.graph_nodes_names):
-            # add clipping node to every feature node in the graph passed in the constructor
-            self.model = reactify(
-                self.model,
-                condition_fn=partial(condition_fn, equals_to=node_name),
-                insert_fn=partial(insert_fn, thr=self.thrs[i]),
-            )
-        logger.info(f"ReAct thresholds = {dict(zip(self.graph_nodes_names, self.thrs))}")
-        logger.debug(self.model.code)
+        if self.graph_nodes_names is not None:
+            for i, node_name in enumerate(self.graph_nodes_names):
+                # add clipping node to every feature node in the graph passed in the constructor
+                self.model = reactify(
+                    self.model,
+                    condition_fn=partial(condition_fn, equals_to=node_name),
+                    insert_fn=partial(insert_fn, thr=self.thrs[i]),
+                )
 
+        _logger.info(f"ReAct thresholds = {dict(zip(self.features_nodes, self.thrs))}")
+
+    @torch.no_grad()
     def __call__(self, x: Tensor) -> Tensor:
         self.model.eval()
-        with torch.no_grad():
+        if self.graph_nodes_names is not None:
             logits = self.model(x)
+        else:
+            features = torch.clip(list(self.feature_extractor(x).values())[-1], max=self.thrs[-1])
+            logits = self.model.forward_head(features)
         return torch.logsumexp(logits, dim=-1)
-
-
-def test():
-    model = models.resnet18()
-    print(get_graph_node_names(model)[0])
-    transformed_model = reactify(model, partial(condition_fn, equals_to="flatten"), partial(insert_fn, thr=1.0))
-    print(transformed_model.graph)
-    print(transformed_model.code)
-
-    x = torch.randn(5, 3, 224, 224)
-    torch.allclose(model(x), transformed_model(x))
-
-    feature_extractor = create_feature_extractor(model, ["flatten"])
-    penult_feats = feature_extractor(x)["flatten"]
-    print(penult_feats.shape)
-    transform = torchvision.transforms.Compose(
-        [
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize(
-                mean=[0.4914, 0.4822, 0.4465],
-                std=[0.2023, 0.1994, 0.2010],
-            ),
-        ]
-    )
-    dataset = torchvision.datasets.CIFAR10(root="data", train=True, download=True, transform=transform)
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True, num_workers=4)
-
-    thrs = _compute_thresholds(feature_extractor, dataloader, device="cpu", limit=100, p=0)
-    print(thrs)
-    react_model = reactify(model, partial(condition_fn, equals_to="flatten"), partial(insert_fn, thr=thrs["flatten"]))
-    print(react_model)
-    print(react_model(x).max(), model(x).max())
-    assert not torch.allclose(react_model(x), model(x))
-
-    new_feature_extractor = create_feature_extractor(react_model, ["clip"])
-    new_penult_feats = new_feature_extractor(x)["clip"]
-    assert not torch.allclose(penult_feats, new_penult_feats)
-
-
-if __name__ == "__main__":
-    test()

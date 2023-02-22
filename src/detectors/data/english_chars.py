@@ -8,7 +8,7 @@ from torchvision.datasets.utils import check_integrity, download_and_extract_arc
 
 class EnglishChars(ImageFolder):
     """In the English language, Latin script (excluding accents) and Hindu-Arabic numerals are used.
-    For simplicity we call this the "English" characters set. Our dataset consists of:
+    For simplicity we call this the "English" characters set. The dataset consists of:
 
     * 64 classes (0-9, A-Z, a-z)
     * 7705 characters obtained from natural images
@@ -23,12 +23,12 @@ class EnglishChars(ImageFolder):
     filename = "EnglishImg.tgz"
     file_md5 = "85d157e0c58f998e1cda8def62bcda0d"
     url = "http://www.ee.surrey.ac.uk/CVSSP/demos/chars74k/EnglishImg.tgz"
-    splits = ("all", "test")
+    splits = ("all",)
 
     def __init__(
         self,
         root: str,
-        split: str = "test",
+        split: Optional[str] = None,
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
         download: bool = False,
@@ -36,7 +36,6 @@ class EnglishChars(ImageFolder):
         is_valid_file: Optional[Callable[[str], bool]] = None,
     ) -> None:
         self.root = os.path.expanduser(root)
-        self.split = verify_str_arg(split, "split", self.splits)
 
         if download:
             self.download()
@@ -72,30 +71,5 @@ class EnglishChars(ImageFolder):
         if self._check_integrity() and self._check_exists():
             return
         download_and_extract_archive(
-            self.url,
-            download_root=self.root,
-            extract_root=self._dataset_folder,
-            remove_finished=False,
-            md5=self.file_md5,
+            self.url, download_root=self.root, extract_root=self._dataset_folder, md5=self.file_md5
         )
-
-
-def test():
-    import torch.utils.data
-    import torchvision
-
-    transforms = torchvision.transforms.ToTensor()
-    dataset = EnglishChars("./data", split="all", download=True, transform=transforms)
-    print(EnglishChars)
-    print(dataset._dataset_folder)
-    print(dataset[0])
-    print(len(dataset))
-    data_loader = torch.utils.data.DataLoader(dataset)
-    for img, label in data_loader:
-        print(img.shape)
-        print(label)
-        break
-
-
-if __name__ == "__main__":
-    test()

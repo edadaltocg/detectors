@@ -12,8 +12,9 @@ class Places365(ImageFolder):
     filename = "val_256.tar"
     file_md5 = "e27b17d8d44f4af9a78502beb927f808"
     url = "http://data.csail.mit.edu/places/places365/val_256.tar"
-    splits = ("all", "test")
+    splits = ("all",)
     # size: 36500
+
     def __init__(
         self,
         root: str,
@@ -25,7 +26,6 @@ class Places365(ImageFolder):
         is_valid_file: Optional[Callable[[str], bool]] = None,
     ) -> None:
         self.root = os.path.expanduser(root)
-        self.split = verify_str_arg(split, "split", self.splits)
 
         if download:
             self.download()
@@ -61,30 +61,5 @@ class Places365(ImageFolder):
         if self._check_integrity() and self._check_exists():
             return
         download_and_extract_archive(
-            self.url,
-            download_root=self.root,
-            extract_root=self._dataset_folder,
-            remove_finished=False,
-            md5=self.file_md5,
+            self.url, download_root=self.root, extract_root=self._dataset_folder, md5=self.file_md5
         )
-
-
-def test():
-    import torch.utils.data
-    import torchvision
-
-    transforms = torchvision.transforms.ToTensor()
-    dataset = Places365("./data", split="all", download=True, transform=transforms)
-    print(Places365)
-    print(dataset._dataset_folder)
-    print(dataset[0])
-    print(len(dataset))
-    data_loader = torch.utils.data.DataLoader(dataset)
-    for img, label in data_loader:
-        print(img.shape)
-        print(label)
-        break
-
-
-if __name__ == "__main__":
-    test()

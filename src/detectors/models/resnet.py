@@ -1,102 +1,139 @@
-from typing import List, Optional, Union
+import logging
 
+import timm
+import timm.models
 import torch
 import torch.nn as nn
-import torchvision
+from timm.models import register_model as timm_register_model
 
-from . import register_model
+from detectors.data import CIFAR10_DEFAULT_MEAN, CIFAR10_DEFAULT_STD
+from detectors.data.constants import CIFAR100_DEFAULT_MEAN, CIFAR100_DEFAULT_STD, SVHN_DEFAULT_MEAN, SVHN_DEFAULT_STD
+from detectors.models.utils import ModelDefaultConfig, hf_hub_url_template
+
+_logger = logging.getLogger(__name__)
 
 
-def ResNet18Small(num_classes=10):
-    model = torchvision.models.resnet18(weights=None)
-    print(model.inplanes)
-    model.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
+def _cfg(url="", **kwargs):
+    num_classes = kwargs.pop("num_classes", 10)
+    mean = kwargs.pop("mean", CIFAR10_DEFAULT_MEAN)
+    std = kwargs.pop("std", CIFAR10_DEFAULT_STD)
+    return ModelDefaultConfig(
+        url=url,
+        num_classes=num_classes,
+        input_size=(3, 32, 32),
+        pool_size=(4, 4),
+        crop_pct=1,
+        interpolation="bilinear",
+        mean=mean,
+        std=std,
+        first_conv="conv1",
+        classifier="fc",
+        **kwargs,
+    )
+
+
+default_cfgs = {
+    "resnet18_cifar10": _cfg(url=hf_hub_url_template("resnet18_cifar10"), architecture="resnet18"),
+    "resnet34_cifar10": _cfg(url=hf_hub_url_template("resnet34_cifar10"), architecture="resnet34"),
+    "resnet50_cifar10": _cfg(url=hf_hub_url_template("resnet50_cifar10"), architecture="resnet50"),
+    "resnet18_cifar100": _cfg(
+        url=hf_hub_url_template("resnet18_cifar100"),
+        num_classes=100,
+        mean=CIFAR100_DEFAULT_MEAN,
+        std=CIFAR100_DEFAULT_STD,
+        architecture="resnet18",
+    ),
+    "resnet34_cifar100": _cfg(
+        url=hf_hub_url_template("resnet34_cifar100"),
+        num_classes=100,
+        mean=CIFAR100_DEFAULT_MEAN,
+        std=CIFAR100_DEFAULT_STD,
+        architecture="resnet34",
+    ),
+    "resnet50_cifar100": _cfg(
+        url=hf_hub_url_template("resnet50_cifar100"),
+        num_classes=100,
+        mean=CIFAR100_DEFAULT_MEAN,
+        std=CIFAR100_DEFAULT_STD,
+        architecture="resnet50",
+    ),
+    "resnet18_svhn": _cfg(
+        url=hf_hub_url_template("resnet18_svhn"), mean=SVHN_DEFAULT_MEAN, std=SVHN_DEFAULT_STD, architecture="resnet18"
+    ),
+    "resnet34_svhn": _cfg(
+        url=hf_hub_url_template("resnet34_svhn"), mean=SVHN_DEFAULT_MEAN, std=SVHN_DEFAULT_STD, architecture="resnet34"
+    ),
+    "resnet50_svhn": _cfg(
+        url=hf_hub_url_template("resnet50_svhn"), mean=SVHN_DEFAULT_MEAN, std=SVHN_DEFAULT_STD, architecture="resnet50"
+    ),
+}
+
+
+def _create_resnet_small(variant, features_dim=512, pretrained=False, **kwargs):
+    default_cfg = default_cfgs[variant]
+
+    # load timm model
+    architecture = default_cfg.architecture or variant.split("_")[0]
+    model = timm.create_model(architecture, pretrained=False)
+
+    # override timm config
+    model.default_cfg = default_cfg
+    model.pretrained_cfg = default_cfg
+
+    # override model
+    model.conv1 = nn.Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
     model.maxpool = nn.Identity()  # type: ignore
-    model.avgpool = nn.AvgPool2d(4)  # type: ignore
-    model.fc = nn.Linear(512, num_classes)
-    return model
+    model.fc = nn.Linear(features_dim, model.default_cfg.num_classes)
 
-
-@register_model("resnet18_cifar10")
-def resnet18_cifar10(weights=False, **kwargs):
-    """
-    Resnet18 model with a small `conv1` layer and a linear layer with `num_classes` outputs
-
-    Args:
-        pretrained (bool): kwargs, load pretrained weights into the model
-    """
-    # Call the model, load pretrained weights
-    num_classes = kwargs.get("num_classes", 10)
-    model = ResNet18Small(num_classes=num_classes)
-
-    if weights:
-        checkpoint = "https://github.com/edadaltocg/detectors/releases/download/weights-v0.1.0-beta/best.pth"
-        model.load_state_dict(torch.hub.load_state_dict_from_url(checkpoint, progress=True, map_location="cpu"))
+    # load weights
+    if pretrained:
+        model.load_state_dict(
+            torch.hub.load_state_dict_from_url(model.default_cfg.url, map_location="cpu", file_name=f"{variant}.pth")
+        )
 
     return model
 
 
-def ResNet34Small(num_classes=10):
-    model = torchvision.models.resnet34(weights=None)
-    model.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-    model.maxpool = nn.Identity()  # type: ignore
-    model.avgpool = nn.AvgPool2d(4)  # type: ignore
-    model.fc = nn.Linear(512, num_classes)
-    return model
+@timm_register_model
+def resnet18_cifar10(pretrained=False, **kwargs):
+    return _create_resnet_small("resnet18_cifar10", features_dim=512, pretrained=pretrained, **kwargs)
 
 
-@register_model("resnet34_cifar10")
-def resnet34_cifar10(weights: Optional[Union[str, bool]] = False, **kwargs):
-    """
-    Resnet34 model with a small `conv1` layer and a linear layer with 10 classes outputs
-
-    Args:
-        pretrained (bool): kwargs, load pretrained weights into the model
-    """
-    # Call the model, load pretrained weights
-    num_classes = kwargs.get("num_classes", 10)
-    model = ResNet34Small(num_classes=num_classes)
-
-    if weights:
-        if isinstance(weights, str):
-            checkpoint = weights
-        else:
-            checkpoint = (
-                "https://github.com/edadaltocg/detectors/releases/download/weights-v0.1.0-beta/resnet34_cifar10_42.pth"
-            )
-
-        model.load_state_dict(torch.hub.load_state_dict_from_url(checkpoint, progress=True, map_location="cpu"))
-
-    return model
+@timm_register_model
+def resnet34_cifar10(pretrained=False, **kwargs):
+    return _create_resnet_small("resnet34_cifar10", features_dim=512, pretrained=pretrained, **kwargs)
 
 
-def ResNet101Small(num_classes=10):
-    model = torchvision.models.resnet101(weights=None)
-    model.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
-    model.maxpool = nn.Identity()  # type: ignore
-    model.avgpool = nn.AvgPool2d(4)  # type: ignore
-    model.fc = nn.Linear(2048, num_classes)
-    return model
+@timm_register_model
+def resnet50_cifar10(pretrained=False, **kwargs):
+    return _create_resnet_small("resnet50_cifar10", features_dim=2048, pretrained=pretrained, **kwargs)
 
 
-def get_default_features_nodes() -> List[str]:
-    return []
+@timm_register_model
+def resnet18_cifar100(pretrained=False, **kwargs):
+    return _create_resnet_small("resnet18_cifar100", features_dim=512, pretrained=pretrained, **kwargs)
 
 
-if __name__ == "__main__":
-    model = ResNet18Small()
-    print(model)
-    model = ResNet34Small()
-    print(model)
-    model = ResNet101Small()
-    print(model)
+@timm_register_model
+def resnet34_cifar100(pretrained=False, **kwargs):
+    return _create_resnet_small("resnet34_cifar100", features_dim=512, pretrained=pretrained, **kwargs)
 
-    model = resnet34_cifar10(weights=False)
 
-    x = torch.randn(1, 3, 32, 32)
-    y = model(x)
-    print(y)
-    assert y.shape == (1, 10)
+@timm_register_model
+def resnet50_cifar100(pretrained=False, **kwargs):
+    return _create_resnet_small("resnet50_cifar100", features_dim=2048, pretrained=pretrained, **kwargs)
 
-    model = resnet18_cifar10(weights=False)
-    print("resnet18", model(x))
+
+@timm_register_model
+def resnet18_svhn(pretrained=False, **kwargs):
+    return _create_resnet_small("resnet18_svhn", features_dim=512, pretrained=pretrained, **kwargs)
+
+
+@timm_register_model
+def resnet34_svhn(pretrained=False, **kwargs):
+    return _create_resnet_small("resnet34_svhn", features_dim=512, pretrained=pretrained, **kwargs)
+
+
+@timm_register_model
+def resnet50_svhn(pretrained=False, **kwargs):
+    return _create_resnet_small("resnet50_svhn", features_dim=2048, pretrained=pretrained, **kwargs)

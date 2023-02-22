@@ -1,9 +1,14 @@
+import itertools
 import json
-from typing import Any, Dict, Iterable, List, Tuple, Type, Union
+import logging
+import multiprocessing as mp
+from functools import wraps
+from time import time
+from typing import Any, Dict, List
 
-import torch
-from torch import Tensor
-from torch.utils.data import Dataset, Subset
+from torch.utils.data import Dataset
+
+_logger = logging.getLogger(__name__)
 
 
 def str_to_dict(string: str) -> Dict[str, Any]:
@@ -29,3 +34,26 @@ class ConcatDatasetsDim1(Dataset):
 
     def __len__(self):
         return len(self.datasets[0])
+
+
+def timeit(func):
+    # time in seconds
+    @wraps(func)
+    def _time_it(*args, **kwargs):
+        start = time()
+        func(*args, **kwargs)
+        end = time()
+        return end - start
+
+    return _time_it
+
+
+def run_parallel(input_space, wrapper_fn):
+    p = mp.Pool()
+    input = itertools.product(*input_space)
+    _logger.info(f"Input space of size {len(list(itertools.product(*input_space)))}")
+
+    results = p.map(wrapper_fn, input)
+    p.close()
+    p.join()
+    return results

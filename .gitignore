@@ -147,10 +147,13 @@ dmypy.json
 /results
 /storage
 /logs
-/checkpoints
+/checkpoints*
 
 # .lock
 *.lock
 
 # github releases
 /releases
+
+/deprecated
+/scripts/bash

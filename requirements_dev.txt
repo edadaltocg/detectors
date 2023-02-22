@@ -1,0 +1,12 @@
+setuptools
+black
+isort
+pytest
+pytest-timeout
+pytest-xdist
+coverage
+twine
+sphinx
+six
+myst-parser
+flake8
