@@ -1,6 +1,5 @@
 from detectors.methods.cpd.pelt import PeltL2
 
-
 cpd_registry = {
     "peltl2": PeltL2,
 }

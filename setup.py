@@ -21,7 +21,6 @@ install_requires = [
 
 setup(
     name="detectors",
-    version="0.1.0",
     author="Eduardo Dadalto with the help of all our contributors.",
     author_email="edadaltocg@gmail.com",
     description="Out of distribution detection benchmark.",
@@ -36,7 +35,6 @@ setup(
     python_requires=">=3.8.0",
     install_requires=install_requires,
     classifiers=[
-        # "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Intended Audience :: Education",
         "Intended Audience :: Science/Research",

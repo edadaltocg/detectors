@@ -6,6 +6,7 @@ r"""All estimators and cost functions are subclasses of.
 From `https://github.com/deepcharles/ruptures/blob/master/src/ruptures/base.py`
 """
 import abc
+
 from .utils import pairwise
 
 

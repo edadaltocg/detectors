@@ -56,6 +56,9 @@ datasets_registry = {
     "cifar10c": CIFAR10_C,
     "cifar100c": CIFAR100_C,
     "imagenet1kc": ...,
+    "oxford_pets": ...,
+    "oxford_flowers": ...,
+    "cub200": ...,
 }
 
 
@@ -89,5 +92,5 @@ def get_dataset_cls(dataset_name: str) -> Type[Dataset]:
     return datasets_registry[dataset_name]
 
 
-def get_datasets_names():
+def list_datasets():
     return list(datasets_registry.keys())
