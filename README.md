@@ -13,21 +13,15 @@ Under development.
 
 ## Deployment & Documentation & Stats & License
 
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/edadaltocg/detectors/graphs/commit-activity)
 [![PyPi version](https://badgen.net/pypi/v/pip/)](https://pypi.org/project/pip)
-
+[![build](https://github.com/edadaltocg/detectors/actions/workflows/python-package.yml/badge.svg)](https://github.com/edadaltocg/detectors/actions/workflows/python-package.yml)
 [![Documentation Status](https://readthedocs.org/projects/ansicolortags/badge/?version=latest)](http://ansicolortags.readthedocs.io/?badge=latest)
-
-[![GitHub stars](https://img.shields.io/github/stars/Naereen/StrapDown.js.svg?style=social&label=Star&maxAge=2592000)](https://GitHub.com/Naereen/StrapDown.js/stargazers/)
-
-
-[![GitHub forks](https://badgen.net/github/forks/Naereen/Strapdown.js/)](https://GitHub.com/Naereen/StrapDown.js/network/)
-
+[![GitHub stars](https://img.shields.io/github/stars/edadaltocg/detectors.svg?style=social&label=Star&maxAge=2592000)](https://GitHub.com/edadaltocg/detectors/stargazers/)
+[![GitHub forks](https://badgen.net/github/forks/edadaltocg/detectors/)](https://github.com/edadaltocg/detectors/network/)
 [![PyPI download month](https://img.shields.io/pypi/dm/ansicolortags.svg)](https://pypi.python.org/pypi/ansicolortags/)
-
 [![GitHub contributors](https://img.shields.io/github/contributors/Naereen/badges.svg)](https://GitHub.com/Naereen/badges/graphs/contributors/)
-
 [![DOI:10.1007/978-3-319-76207-4_15](https://zenodo.org/badge/DOI/10.1007/978-3-319-76207-4_15.svg)](https://doi.org/10.1007/978-3-319-76207-4_15)
-
 [![PyPi license](https://badgen.net/pypi/license/pip/)](https://pypi.org/project/pip/)
 
 -----
@@ -52,6 +46,26 @@ Under development.
 ```bash
 pip install detectors
 ```
+
+## Thanks to all our contributors
+
+<a href="https://github.com/edadaltocg/detectors/graphs/contributors">
+  <img src="https://contributors-img.web.app/image?repo=edadaltocg/detectors" />
+</a>
+
+### Contact
+
+Concerning this package, its use and bugs, use the [issue page](https://github.com/edadaltocg/detectors/issues) of the [ruptures repository](https://github.com/edadaltocg/detectors). For other inquiries, you can contact me [here](https://edadaltocg.github.io/contact/).
+
+
+### Important links
+
+- [Documentation]()
+- [Pypi package index](https://pypi.python.org/pypi/detectors)
+
+### Changelog
+
+See the [changelog](https://github.com/edadaltocg/detectors/blob/master/CHANGELOG.md) for a history of notable changes to `detectors`.
 
 <!-- ## TODO
 
