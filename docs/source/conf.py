@@ -41,7 +41,6 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.imgmath",
     "sphinx.ext.viewcode",
-    "sphinxcontrib.bibtex",
 ]
 
 source_suffix = [".rst", ".md"]
