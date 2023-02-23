@@ -2,6 +2,7 @@ r"""Pelt.
 
 from `https://github.com/deepcharles/ruptures/blob/master/src/ruptures/detection/pelt.py`"""
 from math import floor
+
 from .base import BaseCost, BaseEstimator
 
 

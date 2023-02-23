@@ -139,9 +139,8 @@ class Mahalanobis:
     ) -> None:
         self.model = model
         self.features_nodes = features_nodes
-        if self.features_nodes is None:
-            self.features_nodes = [self.model.feature_info[-1]["module"]]
-        self.feature_extractor = create_feature_extractor(self.model, self.features_nodes)
+        if self.features_nodes is not None:
+            self.feature_extractor = create_feature_extractor(self.model, self.features_nodes)
         self.reduction_method = inv_mat_method
         self.aggregation_method = aggregation_method
         if aggregation_method is not None and features_nodes is not None and len(features_nodes) > 1:
@@ -163,7 +162,10 @@ class Mahalanobis:
 
     @torch.no_grad()
     def update(self, x: Tensor, y: Tensor) -> None:
-        features = self.feature_extractor(x)
+        if self.features_nodes is None:
+            features = {"penultimate": self.model.forward_features(x)}
+        else:
+            features = self.feature_extractor(x)
 
         for k in features:
             features[k] = self.pooling_op(features[k])
@@ -196,7 +198,10 @@ class Mahalanobis:
             raise ValueError("You must properly fit the Mahalanobis method first.")
 
         with torch.no_grad():
-            features = self.feature_extractor(x)
+            if self.features_nodes is None:
+                features = {"penultimate": self.model.forward_features(x)}
+            else:
+                features = self.feature_extractor(x)
 
         for k in features:
             features[k] = self.pooling_op(features[k])

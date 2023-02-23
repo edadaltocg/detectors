@@ -157,3 +157,5 @@ dmypy.json
 
 /deprecated
 /scripts/bash
+
+.pypirc

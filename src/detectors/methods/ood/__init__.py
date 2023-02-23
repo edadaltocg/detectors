@@ -38,6 +38,7 @@ ood_detector_registry = {
     "rankfeat": ...,
     "vim": ...,
     "kl_logits": ...,
+    "mls": ...,
 }
 
 

@@ -1,10 +1,11 @@
 setuptools
+setuptools_scm
 black
 isort
 pytest
+pytest-cov
 pytest-timeout
 pytest-xdist
-coverage
 twine
 sphinx
 six
