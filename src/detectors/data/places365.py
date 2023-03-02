@@ -1,65 +1,46 @@
 import os
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 from torchvision.datasets import ImageFolder
-from torchvision.datasets.folder import default_loader
-from torchvision.datasets.utils import check_integrity, download_and_extract_archive, verify_str_arg
+from torchvision.datasets.utils import check_integrity, download_and_extract_archive
 
 
 class Places365(ImageFolder):
     base_folder = "places365"
-    images_folder = ""
     filename = "val_256.tar"
     file_md5 = "e27b17d8d44f4af9a78502beb927f808"
     url = "http://data.csail.mit.edu/places/places365/val_256.tar"
-    splits = ("all",)
     # size: 36500
 
     def __init__(
         self,
         root: str,
-        split: str = "all",
+        split=None,
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
         download: bool = False,
-        loader: Callable[[str], Any] = default_loader,
-        is_valid_file: Optional[Callable[[str], bool]] = None,
+        **kwargs,
     ) -> None:
         self.root = os.path.expanduser(root)
+        self.dataset_folder = os.path.join(self.root, self.base_folder)
+        self.archive = os.path.join(self.root, self.filename)
 
         if download:
             self.download()
 
         if not self._check_integrity():
             raise RuntimeError("Dataset not found or corrupted." + " You can use download=True to download it")
-        super().__init__(
-            self._split_folder,
-            transform=transform,
-            target_transform=target_transform,
-            loader=loader,
-            is_valid_file=is_valid_file,
-        )
-
-    @property
-    def _dataset_folder(self):
-        return os.path.join(self.root, self.base_folder)
-
-    @property
-    def _split_folder(self):
-        return os.path.join(self._dataset_folder, self.images_folder)
+        super().__init__(root, transform=transform, target_transform=target_transform, **kwargs)
 
     def _check_integrity(self) -> bool:
-        root = self.root
-        md5 = self.file_md5
-        fpath = os.path.join(root, self.filename)
-        return check_integrity(fpath, md5)
+        return check_integrity(self.archive, self.file_md5)
 
     def _check_exists(self) -> bool:
-        return os.path.exists(self._split_folder)
+        return os.path.exists(self.dataset_folder)
 
     def download(self) -> None:
         if self._check_integrity() and self._check_exists():
             return
         download_and_extract_archive(
-            self.url, download_root=self.root, extract_root=self._dataset_folder, md5=self.file_md5
+            self.url, download_root=self.root, extract_root=self.dataset_folder, md5=self.file_md5
         )
