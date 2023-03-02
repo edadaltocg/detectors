@@ -297,7 +297,7 @@ def test_imagenet_o():
 
     assert type(img) == torch.Tensor
     assert len(dataset) == 2000
-    assert issubclass(imagenet_o_class, torchvision.datasets.ImageFolder)
+    assert issubclass(imagenet_o_class, torchvision.datasets.DatasetFolder)
 
 
 def test_imagenet():
@@ -305,6 +305,7 @@ def test_imagenet():
 
     imagenet_class = get_dataset_cls("imagenet")
 
+    dataset = create_dataset("imagenet", root=IMAGENET_ROOT, split="train", transform=transform)
     dataset = create_dataset("imagenet", root=IMAGENET_ROOT, split="val", transform=transform)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
     img, label = next(iter(dataloader))
@@ -348,6 +349,43 @@ def test_cifar100c():
         assert issubclass(cifar10c_class, torch.utils.data.Dataset)
 
 
-if __name__ == "__main__":
-    test_cifar10c()
-    test_cifar100c()
+def test_imagenet_a():
+    transform = transforms.ToTensor()
+
+    imagenet_a_class = get_dataset_cls("imagenet_a")
+
+    dataset = create_dataset("imagenet_a", root=DATA_DIR, split=None, transform=transform, download=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    img, label = next(iter(dataloader))
+    print(len(dataset))
+    assert type(img) == torch.Tensor
+    # assert len(dataset) == 10000
+    assert issubclass(imagenet_a_class, torchvision.datasets.DatasetFolder)
+
+
+def test_imagenet_r():
+    transform = transforms.ToTensor()
+
+    imagenet_r_class = get_dataset_cls("imagenet_r")
+
+    dataset = create_dataset("imagenet_r", root=DATA_DIR, split=None, transform=transform, download=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    img, label = next(iter(dataloader))
+    print(len(dataset))
+    assert type(img) == torch.Tensor
+    # assert len(dataset) == 10000
+    assert issubclass(imagenet_r_class, torchvision.datasets.DatasetFolder)
+
+
+def test_imagenet_c():
+    transform = transforms.ToTensor()
+
+    imagenet_c_class = get_dataset_cls("imagenet_c")
+
+    for split in imagenet_c_class.split_list:
+        dataset = create_dataset("imagenet_c", root=DATA_DIR, split=split, transform=transform, download=True)
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+        img, label = next(iter(dataloader))
+        print(len(dataset))
+        assert type(img) == torch.Tensor
+    assert issubclass(imagenet_c_class, torchvision.datasets.DatasetFolder)

@@ -10,27 +10,27 @@ from torchvision.models.feature_extraction import create_feature_extractor
 _logger = logging.getLogger(__name__)
 
 
-def flatten(data: Tensor, *args, **kwargs):
+def flatten(data: Tensor, **kwargs):
     return torch.flatten(data, 1)
 
 
-def adaptive_avg_pool2d(data: Tensor, *args, **kwargs):
+def adaptive_avg_pool2d(data: Tensor, **kwargs):
     if len(data.shape) > 2:
         return torch.flatten(nn.AdaptiveAvgPool2d((1, 1))(data), 1)
     return data
 
 
-def adaptive_max_pool2d(data: Tensor, *args, **kwargs):
+def adaptive_max_pool2d(data: Tensor, **kwargs):
     if len(data.shape) > 2:
         return torch.flatten(nn.AdaptiveMaxPool2d((1, 1))(data), 1)
     return data
 
 
-def getitem(data: Tensor, *args, **kwargs):
+def getitem(data: Tensor, **kwargs):
     return data[:, 0].clone().contiguous()
 
 
-def none_reduction(data: Tensor, *args, **kwargs):
+def none_reduction(data: Tensor, **kwargs):
     return data
 
 
@@ -43,16 +43,25 @@ reductions_registry = {
 }
 
 
-def mahalanobis_distance_inv(x: Tensor, y: Tensor, inverse: Tensor):
-    return torch.nan_to_num(torch.sqrt(((x - y).T * (inverse @ (x - y).T)).sum(0)), 1e9)
+def mahalanobis_distance_inv(x: Tensor, y: Tensor, precision: Tensor):
+    """Mahalanobis distance betwee x and y normalized to the interval [0,1].
+
+    Args:
+        x (Tensor): first point.
+        y (Tensor): second point.
+        precision (Tensor): inverse of the covariance matrix.
+    """
+
+    d_squared = torch.mm(torch.mm(x - y, precision), (x - y).T).diag()
+    return torch.exp(-d_squared / 2)
 
 
-def mahalanobis_inv_layer_score(x: Tensor, mus: Tensor, inv: Tensor):
+def mahalanobis_inv_layer_score(x: Tensor, mus: Tensor, inv: Tensor) -> Tensor:
     stack = torch.zeros((x.shape[0], mus.shape[0]), device=x.device, dtype=torch.float32)
     for i, mu in enumerate(mus):
         stack[:, i] = mahalanobis_distance_inv(x, mu.reshape(1, -1), inv).reshape(-1)
 
-    return -stack.min(1, keepdim=True)[0]
+    return stack.max(1, keepdim=True)[0]
 
 
 def torch_reduction_matrix(sigma: Tensor, reduction_method="pseudo"):
@@ -97,7 +106,7 @@ def sklearn_cov_matrix_estimarion(
 
 
 def class_cond_mus_cov_inv_matrix(
-    x: Tensor, targets: Tensor, cov_method="EmpiricalCovariance", inv_method="pseudo", device="cpu"
+    x: Tensor, targets: Tensor, cov_method="EmpiricalCovariance", inv_method="pseudo", device=torch.device("cpu")
 ):
     unique_classes = torch.unique(targets).detach().cpu().numpy().tolist()
     class_cond_cov = {}
@@ -117,9 +126,27 @@ def class_cond_mus_cov_inv_matrix(
 
 
 class Mahalanobis:
+    """`Mahalanobis <MAHALANOBIS_PAPER_URL>` OOD detector.
+
+    Args:
+        model (nn.Module): Model to be used to extract features
+        features_nodes (Optional[List[str]]): List of strings that represent the feature nodes.
+            Defaults to None.
+        cov_mat_method (str, optional): Covariance matrix estimation method. Can be one of
+            ["EmpiricalCovariance", "GraphicalLasso", "GraphicalLassoCV", "LedoitWolf", "MinCovDet", "ShrunkCovariance", "OAS"].
+            Defaults to "EmpiricalCovariance".
+        inv_mat_method (str, optional): Inverse matrix estimation method. Can be one of ["cholesky", "svd", "pseudo", "inverse"].
+            Defaults to "pseudo".
+        pooling_op_name (str, optional): Pooling operation to be applied to the features. Can be one of ["max", "avg", "flatten", "getitem", "none"].
+            Defaults to "avg".
+        aggregation_method (None, optional): Aggregation method to be applied to the features. Defaults to None.
+        mu_cov_inv_est_fn (function, optional): Function to be used to estimate the means, covariance and inverse matrix.
+            Defaults to `class_cond_mus_cov_inv_matrix`.
+    """
+
     def __init__(
         self,
-        model: torch.nn.Module,
+        model: nn.Module,
         features_nodes: Optional[List[str]] = None,
         cov_mat_method: Literal[
             "EmpiricalCovariance",
@@ -134,13 +161,19 @@ class Mahalanobis:
         pooling_op_name: Literal["max", "avg", "flatten", "getitem", "none"] = "avg",
         aggregation_method=None,
         mu_cov_inv_est_fn=class_cond_mus_cov_inv_matrix,
-        *args,
         **kwargs,
     ) -> None:
         self.model = model
         self.features_nodes = features_nodes
         if self.features_nodes is not None:
             self.feature_extractor = create_feature_extractor(self.model, self.features_nodes)
+        else:
+            if not hasattr(self.model, "forward_features"):
+                raise ValueError(
+                    "Model does not have a forward_features method. "
+                    "Please provide a list of feature nodes to extract features from."
+                )
+            self.feature_extractor: nn.Module = self.model.forward_features  # type: ignore
         self.reduction_method = inv_mat_method
         self.aggregation_method = aggregation_method
         if aggregation_method is not None and features_nodes is not None and len(features_nodes) > 1:
@@ -163,7 +196,7 @@ class Mahalanobis:
     @torch.no_grad()
     def update(self, x: Tensor, y: Tensor) -> None:
         if self.features_nodes is None:
-            features = {"penultimate": self.model.forward_features(x)}
+            features = {"penultimate": self.feature_extractor(x)}
         else:
             features = self.feature_extractor(x)
 
@@ -199,7 +232,7 @@ class Mahalanobis:
 
         with torch.no_grad():
             if self.features_nodes is None:
-                features = {"penultimate": self.model.forward_features(x)}
+                features = {"penultimate": self.feature_extractor(x)}
             else:
                 features = self.feature_extractor(x)
 
@@ -225,28 +258,3 @@ class Mahalanobis:
             stack = self.aggregation_method(stack)
 
         return stack.view(-1)
-
-
-def inverse_estimation():
-    X = torch.rand(100, 10)
-    batch_size = 5
-    cov_true = torch.cov(X.T)
-    inv_true = torch.inverse(cov_true)
-    print(inv_true)
-    n = X.shape[1]
-    lbd = 0.999
-    lbd_sum = 0
-    inv = torch.eye(n)
-    mu = torch.zeros(n)
-
-    for i in range(0, X.shape[0], batch_size):
-        batch = X[i : i + batch_size]
-        lbd_sum = lbd * lbd_sum + (1 - lbd) * batch.shape[0]
-        delta = batch - mu
-        mu = mu + delta / lbd_sum
-        inv = lbd * inv + delta
-        sigma = inv / lbd_sum
-
-        # estimation of the inverse
-        num = 1 / (lbd**2)
-    return

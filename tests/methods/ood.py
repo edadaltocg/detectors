@@ -11,6 +11,7 @@ class Model(torch.nn.Module):
     def __init__(self) -> None:
         super().__init__()
         self.conv1 = torch.nn.Conv2d(3, 6, 5)
+        self.drop = torch.nn.Dropout()
         self.linear = torch.nn.Linear(6 * 28 * 28, 10)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -20,10 +21,12 @@ class Model(torch.nn.Module):
 
     def forward_features(self, x: Tensor) -> Tensor:
         x = self.conv1(x)
+        x = self.drop(x)
         return x
 
     def forward_head(self, x: Tensor) -> Tensor:
         x = torch.flatten(x, 1)
+        x = self.linear(x)
         return x
 
 
@@ -164,5 +167,38 @@ def test_igeood_logits():
     assert scores.shape == (N,)
 
 
+def test_max_logits():
+    detector = create_ood_detector("max_logits", TEST_MODEL)
+    detector.start()
+    detector.update(X, Y)
+    detector.end()
+    scores = detector(X)
+    scores_std = scores.std()
+    assert scores_std > 0.0
+    assert scores.shape == (N,)
+
+
+def test_mc_dropout():
+    detector = create_ood_detector("mc_dropout", TEST_MODEL)
+    detector.start()
+    detector.update(X, Y)
+    detector.end()
+    scores = detector(X)
+    scores_std = scores.std()
+    assert scores_std > 0.0
+    assert scores.shape == (N,)
+
+
+def test_kl_matching():
+    detector = create_ood_detector("kl_matching", TEST_MODEL)
+    detector.start()
+    detector.update(X, Y)
+    detector.end()
+    scores = detector(X)
+    scores_std = scores.std()
+    assert scores_std > 0.0
+    assert scores.shape == (N,)
+
+
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    test_kl_matching()
