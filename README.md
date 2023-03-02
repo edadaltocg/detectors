@@ -1,6 +1,6 @@
 <p align="center">
     <br>
-    <img src="./face-with-monocle.svg" width="150" height="150" />
+    <img src="_static/face-with-monocle.svg" width="150" height="150" />
     <br>
 </p>
 
@@ -21,10 +21,14 @@ Under development.
 [![GitHub forks](https://badgen.net/github/forks/edadaltocg/detectors/)](https://github.com/edadaltocg/detectors/network/)
 [![PyPI download month](https://img.shields.io/pypi/dm/ansicolortags.svg)](https://pypi.python.org/pypi/ansicolortags/)
 [![GitHub contributors](https://img.shields.io/github/contributors/Naereen/badges.svg)](https://GitHub.com/Naereen/badges/graphs/contributors/)
-[![DOI:10.1007/978-3-319-76207-4_15](https://zenodo.org/badge/DOI/10.1007/978-3-319-76207-4_15.svg)](https://doi.org/10.1007/978-3-319-76207-4_15)
+[![DOI:](https://zenodo.org/badge/DOI/.svg)](https://doi.org/)
 [![PyPi license](https://badgen.net/pypi/license/pip/)](https://pypi.org/project/pip/)
 
 -----
+
+## Table of Contents
+
+
 
 <!--
 ## Examples
@@ -47,6 +51,14 @@ Under development.
 pip install detectors
 ```
 
+To install the latest version from the source:
+
+```bash
+git clone https://github.com/edadaltocg/detectors.git
+cd detectors
+pip install -e .
+```
+
 ## Thanks to all our contributors
 
 <a href="https://github.com/edadaltocg/detectors/graphs/contributors">
@@ -60,7 +72,7 @@ Concerning this package, its use and bugs, use the [issue page](https://github.c
 
 ### Important links
 
-- [Documentation]()
+- [Documentation](http://detectors.readthedocs.io/)
 - [Pypi package index](https://pypi.python.org/pypi/detectors)
 
 ### Changelog

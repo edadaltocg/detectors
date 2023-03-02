@@ -8,7 +8,6 @@ install_requires = [
     "timm>=0.8.11.dev0",
     "torch>=1.7",
     "tqdm",
-    "torchmetrics",
     "torchvision",
     "scipy",
     "transformers",

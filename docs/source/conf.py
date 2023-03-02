@@ -12,6 +12,7 @@
 #
 import os
 import sys
+import detectors
 
 sys.path.insert(0, os.path.abspath("../../src/"))
 
@@ -23,7 +24,7 @@ copyright = "2023, Eduardo Dadalto"
 author = "Eduardo Dadalto"
 
 # The full version, including alpha/beta/rc tags
-release = "0.1.0"
+release = detectors.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -80,4 +81,4 @@ html_theme = "classic"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]
+html_static_path = ["../../_static"]
