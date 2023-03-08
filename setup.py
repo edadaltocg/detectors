@@ -22,7 +22,7 @@ setup(
     name="detectors",
     author="Eduardo Dadalto with the help of all our contributors.",
     author_email="edadaltocg@gmail.com",
-    description="Out of distribution detection benchmark.",
+    description="Detectors: a python package to benchmark generalized out of distribution detection methods.",
     long_description=open("README.md", "r", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
     keywords="vision deep learning pytorch OOD",
@@ -30,9 +30,23 @@ setup(
     url="https://github.com/edadaltocg/detectors",
     package_dir={"": "src"},
     packages=find_packages("src"),
-    zip_safe=False,
     python_requires=">=3.8.0",
     install_requires=install_requires,
+    extras_require={
+        "dev": [
+            "black",
+            "isort",
+            "pytest",
+            "pytest-cov",
+            "pytest-timeout",
+            "pytest-xdist",
+            "twine",
+            "sphinx",
+            "myst-parser",
+            "six",
+            "flake8",
+        ]
+    },
     classifiers=[
         "Intended Audience :: Developers",
         "Intended Audience :: Education",
