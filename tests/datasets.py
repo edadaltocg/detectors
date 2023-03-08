@@ -382,10 +382,14 @@ def test_imagenet_c():
 
     imagenet_c_class = get_dataset_cls("imagenet_c")
 
-    for split in imagenet_c_class.split_list:
-        dataset = create_dataset("imagenet_c", root=DATA_DIR, split=split, transform=transform, download=True)
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
-        img, label = next(iter(dataloader))
-        print(len(dataset))
-        assert type(img) == torch.Tensor
+    for split in imagenet_c_class.corruptions:
+        for intensity in [1, 2, 3, 4, 5]:
+            dataset = create_dataset(
+                "imagenet_c", root=DATA_DIR, split=split, intensity=intensity, transform=transform, download=True
+            )
+            dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+            img, label = next(iter(dataloader))
+            assert len(dataset) == 50000
+            assert type(img) == torch.Tensor
+
     assert issubclass(imagenet_c_class, torchvision.datasets.DatasetFolder)

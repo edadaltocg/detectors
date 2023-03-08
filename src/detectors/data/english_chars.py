@@ -1,9 +1,8 @@
 import os
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 from torchvision.datasets import ImageFolder
-from torchvision.datasets.folder import default_loader
-from torchvision.datasets.utils import check_integrity, download_and_extract_archive, verify_str_arg
+from torchvision.datasets.utils import check_integrity, download_and_extract_archive
 
 
 class EnglishChars(ImageFolder):
@@ -23,17 +22,9 @@ class EnglishChars(ImageFolder):
     filename = "EnglishImg.tgz"
     file_md5 = "85d157e0c58f998e1cda8def62bcda0d"
     url = "http://www.ee.surrey.ac.uk/CVSSP/demos/chars74k/EnglishImg.tgz"
-    splits = ("all",)
 
     def __init__(
-        self,
-        root: str,
-        split: Optional[str] = None,
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
-        download: bool = False,
-        loader: Callable[[str], Any] = default_loader,
-        is_valid_file: Optional[Callable[[str], bool]] = None,
+        self, root: str, split=None, transform: Optional[Callable] = None, download: bool = False, **kwargs
     ) -> None:
         self.root = os.path.expanduser(root)
 
@@ -42,13 +33,7 @@ class EnglishChars(ImageFolder):
 
         if not self._check_integrity():
             raise RuntimeError("Dataset not found or corrupted." + " You can use download=True to download it")
-        super().__init__(
-            self._split_folder,
-            transform=transform,
-            target_transform=target_transform,
-            loader=loader,
-            is_valid_file=is_valid_file,
-        )
+        super().__init__(self._split_folder, transform=transform, **kwargs)
 
     @property
     def _dataset_folder(self):
