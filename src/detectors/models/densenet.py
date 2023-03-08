@@ -1,3 +1,4 @@
+"""Densenet models for CIFAR10, CIFAR100 and SVHN datasets."""
 import timm
 import timm.models
 import torch

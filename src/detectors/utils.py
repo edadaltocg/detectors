@@ -2,10 +2,12 @@ import itertools
 import json
 import logging
 import multiprocessing as mp
+import os
 from functools import wraps
 from time import time
 from typing import Any, Dict, List
 
+import pandas as pd
 from torch.utils.data import Dataset
 
 _logger = logging.getLogger(__name__)
@@ -14,6 +16,23 @@ _logger = logging.getLogger(__name__)
 def str_to_dict(string: str) -> Dict[str, Any]:
     string = string.strip().strip("'")
     return json.loads(string)
+
+
+def append_results_to_csv_file(results, filename="results.csv", remove_duplicates=True):
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    results = {k: [v] for k, v in results.items()}
+    results = pd.DataFrame.from_dict(results, orient="columns")
+
+    if not os.path.isfile(filename):
+        results.to_csv(filename, header=True, index=False)
+    else:  # it exists, so append without writing the header
+        results.to_csv(filename, mode="a", header=False, index=False)
+
+    # remove duplicates
+    if remove_duplicates:
+        df = pd.read_csv(filename)
+        df.drop_duplicates(inplace=True)
+        df.to_csv(filename, index=False, header=True)
 
 
 class ConcatDatasetsDim1(Dataset):

@@ -53,7 +53,7 @@ def mahalanobis_distance_inv(x: Tensor, y: Tensor, precision: Tensor):
     """
 
     d_squared = torch.mm(torch.mm(x - y, precision), (x - y).T).diag()
-    return torch.exp(-d_squared / 2)
+    return torch.sqrt(d_squared)
 
 
 def mahalanobis_inv_layer_score(x: Tensor, mus: Tensor, inv: Tensor) -> Tensor:
@@ -61,7 +61,7 @@ def mahalanobis_inv_layer_score(x: Tensor, mus: Tensor, inv: Tensor) -> Tensor:
     for i, mu in enumerate(mus):
         stack[:, i] = mahalanobis_distance_inv(x, mu.reshape(1, -1), inv).reshape(-1)
 
-    return stack.max(1, keepdim=True)[0]
+    return -stack.min(1, keepdim=True)[0]
 
 
 def torch_reduction_matrix(sigma: Tensor, reduction_method="pseudo"):
@@ -73,9 +73,9 @@ def torch_reduction_matrix(sigma: Tensor, reduction_method="pseudo"):
     elif reduction_method == "svd":
         u, s, _ = torch.linalg.svd(sigma)
         return u @ torch.diag(torch.sqrt(1 / s))
-    elif reduction_method == "pseudo":
+    elif reduction_method == "pseudo" or reduction_method == "pinv":
         return torch.linalg.pinv(sigma)
-    elif reduction_method == "inverse":
+    elif reduction_method == "inverse" or reduction_method == "inv":
         return torch.linalg.inv(sigma)
     else:
         raise ValueError(f"Unknown reduction method {reduction_method}")
@@ -91,7 +91,7 @@ def sklearn_cov_matrix_estimarion(
         "MinCovDet",
         "ShrunkCovariance",
         "OAS",
-    ] = "EmpiricalCovariance",
+    ] = "ShrunkCovariance",
     **method_kwargs,
 ):
     import sklearn.covariance
@@ -106,21 +106,34 @@ def sklearn_cov_matrix_estimarion(
 
 
 def class_cond_mus_cov_inv_matrix(
-    x: Tensor, targets: Tensor, cov_method="EmpiricalCovariance", inv_method="pseudo", device=torch.device("cpu")
+    x: Tensor, targets: Tensor, cov_method: str = "EmpiricalCovariance", inv_method="pseudo", device=torch.device("cpu")
 ):
-    unique_classes = torch.unique(targets).detach().cpu().numpy().tolist()
-    class_cond_cov = {}
+    unique_classes = sorted(torch.unique(targets.detach().cpu()).numpy().tolist())
     class_cond_mean = {}
+    centered_data_per_class = {}
     for c in unique_classes:
         filt = targets == c
-        if filt.sum() == 0:
-            continue
-        temp = x[filt]
-        mu, cov, inv = sklearn_cov_matrix_estimarion(temp.detach().cpu().numpy(), method=cov_method)
-        class_cond_cov[c] = torch.from_numpy(cov).float().to(device)
-        class_cond_mean[c] = torch.from_numpy(mu).float().to(device)
-    cov_mat = sum(list(class_cond_cov.values())) / x.shape[0]
-    inv_mat = torch_reduction_matrix(cov_mat, reduction_method=inv_method)
+        temp = x[filt].to(device)
+        class_cond_mean[c] = temp.mean(0, keepdim=True)
+        centered_data_per_class[c] = temp - class_cond_mean[c]
+
+        class_cond_mean[c] = class_cond_mean[c].cpu()
+        centered_data_per_class[c] = centered_data_per_class[c].cpu()
+
+    centered_data_per_class = torch.vstack(list(centered_data_per_class.values()))
+    mu, cov_mat, inv_mat = sklearn_cov_matrix_estimarion(
+        centered_data_per_class.detach().cpu().numpy(), method=cov_method
+    )
+    cov_mat = torch.from_numpy(cov_mat).float()
+    inv_mat = torch.from_numpy(inv_mat).float()
+
+    _logger.debug("Cov mat determinant %s", torch.linalg.det(cov_mat))
+    _logger.debug("Cov mat rank %s", torch.linalg.matrix_rank(cov_mat))
+    _logger.debug("Cov mat condition number %s", torch.linalg.cond(cov_mat))
+    _logger.debug("Cov mat norm %s", torch.linalg.norm(cov_mat))
+    _logger.debug("Cov mat trace %s", torch.trace(cov_mat))
+    _logger.debug("Cov mat eigvals %s", torch.linalg.eigvalsh(cov_mat))
+
     mus = torch.vstack(list(class_cond_mean.values()))
     return mus, cov_mat, inv_mat
 
@@ -156,7 +169,7 @@ class Mahalanobis:
             "MinCovDet",
             "ShrunkCovariance",
             "OAS",
-        ] = "EmpiricalCovariance",
+        ] = "ShrunkCovariance",
         inv_mat_method: Literal["cholesky", "svd", "pseudo", "inverse"] = "pseudo",
         pooling_op_name: Literal["max", "avg", "flatten", "getitem", "none"] = "avg",
         aggregation_method=None,
@@ -164,6 +177,7 @@ class Mahalanobis:
         **kwargs,
     ) -> None:
         self.model = model
+        self.model.eval()
         self.features_nodes = features_nodes
         if self.features_nodes is not None:
             self.feature_extractor = create_feature_extractor(self.model, self.features_nodes)
@@ -214,6 +228,7 @@ class Mahalanobis:
             self.training_features["targets"] = torch.cat((self.training_features["targets"], y.cpu()), dim=0)
 
     def end(self, *args, **kwargs):
+        _logger.info("Computing inverse matrix.")
         for k in self.training_features:
             if k == "targets":
                 continue

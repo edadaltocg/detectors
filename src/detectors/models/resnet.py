@@ -1,3 +1,4 @@
+"""ResNet models for CIFAR10, CIFAR100, and SVHN datasets."""
 import logging
 
 import timm

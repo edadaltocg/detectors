@@ -1,3 +1,4 @@
+"""Pipeline module."""
 from detectors.pipelines.base import Pipeline
 
 pipeline_registry = {}
@@ -5,7 +6,7 @@ pipeline_registry = {}
 
 def register_pipeline(name: str):
     """
-    Registers a new pipeline in the registry.
+    Decorator to register a new pipeline in the registry.
 
     Args:
         name (str): The name of the pipeline to register.
@@ -20,9 +21,7 @@ def register_pipeline(name: str):
 
 def create_pipeline(task: str, **kwargs) -> Pipeline:
     """
-    # TODO: rewrite docs
     Utility factory method to build a [`Pipeline`].
-
 
     Args:
         task (str, optional):
@@ -34,7 +33,6 @@ def create_pipeline(task: str, **kwargs) -> Pipeline:
         [Pipeline]: A suitable pipeline for the task.
 
     Examples:
-
     ```python
     >>> pipe = pipeline("ood_cifar10")
     ```

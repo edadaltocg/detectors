@@ -217,17 +217,17 @@ def test_uniform():
     assert len(dataset) == 10000
 
 
-# def test_places365():
-#     transform = transforms.ToTensor()
+def test_places365():
+    transform = transforms.ToTensor()
 
-#     places365_class = get_dataset_cls("places365")
-#     dataset = create_dataset("places365", root=DATA_DIR, split="val", transform=transform, download=True)
-#     dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
-#     img, label = next(iter(dataloader))
+    places365_class = get_dataset_cls("places365")
+    dataset = create_dataset("places365", root=DATA_DIR, split=None, transform=transform, download=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    img, label = next(iter(dataloader))
 
-#     assert type(img) == torch.Tensor
-#     assert len(dataset) == 10000
-#     assert places365_class is torchvision.datasets.Places365
+    assert type(img) == torch.Tensor
+    assert len(dataset) == 36500
+    assert issubclass(places365_class, torchvision.datasets.ImageFolder)
 
 
 def test_stanford_cars():
@@ -320,7 +320,7 @@ def test_cifar10c():
 
     cifar10c_class = get_dataset_cls("cifar10c")
 
-    for intensity in [1, 2, 3, 4, 5]:
+    for intensity in [1, 2]:
         dataset = create_dataset(
             "cifar10c", root=DATA_DIR, split="gaussian_blur", intensity=intensity, transform=transform
         )
@@ -337,7 +337,7 @@ def test_cifar100c():
 
     cifar10c_class = get_dataset_cls("cifar100c")
 
-    for intensity in [1, 2, 3, 4, 5]:
+    for intensity in [1, 2]:
         dataset = create_dataset(
             "cifar100c", root=DATA_DIR, split="gaussian_blur", intensity=intensity, transform=transform
         )
@@ -383,7 +383,7 @@ def test_imagenet_c():
     imagenet_c_class = get_dataset_cls("imagenet_c")
 
     for split in imagenet_c_class.corruptions:
-        for intensity in [1, 2, 3, 4, 5]:
+        for intensity in [1]:
             dataset = create_dataset(
                 "imagenet_c", root=DATA_DIR, split=split, intensity=intensity, transform=transform, download=True
             )

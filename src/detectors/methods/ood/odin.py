@@ -2,6 +2,8 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
 
+DefaultConfig = dict(temperature=1000, eps=0.0)
+
 
 def odin(x: Tensor, model: nn.Module, temperature: float = 1000, eps: float = 0.0, **kwargs) -> Tensor:
     """`ODIN <ODIN_PAPER_URL>` OOD detector.

@@ -6,21 +6,18 @@ from typing import Optional
 
 from torch import Tensor, nn
 
-from .kl_matching import KLMatching
-
-from .mcdropout import mc_dropout
-
-from .igeood import IgeoodLogits
-from .max_logits import max_logits
-
 from .dice import Dice
 from .energy import energy
+from .igeood import IgeoodLogits
+from .kl_matching import KLMatching
 from .knn_euclides import KnnEuclides
 from .mahalanobis import Mahalanobis
+from .max_logits import max_logits
+from .mcdropout import mc_dropout
 from .msp import msp
+from .naive import always_one, always_zero, random_score
 from .odin import odin
 from .projection import Projection
-from .random import random_score
 from .react import ReAct
 from .react_projection import ReActProjection
 
@@ -28,6 +25,8 @@ _logger = logging.getLogger(__name__)
 
 ood_detector_registry = {
     "random": random_score,
+    "always_one": always_one,
+    "always_zero": always_zero,
     "msp": msp,
     "odin": odin,
     "max_logits": max_logits,
@@ -51,9 +50,14 @@ ood_detector_registry = {
 
 
 class OODDetector:
-    def __init__(self, detector, model: Optional[nn.Module] = None, **kwargs):
+    def __init__(self, detector, **kwargs):
         self.detector = detector
-        self.model = model
+        if hasattr(self.detector, "model"):
+            self.model = self.detector.model
+        elif hasattr(self.detector, "keywords") and "model" in self.detector.keywords:
+            self.model = self.detector.keywords["model"]
+        else:
+            self.model = None
         self.keywords = kwargs
 
     def start(self, *args, **kwargs):
@@ -93,11 +97,12 @@ class OODDetector:
         return self.detector(x)
 
     def set_params(self, **params):
+        model = params.pop("model", None)
         self.keywords.update(params)
         if hasattr(self.detector, "keywords"):
             self.detector.keywords.update(**params)
         else:
-            self.detector = self.detector.__class__(model=self.model, **self.keywords)
+            self.detector = self.detector.__class__(model=model, **self.keywords)
         return self
 
 
@@ -111,7 +116,7 @@ def register_ood_detector(name: str):
     return decorator
 
 
-def create_ood_detector(detector_name: str, model: Optional[nn.Module] = None, **kwargs) -> OODDetector:
+def create_ood_detector(detector_name: str, **kwargs) -> OODDetector:
     """Create OOD detector factory.
 
     Args:
@@ -123,8 +128,9 @@ def create_ood_detector(detector_name: str, model: Optional[nn.Module] = None, *
     Returns:
         OODDetector: OOD detector.
     """
+    model = kwargs.pop("model", None)
     if detector_name not in ood_detector_registry:
         raise ValueError(f"Unknown OOD detector: {detector_name}")
     if not isinstance(ood_detector_registry[detector_name], types.FunctionType):
-        return OODDetector(ood_detector_registry[detector_name](model, **kwargs), model, **kwargs)
-    return OODDetector(partial(ood_detector_registry[detector_name], model=model, **kwargs), model, **kwargs)
+        return OODDetector(ood_detector_registry[detector_name](model=model, **kwargs), **kwargs)
+    return OODDetector(partial(ood_detector_registry[detector_name], model=model, **kwargs), **kwargs)
