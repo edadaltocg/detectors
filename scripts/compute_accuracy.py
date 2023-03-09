@@ -20,9 +20,6 @@ _logger = logging.getLogger(__name__)
 def main(args):
     device = args.device
     model = timm.create_model(args.model, pretrained=True)
-    model = timm.create_model(args.model, pretrained=False)
-    checkpoint = torch.load(f"checkpoints/{args.model}_1/best.pth", map_location="cpu")
-    model.load_state_dict(checkpoint)
     model.to(device)
     model.eval()
     data_config = resolve_data_config(model.default_cfg)

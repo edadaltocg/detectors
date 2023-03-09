@@ -1,1 +1,0 @@
-# Detectors Gradio Demo

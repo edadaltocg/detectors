@@ -160,3 +160,4 @@ dmypy.json
 
 .pypirc
 /images
+slurm/

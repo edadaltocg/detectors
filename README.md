@@ -77,7 +77,7 @@ accelerate config
 And finally, you can run the benchmark with the `accelerate` command:
 
 ```bash
-accelerate launch demo/ood_benchmark.py --args_for_the_script
+accelerate launch demo/ood_benchmark.py
 ```
 
 #### Configuration example
@@ -112,11 +112,13 @@ Concerning this package, its use and bugs, use the [issue page](https://github.c
 
 See the [changelog](https://github.com/edadaltocg/detectors/blob/master/CHANGELOG.md) for a history of notable changes to `detectors`.
 
+## Contributing
+
+See the [contributing guidelines](https://github.com/edadaltocg/detectors/blob/master/CONTRIBUTING.md) for instructions on how to contribute to `detectors`.
+
 <!-- ## TODO
 
 - Pipeline for generating results table.
-
-## Contributing
 
 ## Citing detectors
 

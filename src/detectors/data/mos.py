@@ -78,7 +78,7 @@ class MOSPlaces365(MOSSUN):
     url = "http://pages.cs.wisc.edu/~huangrui/imagenet_ood_dataset/Places.tar.gz"
 
 
-class MOSiNaturalist(ImageFolder):
+class MOSiNaturalist(MOSSUN):
     """`MOS iNaturalist <MOS_PAPER_URL>`_ Dataset subset.
 
     Args:

@@ -20,13 +20,7 @@ class Textures(ImageFolder):
     url = "https://www.robots.ox.ac.uk/~vgg/data/dtd/download/dtd-r1.0.1.tar.gz"
 
     def __init__(
-        self,
-        root: str,
-        split=None,
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
-        download: bool = False,
-        **kwargs,
+        self, root: str, split=None, transform: Optional[Callable] = None, download: bool = False, **kwargs
     ) -> None:
         self.root = os.path.expanduser(root)
 
@@ -36,7 +30,7 @@ class Textures(ImageFolder):
         if not self._check_integrity():
             raise RuntimeError("Dataset not found or corrupted." + " You can use download=True to download it")
 
-        super().__init__(self.split_folder, transform=transform, target_transform=target_transform, **kwargs)
+        super().__init__(self.split_folder, transform=transform, **kwargs)
 
     @property
     def dataset_folder(self):

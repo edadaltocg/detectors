@@ -4,7 +4,7 @@ import torch
 from torch import Tensor
 
 import detectors
-from detectors import create_ood_detector
+from detectors import create_detector
 
 
 class Model(torch.nn.Module):
@@ -38,7 +38,7 @@ Y = torch.randint(0, 2, (N,))
 
 
 def test_msp():
-    detector = create_ood_detector("msp", TEST_MODEL)
+    detector = create_detector("msp", TEST_MODEL)
     detector.start()
     detector.update(X, Y)
     detector.end()
@@ -53,7 +53,7 @@ def test_msp():
 
 def test_odin():
     hp = {"temperature": 1.0, "eps": 0.0}
-    detector = create_ood_detector("odin", TEST_MODEL, **hp)
+    detector = create_detector("odin", TEST_MODEL, **hp)
     detector.start()
     detector.update(X, Y)
     detector.end()
@@ -67,7 +67,7 @@ def test_odin():
     assert detector.keywords["eps"] == hp["eps"]
 
     hp = {"temperature": 1000.0, "eps": 0.1}
-    detector = create_ood_detector("odin", TEST_MODEL, **hp)
+    detector = create_detector("odin", TEST_MODEL, **hp)
     detector.start()
     detector.update(X, Y)
     detector.end()
@@ -79,7 +79,7 @@ def test_odin():
 
 
 def test_random_score():
-    detector = create_ood_detector("random", TEST_MODEL)
+    detector = create_detector("random", TEST_MODEL)
     detector.start()
     detector.update(X, Y)
     detector.end()
@@ -93,7 +93,7 @@ def test_random_score():
 
 def test_energy():
     hp = {"temperature": 1.0}
-    detector = create_ood_detector("energy", TEST_MODEL, **hp)
+    detector = create_detector("energy", TEST_MODEL, **hp)
     detector.start()
     detector.update(X, Y)
     detector.end()
@@ -104,7 +104,7 @@ def test_energy():
     assert detector.keywords["temperature"] == hp["temperature"]
 
     hp = {"temperature": 1000.0}
-    detector = create_ood_detector("energy", TEST_MODEL, **hp)
+    detector = create_detector("energy", TEST_MODEL, **hp)
     scores = detector(X)
     scores_std = scores.std()
     assert scores_std > 0.0
@@ -112,7 +112,7 @@ def test_energy():
 
 
 def test_mahalanobis():
-    detector = create_ood_detector("mahalanobis", TEST_MODEL, features_nodes=["conv1"])
+    detector = create_detector("mahalanobis", TEST_MODEL, features_nodes=["conv1"])
     detector.start()
     detector.update(X, Y)
     detector.end()
@@ -123,7 +123,7 @@ def test_mahalanobis():
 
 
 def test_react():
-    detector = create_ood_detector("react", TEST_MODEL, features_nodes=["conv1"])
+    detector = create_detector("react", TEST_MODEL, features_nodes=["conv1"])
     detector.start()
     detector.update(X, Y)
     detector.end()
@@ -135,7 +135,7 @@ def test_react():
 
 
 def test_dice():
-    detector = create_ood_detector("dice", TEST_MODEL, last_layer_name="linear", p=0.5)
+    detector = create_detector("dice", TEST_MODEL, last_layer_name="linear", p=0.5)
     detector.start()
     detector.update(X, Y)
     detector.end()
@@ -146,7 +146,7 @@ def test_dice():
 
 
 def test_knn_euclides():
-    detector = create_ood_detector("knn_euclides", TEST_MODEL, features_nodes=["conv1"])
+    detector = create_detector("knn_euclides", TEST_MODEL, features_nodes=["conv1"])
     detector.start()
     detector.update(X, Y)
     detector.end()
@@ -157,7 +157,7 @@ def test_knn_euclides():
 
 
 def test_igeood_logits():
-    detector = create_ood_detector("igeood_logits", TEST_MODEL)
+    detector = create_detector("igeood_logits", TEST_MODEL)
     detector.start()
     detector.update(X, Y)
     detector.end()
@@ -168,7 +168,7 @@ def test_igeood_logits():
 
 
 def test_max_logits():
-    detector = create_ood_detector("max_logits", TEST_MODEL)
+    detector = create_detector("max_logits", TEST_MODEL)
     detector.start()
     detector.update(X, Y)
     detector.end()
@@ -179,7 +179,7 @@ def test_max_logits():
 
 
 def test_mc_dropout():
-    detector = create_ood_detector("mc_dropout", TEST_MODEL)
+    detector = create_detector("mc_dropout", TEST_MODEL)
     detector.start()
     detector.update(X, Y)
     detector.end()
@@ -190,7 +190,7 @@ def test_mc_dropout():
 
 
 def test_kl_matching():
-    detector = create_ood_detector("kl_matching", TEST_MODEL)
+    detector = create_detector("kl_matching", TEST_MODEL)
     detector.start()
     detector.update(X, Y)
     detector.end()

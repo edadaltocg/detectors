@@ -29,12 +29,15 @@ def create_pipeline(task: str, **kwargs) -> Pipeline:
 
             - `"ood-cifar"`: will return a [`OODCIFARPipeline`].
 
+        seed (int, optional):
+            The seed to use for the pipeline.
+
     Returns:
         [Pipeline]: A suitable pipeline for the task.
 
     Examples:
     ```python
-    >>> pipe = pipeline("ood_cifar10")
+    >>> pipe = pipeline("ood_cifar10_benchmark")
     ```
     """
 

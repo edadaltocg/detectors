@@ -2,7 +2,7 @@
 from typing import Callable, Optional, Type
 
 from torch.utils.data import Dataset
-from torchvision.datasets import STL10, SVHN, ImageNet, StanfordCars, OxfordIIITPet
+from torchvision.datasets import STL10, SVHN, ImageNet, OxfordIIITPet, StanfordCars
 
 from detectors.data.cifar_wrapper import CIFAR10Wrapped, CIFAR100Wrapped
 from detectors.data.cifarc import CIFAR10_C, CIFAR100_C
@@ -10,8 +10,9 @@ from detectors.data.imagenet import ImageNetA, ImageNetC, ImageNetO, ImageNetR
 from detectors.data.mnist_wrapped import FashionMNISTWrapped, MNISTWrapped
 from detectors.data.mnistc import MNISTC
 from detectors.data.mos import MOSSUN, MOSiNaturalist, MOSPlaces365
+from detectors.data.openimage_o import OpenImageO
 from detectors.data.places365 import Places365
-
+import logging
 from ..config import DATA_DIR, IMAGENET_ROOT
 from .constants import *
 from .english_chars import EnglishChars
@@ -22,6 +23,7 @@ from .textures import Textures
 from .tiny_imagenet import TinyImageNet
 from .tiny_imagenet_r_c import TinyImageNetCroped, TinyImageNetResized
 
+_logger = logging.getLogger(__name__)
 datasets_registry = {
     "cifar10": CIFAR10Wrapped,
     "cifar100": CIFAR100Wrapped,
@@ -44,9 +46,6 @@ datasets_registry = {
     "uniform": Uniform,
     "places365": Places365,
     "stanford_cars": StanfordCars,
-    "imagenet": ImageNet,
-    "imagenet1k": ImageNet,
-    "ilsvrc2012": ImageNet,
     "mos_inaturalist": MOSiNaturalist,
     "mos_places365": MOSPlaces365,
     "mos_sun": MOSSUN,
@@ -55,10 +54,15 @@ datasets_registry = {
     "imagenet1klt": ...,
     "cifar10c": CIFAR10_C,
     "cifar100c": CIFAR100_C,
-    "imagenet_c": ImageNetC,
+    "imagenet": ImageNet,
+    "imagenet1k": ImageNet,
+    "ilsvrc2012": ImageNet,
+    "imagenetc": ImageNetC,
+    "imagenet1kc": ImageNetC,
     "imagenet_a": ImageNetA,
     "imagenet_r": ImageNetR,
     "imagenet_o": ImageNetO,
+    "openimage_o": OpenImageO,
     "oxford_pets": OxfordIIITPet,
     "oxford_flowers": ...,
     "cub200": ...,
@@ -89,7 +93,14 @@ def create_dataset(
 
     Args:
         dataset_name (string): Name of the dataset.
-            Already implemented: [`cifar10`, `cifar100`, `stl10`, `svhn`, `mnist`]
+            Already implemented:
+            [`cifar10`, `cifar100`, `stl10`, `svhn`, `mnist`, `fashion_mnist`,
+              `kmnist`, `emnist`, `mnist_c`, `english_chars`, `isun`, `lsun_c`, `lsun_r`,
+              `tiny_imagenet_c`, `tiny_imagenet_r`, `tiny_imagenet`, `textures`, `gaussian`,
+              `uniform`, `places365`, `stanford_cars`, `imagenet`, `imagenet1k`, `ilsvrc2012`,
+              `mos_inaturalist`, `mos_places365`, `mos_sun`, `cifar10lt`, `cifar100lt`,
+              `imagenet1klt`, `cifar10c`, `cifar100c`, `imagenet_c`, `imagenet_a`,
+              `imagenet_r`, `imagenet_o`, `oxford_pets`, `oxford_flowers`, `cub200`]
         root (string): Root directory of dataset.
         split (string, optional): Depends on the selected dataset.
         transform (callable, optional): A function/transform that  takes in an PIL image
@@ -108,7 +119,8 @@ def create_dataset(
         if dataset_name in ["imagenet", "imagenet1k", "ilsvrc2012"]:
             return datasets_registry[dataset_name](root=IMAGENET_ROOT, split=split, transform=transform, **kwargs)
         return datasets_registry[dataset_name](root=root, split=split, transform=transform, download=download, **kwargs)
-    except KeyError:
+    except KeyError as e:
+        _logger.error(e)
         raise ValueError("Dataset name is not specified")
 
 

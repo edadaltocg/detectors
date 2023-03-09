@@ -14,10 +14,11 @@ import torch.utils.data
 from optuna.trial import TrialState
 from torch import Tensor
 from tqdm import tqdm
+import torchvision
 
 from detectors.data import create_dataset
 from detectors.eval import compute_detection_error, fpr_at_fixed_tpr
-from detectors.methods.ood import OODDetector
+from detectors.methods import Detector
 from detectors.pipelines import register_pipeline
 from detectors.pipelines.base import Pipeline
 from detectors.utils import ConcatDatasetsDim1
@@ -71,7 +72,7 @@ class OODBasePipeline(Pipeline):
             # self.fit_dataloader = self.accelerator.prepare(self.fit_dataloader) # this can cause bugs
         self.test_dataloader = self.accelerator.prepare(self.test_dataloader)
 
-    def preprocess(self, method: OODDetector) -> OODDetector:
+    def preprocess(self, method: Detector) -> Detector:
         if self.fit_dataset is None:
             _logger.warning("Fit is not set or not supported. Returning.")
             return method
@@ -117,7 +118,7 @@ class OODBasePipeline(Pipeline):
         test_labels = torch.cat(test_labels).view(-1)
         return test_scores, test_labels
 
-    def run(self, method: OODDetector) -> Dict[str, Any]:
+    def run(self, method: Detector) -> Dict[str, Any]:
         self.method = method
 
         if self.method.model is not None:
@@ -208,6 +209,7 @@ class OODBenchmarkPipeline(OODBasePipeline, ABC):
 
         if self.limit_fit is None:
             self.limit_fit = len(self.fit_dataset)
+        self.limit_fit = min(self.limit_fit, len(self.fit_dataset))
 
         # random indices
         subset = np.random.choice(np.arange(len(self.fit_dataset)), self.limit_fit, replace=False).tolist()
@@ -225,7 +227,7 @@ class OODBenchmarkPipeline(OODBasePipeline, ABC):
         test_dataset = ConcatDatasetsDim1([test_dataset, test_labels])
         self.test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=self.batch_size, shuffle=True)
 
-        self.fit_dataloader = self.accelerator.prepare(self.fit_dataloader)
+        # self.fit_dataloader = self.accelerator.prepare(self.fit_dataloader)
         self.test_dataloader = self.accelerator.prepare(self.test_dataloader)
 
         _logger.info(f"Using {len(self.fit_dataset)} samples for fitting.")
@@ -235,10 +237,10 @@ class OODBenchmarkPipeline(OODBasePipeline, ABC):
         self._setup()
         self._setup_dataloaders()
 
-    def preprocess(self, method: OODDetector) -> OODDetector:
+    def preprocess(self, method: Detector) -> Detector:
         return super().preprocess(method)
 
-    def run(self, method: OODDetector) -> Dict[str, Any]:
+    def run(self, method: Detector) -> Dict[str, Any]:
         self.method = method
 
         if self.method.model is not None:
@@ -273,9 +275,6 @@ class OODBenchmarkPipeline(OODBasePipeline, ABC):
 
         for ood_dataset, res in results.items():
             df = pd.concat([df, pd.DataFrame(res, index=[ood_dataset])])
-            # df = df.append(
-            #     {"Dataset": ood_dataset, **{METRICS_NAMES_PRETTY[k]: v for k, v in res.items()}}, ignore_index=True
-            # )
         df.columns = [METRICS_NAMES_PRETTY[k] for k in df.columns]
         return df.to_string(index=False)
 
@@ -318,7 +317,7 @@ class OODCifar10BenchmarkPipeline(OODBenchmarkPipeline):
 
 @register_pipeline("ood_cifar100_benchmark")
 class OODCifar100BenchmarkPipeline(OODCifar10BenchmarkPipeline):
-    def __init__(self, transform: Callable, limit_fit=10000, batch_size=128, seed=42, **kwargs) -> None:
+    def __init__(self, transform: Callable, limit_fit=10_000, batch_size=128, seed=42, **kwargs) -> None:
         super().__init__(transform=transform, limit_fit=limit_fit, batch_size=batch_size, seed=seed)
         self.in_dataset_name = "cifar100"
         self.ood_datasets_names_splits = {
@@ -337,7 +336,7 @@ class OODCifar100BenchmarkPipeline(OODCifar10BenchmarkPipeline):
 
 @register_pipeline("ood_imagenet_benchmark")
 class OODImageNetBenchmarkPipeline(OODBenchmarkPipeline):
-    def __init__(self, transform: Callable, limit_fit=100000, batch_size=64) -> None:
+    def __init__(self, transform: Callable, limit_fit=100_000, batch_size=64, seed=42, **kwargs) -> None:
         super().__init__(
             "ilsvrc2012",
             {
@@ -350,6 +349,7 @@ class OODImageNetBenchmarkPipeline(OODBenchmarkPipeline):
             limit_fit=limit_fit,
             transform=transform,
             batch_size=batch_size,
+            seed=seed,
         )
 
     def _setup(self):
@@ -367,7 +367,7 @@ class OODImageNetBenchmarkPipeline(OODBenchmarkPipeline):
 
 @register_pipeline("ood_mnist_benchmark")
 class OODMNISTBenchmarkPipeline(OODBenchmarkPipeline):
-    def __init__(self, transform: Callable, limit_fit=100000, batch_size=64) -> None:
+    def __init__(self, transform: Callable, limit_fit=10_000, batch_size=64) -> None:
         super().__init__(
             "mnist",
             {
@@ -384,8 +384,9 @@ class OODMNISTBenchmarkPipeline(OODBenchmarkPipeline):
 
     def _setup(self):
         _logger.info("Loading In-distribution dataset...")
+        self.transform.transforms.append(torchvision.transforms.Grayscale(num_output_channels=1))
         self.fit_dataset = create_dataset(self.in_dataset_name, split="train", transform=self.transform)
-        self.in_test_dataset = create_dataset(self.in_dataset_name, split="test", transform=self.transform)
+        self.in_dataset = create_dataset(self.in_dataset_name, split="test", transform=self.transform)
 
         _logger.info("Loading OOD datasets...")
         self.out_datasets = {
@@ -398,11 +399,11 @@ class OODMNISTBenchmarkPipeline(OODBenchmarkPipeline):
 class OODValidationPipeline(OODBasePipeline):
     def run(
         self,
-        method: OODDetector,
+        method: Detector,
         hyperparameters: Dict[str, List[Any]],
         objective_metric: Literal["fpr", "auc"] = "fpr",
         n_trials=100,
-    ) -> Tuple[OODDetector, optuna.study.Study]:
+    ) -> Tuple[Detector, optuna.study.Study]:
         self.method = method
         self.hyperparameters = hyperparameters
         self.objective_metric = objective_metric

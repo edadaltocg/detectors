@@ -2,7 +2,7 @@ import detectors
 
 
 def main():
-    for dataset_name in detectors.data.datasets_registry:
+    for dataset_name in detectors.data.list_datasets():
         dataset = detectors.data.create_dataset(dataset_name, download=True)
 
 

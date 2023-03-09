@@ -26,7 +26,7 @@ def main(args):
     for method_name in args.methods:
         print(f"Method: {method_name}")
         # create detector
-        method = detectors.create_ood_detector(method_name, model=model, **args.methods_kwargs.get(method_name, {}))
+        method = detectors.create_detector(method_name, model=model, **args.methods_kwargs.get(method_name, {}))
         # run pipeline
         results = pipeline.run(method)
         # print results

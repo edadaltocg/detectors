@@ -15,6 +15,6 @@ import detectors
 )
 def test_ood_pipeline_benchmark(pipeline_name):
     transform = transforms.Compose([transforms.Resize(32), transforms.CenterCrop(32), transforms.ToTensor()])
-    detector = detectors.create_ood_detector("random")
+    detector = detectors.create_detector("random")
     pipeline = detectors.create_pipeline(pipeline_name, transform=transform, batch_size=512)
     pipeline = pipeline.run(detector)
