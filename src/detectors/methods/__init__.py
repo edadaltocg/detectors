@@ -1,9 +1,11 @@
-"""OOD Detection methods."""
+"""Detection methods."""
 import logging
 import types
 from functools import partial
 
-from torch import Tensor, nn
+from torch import Tensor
+
+from .gmm import GMM
 
 from .dice import Dice
 from .energy import energy
@@ -22,7 +24,7 @@ from .react_projection import ReActProjection
 
 _logger = logging.getLogger(__name__)
 
-ood_detector_registry = {
+detectors_registry = {
     "random": random_score,
     "always_one": always_one,
     "always_zero": always_zero,
@@ -45,10 +47,13 @@ ood_detector_registry = {
     "rankfeat": ...,
     "vim": ...,
     "kl_matching": KLMatching,
+    "gmm": GMM,
 }
 
 
 class Detector:
+    """Detector wrapper."""
+
     def __init__(self, detector, **kwargs):
         self.detector = detector
         if hasattr(self.detector, "model"):
@@ -91,7 +96,7 @@ class Detector:
             x (Tensor): input tensor.
 
         Returns:
-            Tensor: OOD scores for each input.
+            Tensor: scores for each input.
         """
         return self.detector(x)
 
@@ -106,30 +111,30 @@ class Detector:
 
 
 def register_detector(name: str):
-    """Decorator to register a new OOD detector."""
+    """Decorator to register a new detector."""
 
     def decorator(f):
-        ood_detector_registry[name] = f
+        detectors_registry[name] = f
         return f
 
     return decorator
 
 
 def create_detector(detector_name: str, **kwargs) -> Detector:
-    """Create OOD detector factory.
+    """Create detector factory.
 
     Args:
-        detector_name (string): Name of the OOD detector.
+        detector_name (string): Name of the detector.
             Already implemented: [`random`, `msp`, `odin`, `energy`, `mahalanobis`, `react`, `dice`, `knn_euclides`, `igeood_logits`, `projection`, `react_projection`]
         model (nn.Module): Model to be used for the OOD detector.
-        **kwargs: Additional arguments for the OOD detector.
+        **kwargs: Additional arguments for the detector.
 
     Returns:
-        OODDetector: OOD detector.
+        Detector.
     """
     model = kwargs.pop("model", None)
-    if detector_name not in ood_detector_registry:
-        raise ValueError(f"Unknown OOD detector: {detector_name}")
-    if not isinstance(ood_detector_registry[detector_name], types.FunctionType):
-        return Detector(ood_detector_registry[detector_name](model=model, **kwargs), **kwargs)
-    return Detector(partial(ood_detector_registry[detector_name], model=model, **kwargs), **kwargs)
+    if detector_name not in detectors_registry:
+        raise ValueError(f"Unknown detector: {detector_name}")
+    if not isinstance(detectors_registry[detector_name], types.FunctionType):
+        return Detector(detectors_registry[detector_name](model=model, **kwargs), **kwargs)
+    return Detector(partial(detectors_registry[detector_name], model=model, **kwargs), **kwargs)

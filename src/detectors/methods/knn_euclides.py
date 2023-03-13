@@ -21,7 +21,6 @@ class KnnEuclides:
         **kwargs,
     ):
         self.model = model
-        self.device = next(model.parameters()).device
         self.features_nodes = features_nodes
         if self.features_nodes is None:
             self.features_nodes = [self.model.feature_info[-1]["module"]]
@@ -81,7 +80,7 @@ class KnnEuclides:
             features[k] = features[k] / torch.norm(features[k], p=2, dim=-1, keepdim=True)  # type: ignore
 
         # pairwise euclidean distance between x and X
-        stack = torch.zeros((x.shape[0], len(features)), device=self.device)
+        stack = torch.zeros((x.shape[0], len(features)), device=x.device)
         for i, k in enumerate(features):
             features[k] = torch.cdist(features[k], self.train_features[k].to(x.device), p=2)
             # take smallest k distance for each test sample

@@ -1,7 +1,8 @@
 import os
-from typing import Callable, Optional
 from multiprocessing import cpu_count
 from multiprocessing.pool import ThreadPool
+from typing import Callable, Optional
+
 from torchvision.datasets import ImageFolder
 from torchvision.datasets.utils import download_url
 
@@ -9,8 +10,10 @@ from torchvision.datasets.utils import download_url
 class OpenImageO(ImageFolder):
     """OpenImageO dataset.
 
-    - Length: <17632 (sore url returns http error code 404)
-    - Size: >28GB
+    - Length: <17632
+        (sore url returns http error code 404.
+        Might need to invoke several times to get at lkeas 16k images). Confirmed 16067 images.
+    - Size: >30GB
     - Paper: https://arxiv.org/pdf/2203.10807.pdf
     - Auxiliary file: `OpenImageO/openimage_o_urls.csv`
 
@@ -45,11 +48,11 @@ class OpenImageO(ImageFolder):
 
         count = 0
         # Iterate directory
-        for path in os.listdir(self.dataset_folder):
+        for path in os.listdir(os.path.join(self.dataset_folder, self.base_folder)):
             # check if current path is a file
-            if os.path.isfile(os.path.join(self.dataset_folder, path)):
+            if os.path.isfile(os.path.join(self.dataset_folder, self.base_folder, path)):
                 count += 1
-        return count >= 15_000
+        return count >= 16_000
 
     def _check_exists(self) -> bool:
         return os.path.exists(self.dataset_folder)
@@ -64,7 +67,7 @@ class OpenImageO(ImageFolder):
             filename = id + "." + extension
             if not os.path.exists(os.path.join(root, filename)):
                 try:
-                    download_url(url, root, filename=filename, max_redirect_hops=5)
+                    download_url(url, root, filename=filename, max_redirect_hops=10)
                 except Exception as e:
                     print(f"Error downloading: {url}. Error: {e}")
 

@@ -17,9 +17,9 @@ def odin(x: Tensor, model: nn.Module, temperature: float = 1000, eps: float = 0.
     Returns:
         Tensor: OOD scores for each input.
     """
-    x = x.requires_grad_()
     model.eval()
     if eps > 0:
+        x.requires_grad_()
         # input preprocessing
         outputs = model(x)
         labels = torch.argmax(outputs, dim=1)

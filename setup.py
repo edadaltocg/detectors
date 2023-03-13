@@ -13,6 +13,7 @@ install_requires = [
     "accelerate",
     "psutil",
     "jinja2",
+    "pyod",
     "matplotlib",
 ]
 

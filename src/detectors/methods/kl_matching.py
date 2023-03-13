@@ -6,17 +6,20 @@ def kl_divergence(p: Tensor, q: Tensor, eps=1e-6):
     return (p * torch.log(p / (q + eps))).sum(1)
 
 
-def js_divergence(p, q):
+def js_divergence(p: Tensor, q: Tensor):
     m = 0.5 * (p + q)
     return 0.5 * kl_divergence(p, m) + 0.5 * kl_divergence(q, m)
 
 
 class KLMatching:
-    """KL-Matching [https://arxiv.org/abs/1911.11132] OOD detector."""
+    """KL-Matching
+
+    - Paper: https://arxiv.org/abs/1911.11132"""
 
     def __init__(self, model: nn.Module, **kwargs):
         self.model = model
         self.model.eval()
+
         self.centroids = {}
         self.train_probs = []
         self.predictions = []
@@ -37,7 +40,7 @@ class KLMatching:
 
     def end(self):
         self.train_probs = torch.cat(self.train_probs, dim=0)
-        self.predictions = torch.cat(self.predictions)
+        self.predictions = torch.cat(self.predictions, dim=0)
         for c in torch.unique(self.predictions).detach().cpu().numpy().tolist():
             self.centroids[c] = torch.mean(self.train_probs[self.predictions == c], dim=0, keepdim=True)
 
@@ -45,11 +48,11 @@ class KLMatching:
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
         probs = torch.softmax(self.model(x), dim=1)
         predictions = probs.argmax(dim=1)
-        scores = torch.empty_like(predictions, dtype=torch.float)
+        scores = torch.empty_like(predictions, dtype=torch.float32)
         for label in torch.unique(predictions).detach().cpu().numpy().tolist():
             if label not in self.centroids:
                 raise ValueError(f"Label {label} not found in training set.")
-            centroid = self.centroids[label]
+            centroid = self.centroids[label].to(x.device)
             scores[predictions == label] = kl_divergence(probs[predictions == label], centroid)
 
         return scores

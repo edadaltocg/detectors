@@ -8,6 +8,9 @@ from time import time
 from typing import Any, Dict, List
 
 import pandas as pd
+import timm
+import timm.data
+import torch
 from torch.utils.data import Dataset
 
 _logger = logging.getLogger(__name__)
@@ -18,7 +21,7 @@ def str_to_dict(string: str) -> Dict[str, Any]:
     return json.loads(string)
 
 
-def append_results_to_csv_file(results, filename="results.csv", remove_duplicates=True):
+def append_results_to_csv_file(results, filename="results.csv"):
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     results = {k: [v] for k, v in results.items()}
     results = pd.DataFrame.from_dict(results, orient="columns")
@@ -27,12 +30,6 @@ def append_results_to_csv_file(results, filename="results.csv", remove_duplicate
         results.to_csv(filename, header=True, index=False)
     else:  # it exists, so append without writing the header
         results.to_csv(filename, mode="a", header=False, index=False)
-
-    # remove duplicates
-    if remove_duplicates:
-        df = pd.read_csv(filename)
-        df.drop_duplicates(inplace=True)
-        df.to_csv(filename, index=False, header=True)
 
 
 class ConcatDatasetsDim1(Dataset):
@@ -76,3 +73,10 @@ def run_parallel(input_space, wrapper_fn):
     p.close()
     p.join()
     return results
+
+
+def create_transform(model: torch.nn.Module, is_training: bool = False):
+    data_config = timm.data.resolve_data_config(model.default_cfg)
+    data_config["is_training"] = is_training
+    transform = timm.data.create_transform(**data_config)
+    return transform

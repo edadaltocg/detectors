@@ -91,7 +91,7 @@ def sklearn_cov_matrix_estimarion(
         "MinCovDet",
         "ShrunkCovariance",
         "OAS",
-    ] = "ShrunkCovariance",
+    ] = "EmpiricalCovariance",
     **method_kwargs,
 ):
     import sklearn.covariance
@@ -117,13 +117,13 @@ def class_cond_mus_cov_inv_matrix(
         class_cond_mean[c] = temp.mean(0, keepdim=True)
         centered_data_per_class[c] = temp - class_cond_mean[c]
 
-        class_cond_mean[c] = class_cond_mean[c].cpu()
-        centered_data_per_class[c] = centered_data_per_class[c].cpu()
+        class_cond_mean[c] = class_cond_mean[c].detach().cpu()
+        centered_data_per_class[c] = centered_data_per_class[c].detach().cpu()
 
     centered_data_per_class = torch.vstack(list(centered_data_per_class.values()))
-    mu, cov_mat, inv_mat = sklearn_cov_matrix_estimarion(
-        centered_data_per_class.detach().cpu().numpy(), method=cov_method
-    )
+    mus = torch.vstack(list(class_cond_mean.values()))
+
+    mu, cov_mat, inv_mat = sklearn_cov_matrix_estimarion(centered_data_per_class.numpy(), method=cov_method)
     cov_mat = torch.from_numpy(cov_mat).float()
     inv_mat = torch.from_numpy(inv_mat).float()
 
@@ -134,7 +134,6 @@ def class_cond_mus_cov_inv_matrix(
     _logger.debug("Cov mat trace %s", torch.trace(cov_mat))
     _logger.debug("Cov mat eigvals %s", torch.linalg.eigvalsh(cov_mat))
 
-    mus = torch.vstack(list(class_cond_mean.values()))
     return mus, cov_mat, inv_mat
 
 
@@ -169,7 +168,7 @@ class Mahalanobis:
             "MinCovDet",
             "ShrunkCovariance",
             "OAS",
-        ] = "ShrunkCovariance",
+        ] = "EmpiricalCovariance",
         inv_mat_method: Literal["cholesky", "svd", "pseudo", "inverse"] = "pseudo",
         pooling_op_name: Literal["max", "avg", "flatten", "getitem", "none"] = "avg",
         aggregation_method=None,

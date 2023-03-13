@@ -1,4 +1,5 @@
 """Data module."""
+import logging
 from typing import Callable, Optional, Type
 
 from torch.utils.data import Dataset
@@ -12,7 +13,7 @@ from detectors.data.mnistc import MNISTC
 from detectors.data.mos import MOSSUN, MOSiNaturalist, MOSPlaces365
 from detectors.data.openimage_o import OpenImageO
 from detectors.data.places365 import Places365
-import logging
+
 from ..config import DATA_DIR, IMAGENET_ROOT
 from .constants import *
 from .english_chars import EnglishChars

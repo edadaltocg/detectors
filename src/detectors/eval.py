@@ -1,7 +1,12 @@
 """Module containing evaluation metrics.
 """
+from typing import Dict
+
 import numpy as np
+import sklearn
+import sklearn.metrics
 import torch
+from torch import Tensor
 
 
 def fpr_at_fixed_tpr(fprs: np.ndarray, tprs: np.ndarray, thresholds: np.ndarray, tpr_level: float = 0.95):
@@ -147,3 +152,33 @@ def expected_calibration_error(num_bins, logits, labels_true):
         res += np.abs(a - c) * np.abs(bin[1] - bin[0]) / n
 
     return res
+
+
+def get_ood_results(in_scores: Tensor, ood_scores: Tensor) -> Dict[str, float]:
+    in_labels = torch.ones(len(in_scores))
+    ood_labels = torch.zeros(len(ood_scores))
+
+    _test_scores = torch.cat([in_scores, ood_scores]).cpu().numpy()
+    _test_labels = torch.cat([in_labels, ood_labels]).cpu().numpy()
+
+    fprs, tprs, thrs = sklearn.metrics.roc_curve(_test_labels, _test_scores)
+    precision, recall, _ = sklearn.metrics.precision_recall_curve(_test_labels, _test_scores, pos_label=1)
+    precision_out, recall_out, _ = sklearn.metrics.precision_recall_curve(_test_labels, _test_scores, pos_label=0)
+    fpr, tpr, thr = fpr_at_fixed_tpr(fprs, tprs, thrs, 0.95)
+    auroc = sklearn.metrics.auc(fprs, tprs)
+    aupr_in = sklearn.metrics.auc(recall, precision)
+    aupr_out = sklearn.metrics.auc(recall_out, precision_out)
+
+    pos_ratio = np.mean(_test_labels == 1)
+    detection_error = compute_detection_error(fpr, tpr, pos_ratio)
+
+    results = {
+        "fpr_at_0.95_tpr": fpr,
+        "tnr_at_0.95_tpr": 1 - fpr,
+        "detection_error": detection_error,
+        "auroc": auroc,
+        "aupr_in": aupr_in,
+        "aupr_out": aupr_out,
+        "thr": thr,
+    }
+    return results

@@ -17,13 +17,10 @@ class Dice:
     """
     DICE: Leveraging Sparsification for Out-of-Distribution Detection
 
-    Reference:
-    ----------
-
-    Sun, Y., & Li, Y. (2021). DICE: Leveraging Sparsification for Out-of-Distribution Detection. ArXiv. https://doi.org/10.48550/arXiv.2111.09805
+    - Paper: https://doi.org/10.48550/arXiv.2111.09805
     """
 
-    def __init__(self, model: torch.nn.Module, last_layer_name: Optional[str] = "fc", p=0.7, *args, **kwargs) -> None:
+    def __init__(self, model: torch.nn.Module, last_layer_name: Optional[str] = None, p=0.7, *args, **kwargs) -> None:
         self.model = model
         self.p = p
 

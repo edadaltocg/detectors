@@ -5,8 +5,6 @@ from typing import Callable, List, Optional
 import torch
 import torch.fx as fx
 import torch.utils.data
-import torchvision
-import torchvision.models as models
 from torch import Tensor
 from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
 
@@ -68,7 +66,7 @@ class ReAct:
     def __init__(
         self,
         model: torch.nn.Module,
-        features_nodes: Optional[List[str]] = ["flatten"],
+        features_nodes: Optional[List[str]] = None,
         graph_nodes_names: Optional[List[str]] = None,  # annoying parameter
         insert_node_fn: Callable = insert_fn,
         p=0.9,
@@ -80,15 +78,21 @@ class ReAct:
         self.model.eval()
         self.features_nodes = features_nodes
         self.graph_nodes_names = graph_nodes_names
-        if self.features_nodes is None:
-            self.features_nodes = [self.model.feature_info[-1]["module"]]
+        if self.features_nodes is not None:
+            self.feature_extractor = create_feature_extractor(self.model, self.features_nodes)
+        else:
+            if not hasattr(self.model, "forward_features"):
+                raise ValueError(
+                    "Model does not have a forward_features method. "
+                    "Please provide a list of feature nodes to extract features from."
+                )
+            self.feature_extractor: nn.Module = self.model.forward_features  # type: ignore
+
         if self.graph_nodes_names is None and not hasattr(self.model, "forward_head"):
             raise ValueError(
                 "You must pass graph_nodes_names if the model does not have forward_head attribute implemented."
             )
-        if len(self.features_nodes) > 1 and self.graph_nodes_names is None:
-            raise ValueError("The number of features nodes must be equal to the number of graph nodes.")
-        self.feature_extractor = create_feature_extractor(self.model, self.features_nodes)
+
         self.insert_node_fn = insert_node_fn
         self.p = p
 

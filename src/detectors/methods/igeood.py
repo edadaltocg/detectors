@@ -15,7 +15,6 @@ class IgeoodLogits:
     def __init__(self, model: torch.nn.Module, temperature: float = 1.0, *args, **kwargs):
         self.model = model
         self.temperature = temperature
-        self.device = next(model.parameters()).device
 
         self.centroids = {}
         self.train_logits = []
