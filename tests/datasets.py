@@ -196,7 +196,7 @@ def test_textures():
 
 
 def test_gaussian():
-    transform = transforms.ToTensor()
+    transform = transforms.Compose([transforms.Resize(32), transforms.CenterCrop(32), transforms.ToTensor()])
 
     dataset = create_dataset("gaussian", root=DATA_DIR, split=None, transform=transform, nb_samples=10000)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
@@ -207,7 +207,7 @@ def test_gaussian():
 
 
 def test_uniform():
-    transform = transforms.ToTensor()
+    transform = transforms.Compose([transforms.Resize(32), transforms.CenterCrop(32), transforms.ToTensor()])
 
     dataset = create_dataset("uniform", root=DATA_DIR, split=None, transform=transform, nb_samples=10000)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)

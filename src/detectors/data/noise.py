@@ -5,6 +5,8 @@ import torch
 import torch.utils.data
 from numpy.random import RandomState
 
+from PIL import Image
+
 
 class CustomTensorDataset(torch.utils.data.Dataset):
     """TensorDataset with support for transformations.
@@ -20,9 +22,9 @@ class CustomTensorDataset(torch.utils.data.Dataset):
         self.transform = transform
 
     def __getitem__(self, index):
-        x = self.tensors[0][index]
+        x = Image.fromarray(self.tensors[0][index])
         if self.transform is not None:
-            x = self.transform(self.tensors[0][index])
+            x = self.transform(x)
 
         return (x,) + tuple(tensor[index] for tensor in self.tensors[1:])
 
