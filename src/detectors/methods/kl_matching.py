@@ -55,4 +55,4 @@ class KLMatching:
             centroid = self.centroids[label].to(x.device)
             scores[predictions == label] = kl_divergence(probs[predictions == label], centroid)
 
-        return scores
+        return -scores

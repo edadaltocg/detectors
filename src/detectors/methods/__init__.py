@@ -4,11 +4,13 @@ import types
 from functools import partial
 
 from torch import Tensor
+from detectors.methods.gradnorm import gradnorm
 
-from .gmm import GMM
+from detectors.methods.vim import ViM
 
 from .dice import Dice
 from .energy import energy
+from .gmm import GMM
 from .igeood import IgeoodLogits
 from .kl_matching import KLMatching
 from .knn_euclides import KnnEuclides
@@ -45,8 +47,9 @@ detectors_registry = {
     "bats": ...,
     "gram": ...,
     "rankfeat": ...,
-    "vim": ...,
+    "vim": ViM,
     "kl_matching": KLMatching,
+    "gradnorm": gradnorm,
     "gmm": GMM,
 }
 
