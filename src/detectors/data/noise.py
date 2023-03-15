@@ -58,7 +58,7 @@ class Gaussian(CustomTensorDataset):
     ):
         rng = RandomState(seed)
         imgs = np.array(np.clip(rng.randn(nb_samples, *shape) + 0.5, 0, 1) * 255, dtype=np.uint8)
-        labels = torch.tensor([0] * nb_samples)
+        labels = np.array([-1] * nb_samples)
         super().__init__(imgs, labels, transform=transform)
 
 
@@ -88,5 +88,5 @@ class Uniform(CustomTensorDataset):
     ):
         rng = RandomState(seed)
         imgs = np.array(rng.rand(nb_samples, *shape) * 255, dtype=np.uint8)
-        labels = torch.tensor([0] * nb_samples)
+        labels = np.array([-1] * nb_samples)
         super().__init__(imgs, labels, transform=transform)

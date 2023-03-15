@@ -191,6 +191,7 @@ def test_textures():
     img, label = next(iter(dataloader))
 
     assert type(img) == torch.Tensor
+    assert img.shape[1] == 3
     assert len(dataset) == 5640
     assert issubclass(textures_class, torchvision.datasets.ImageFolder)
 
@@ -254,6 +255,7 @@ def test_mos_inaturalist():
     img, label = next(iter(dataloader))
 
     assert type(img) == torch.Tensor
+    assert img.shape[1] == 3
     assert len(dataset) == 10000
     assert issubclass(mos_inaturalist_class, torchvision.datasets.ImageFolder)
 
@@ -268,6 +270,7 @@ def test_mos_places365():
     img, label = next(iter(dataloader))
 
     assert type(img) == torch.Tensor
+    assert img.shape[1] == 3
     assert len(dataset) == 10000
     assert issubclass(mos_places365_class, torchvision.datasets.ImageFolder)
 
@@ -282,6 +285,7 @@ def test_mos_sun():
     img, label = next(iter(dataloader))
 
     assert type(img) == torch.Tensor
+    assert img.shape[1] == 3
     assert len(dataset) == 10000
     assert issubclass(mos_sun_class, torchvision.datasets.ImageFolder)
 
@@ -311,6 +315,7 @@ def test_imagenet():
     img, label = next(iter(dataloader))
 
     assert type(img) == torch.Tensor
+    assert img.shape[1] == 3
     assert len(dataset) == 50000
     assert imagenet_class is torchvision.datasets.ImageNet
 
