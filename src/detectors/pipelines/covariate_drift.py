@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import accelerate
 import matplotlib.pyplot as plt
@@ -14,6 +14,7 @@ from tqdm import tqdm
 
 import detectors
 from detectors.data import create_dataset
+from detectors.methods import Detector
 from detectors.pipelines import register_pipeline
 from detectors.pipelines.base import Pipeline
 from detectors.utils import ConcatDatasetsDim1
@@ -30,11 +31,14 @@ class CovariateDriftPipeline(Pipeline):
         corruptions: List[str],
         intensities: List[int],
         batch_size: int = 128,
+        limit_fit: float = 1.0,
         warmup_size=2000,
         seed=42,
         **kwargs,
     ) -> None:
-        """Covariate Drift Pipeline
+        """Covariate Drift Pipeline.
+
+        Covariate drift event: when moving accuracy is below threshold compared to training accuracy
 
         Args:
             dataset_name (str): Name of the dataset.
@@ -44,9 +48,6 @@ class CovariateDriftPipeline(Pipeline):
             intensities (List[int]): List of intensities to apply.
             batch_size (int, optional): Batch size. Defaults to 128.
 
-        Returns:
-            CovariateDriftPipeline: Covariate Drift Pipeline
-
         Example:
         """
         self.accelerator = accelerate.Accelerator()
@@ -55,13 +56,18 @@ class CovariateDriftPipeline(Pipeline):
         _logger.info("Creating datasets...")
 
         fit_dataset = create_dataset(dataset_name, split=dataset_splits[0], transform=transform)
+        # shuffle fit dataset
+        limit_fit = limit_fit or 1
+        limit_fit = min(int(limit_fit * len(fit_dataset)), len(fit_dataset))
+        indices = range(len(fit_dataset))[:limit_fit]
+        fit_dataset = torch.utils.data.Subset(fit_dataset, indices)
         in_dataset = create_dataset(dataset_name, split=dataset_splits[1], transform=transform)
         # shuffle in dataset
         indices = torch.randperm(len(in_dataset)).numpy()
         max_dataset_size = len(in_dataset) // (len(corruptions) * len(intensities) + 1)
         self.splits = torch.arange(0, len(in_dataset), max_dataset_size)
         in_dataset = torch.utils.data.Subset(in_dataset, indices[np.arange(0, self.splits[1].item())])
-        warmup_dataset = torch.utils.data.Subset(fit_dataset, torch.randperm(len(fit_dataset))[:warmup_size].numpy())
+        warmup_dataset = torch.utils.data.Subset(fit_dataset, range(len(fit_dataset))[:warmup_size])
         in_dataset = torch.utils.data.ConcatDataset([warmup_dataset, in_dataset])
         out_datasets = {}
         for i, corruption in enumerate(corruptions):
@@ -96,6 +102,7 @@ class CovariateDriftPipeline(Pipeline):
         self.fit_dataset = fit_dataset
         self.batch_size = batch_size
         self.warmup_size = warmup_size
+        self.limit_fit = limit_fit
 
         self.setup()
 
@@ -107,27 +114,26 @@ class CovariateDriftPipeline(Pipeline):
 
         self.test_dataset = ConcatDatasetsDim1([test_dataset, test_labels])
         self.test_dataloader = torch.utils.data.DataLoader(self.test_dataset, batch_size=self.batch_size, shuffle=False)
-        if self.fit_dataset is not None:
-            self.fit_dataloader = torch.utils.data.DataLoader(
-                self.fit_dataset, batch_size=self.batch_size, shuffle=True
-            )
-            # self.fit_dataloader = self.accelerator.prepare(self.fit_dataloader)
+        self.fit_dataloader = torch.utils.data.DataLoader(self.fit_dataset, batch_size=self.batch_size, shuffle=True)
+        self.fit_dataloader = self.accelerator.prepare(self.fit_dataloader)  # careful with this with multiple gpus
         self.test_dataloader = self.accelerator.prepare(self.test_dataloader)
 
-    def preprocess(self, method):
+    def preprocess(self, method: Detector) -> Detector:
+        if not hasattr(method.detector, "update"):
+            return method
+
         if self.fit_dataset is None:
             _logger.warning("Fit is not set or not supported. Returning.")
             return method
 
         if method.model is not None:
-            method.detector.model = self.accelerator.prepare(self.method.detector.model)
+            method.detector.model = self.accelerator.prepare(method.detector.model)
 
         progress_bar = tqdm(
             range(len(self.fit_dataloader)), desc="Fitting", disable=not self.accelerator.is_local_main_process
         )
         method.start()
         for x, y in self.fit_dataloader:
-            # x, y = self.accelerator.gather_for_metrics(x, y)
             method.update(x, y)
             progress_bar.update(1)
         progress_bar.close()
@@ -139,13 +145,10 @@ class CovariateDriftPipeline(Pipeline):
         model = self.accelerator.prepare(model)
         model.eval()
 
-        self.method = method
-        if self.method.model is not None:
+        method = method
+        if method.model is not None:
             _logger.info("Preparing model...")
-            self.method.model = self.accelerator.prepare(self.method.model)
-
-        if hasattr(method.detector, "update"):
-            self.preprocess(method)
+            method.model = self.accelerator.prepare(method.model)
 
         test_labels = torch.empty(len(self.test_dataset), dtype=torch.long)
         test_targets = torch.empty(len(self.test_dataset), dtype=torch.long)
@@ -157,7 +160,7 @@ class CovariateDriftPipeline(Pipeline):
         )
         for x, y, labels in self.test_dataloader:
 
-            scores = self.method(x)
+            scores = method(x)
             with torch.no_grad():
                 logits = model(x)
 
@@ -184,7 +187,7 @@ class CovariateDriftPipeline(Pipeline):
         )
 
         return {
-            "method": self.method,
+            "method": method,
             "test_scores": test_scores,
             "test_preds": test_preds,
             "test_targets": test_targets,
@@ -219,7 +222,6 @@ class CovariateDriftPipeline(Pipeline):
         moving_accuracy = 1 - mistakes_padded.unfold(0, win_size, stride).mean(dim=1)
 
         # define real drift event: when moving accuracy is below threshold compared to training accuracy
-        # original accuracy:
         acc = moving_accuracy[self.splits[1] : self.splits[1] + (self.splits[2] - self.splits[1]) // 2].mean().item()
         ref = acc_threshold * acc
         _logger.info("Original accuracy: %s", acc)
@@ -229,8 +231,16 @@ class CovariateDriftPipeline(Pipeline):
         corr_drift = np.corrcoef(-moving_average.numpy(), drift_labels.numpy())[0, 1]
         corr_acc = np.corrcoef(moving_average.numpy(), moving_accuracy.numpy())[0, 1]
 
-        auroc_drift = float(sklearn.metrics.roc_auc_score(drift_labels, -test_scores))
-        auroc_mistakes = float(sklearn.metrics.roc_auc_score(mistakes, -test_scores))
+        # check error if theres is only one label on drift_labels
+        if len(np.unique(drift_labels.numpy())) == 1:
+            auroc_drift = 1.0
+        else:
+            auroc_drift = float(sklearn.metrics.roc_auc_score(drift_labels, -test_scores))
+
+        if len(np.unique(mistakes.numpy())) == 1:
+            auroc_mistakes = 1.0
+        else:
+            auroc_mistakes = float(sklearn.metrics.roc_auc_score(mistakes, -test_scores))
 
         fprs, tprs, thresholds = sklearn.metrics.roc_curve(drift_labels, -test_scores)
         fpr_drift, _, _ = detectors.eval.fpr_at_fixed_tpr(fprs, tprs, thresholds, 0.95)
@@ -256,6 +266,16 @@ class CovariateDriftPipeline(Pipeline):
         )
 
     def report(self, results: Dict[str, Any], subsample=1):
+        print("Results:")
+        print("\tCorr. Acc:", results["corr_acc"])
+        print("\tCorr. Drift:", results["corr_drift"])
+        print("\tAUC Drift:", results["auroc_drift"])
+        print("\tAUC Mistakes:", results["auroc_mistakes"])
+        print("\tFPR Drift:", results["fpr_drift"])
+        print("\tFPR Mistakes:", results["fpr_mistakes"])
+        print("\tFirst Drift:", results["first_drift"])
+        print("\tSplits", results["splits"])
+
         # plot results
         mpl_colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
         fig, ax1 = plt.subplots(1, 1, figsize=(9, 4))

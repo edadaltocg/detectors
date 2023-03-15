@@ -64,4 +64,4 @@ def test_ood_pipeline_noise_validation(pipeline_name):
     detector = detectors.create_detector("random")
     pipeline = detectors.create_pipeline(pipeline_name, transform=transform, batch_size=512)
     hyperparameters = {}
-    pipeline = pipeline.run(detector, hyperparameters)
+    pipeline = pipeline.run(detector, hyperparameters, n_trials=2)
