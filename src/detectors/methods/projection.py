@@ -3,12 +3,10 @@ from collections import defaultdict
 from typing import List, Union
 
 import torch
-import torch.nn.functional as F
 from torch import Tensor, nn
 from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
-from tqdm import tqdm
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 def flatten(data: Tensor, *args, **kwargs):
@@ -44,13 +42,6 @@ reductions_registry = {
 }
 
 
-def projection_layer_score2(x: Tensor, mus: Union[Tensor, List[Tensor]], eps=1e-7):
-    stack = torch.zeros(x.shape[0], len(mus), device=x.device, dtype=x.dtype)
-    for i, mu in enumerate(mus):
-        stack[:, i] = F.cosine_similarity(x, mu.unsqueeze(0), dim=-1)
-    return torch.norm(x, p=2, dim=-1, keepdim=True) * stack  # type: ignore
-
-
 def projection_layer_score(x: Tensor, mus: Union[Tensor, List[Tensor]], eps=1e-7):
     if isinstance(mus, list):
         mus = torch.cat(mus, dim=0)
@@ -75,8 +66,6 @@ class Projection:
         self.pooling_name = pooling_name
         self.device = next(self.model.parameters()).device
         self.features_nodes = features_nodes
-        logger.debug(features_nodes)
-        logger.debug(get_graph_node_names(self.model)[0])
         self.feature_extractor = create_feature_extractor(self.model, features_nodes)
         self.pooling_op = reductions_registry[pooling_name]
         self.aggregation_method = aggregation_method
@@ -90,8 +79,14 @@ class Projection:
 
     def start(self, *args, **kwargs):
         self.all_train_features = {}
+        self.max_trajectory = None
+        self.ref_trajectory = None
+        self.scale = None
 
     def update(self, x: Tensor, y: Tensor):
+        self.device = x.device
+        self.feature_extractor = self.feature_extractor.to(x.device)
+
         with torch.no_grad():
             features = self.feature_extractor(x)
 
@@ -122,6 +117,7 @@ class Projection:
 
         for k in self.mus:
             self.mus[k] = torch.cat(self.mus[k], dim=0)
+
         # build trajectories
         logits = self.all_train_features[list(self.all_train_features.keys())[-1]]
         probs = torch.softmax(logits, 1).to(self.device)
@@ -139,66 +135,21 @@ class Projection:
         del self.all_train_features
 
     def __call__(self, x: Tensor):
+        self.feature_extractor = self.feature_extractor.to(x.device)
         with torch.no_grad():
             features = self.feature_extractor(x)
 
         logits = features[list(features.keys())[-1]]
-        probs = torch.softmax(logits, 1)
+        probs = torch.softmax(logits, dim=1)
         scores = {}
         for k in features:
-            # TODO: parallelize this loop
             features[k] = self.pooling_op(features[k])
-            scores[k] = projection_layer_score(features[k], self.mus[k])  # type: ignore
+            scores[k] = projection_layer_score(features[k], self.mus[k].to(features[k].device))  # type: ignore
             scores[k] = torch.sum(scores[k] * probs, 1, keepdim=True)
 
         # combine scores
         scores = torch.cat(list(scores.values()), dim=-1)
-        scores = scores / self.max_trajectory
-        scores = torch.sum(scores * self.ref_trajectory, -1) / self.scale  # type: ignore
+        scores = scores / self.max_trajectory.to(scores.device)
+        scores = torch.sum(scores * self.ref_trajectory.to(scores.device), dim=-1) / self.scale  # type: ignore
 
         return scores
-
-    def __call__2(self, x: Tensor):
-        with torch.no_grad():
-            features = self.feature_extractor(x)
-
-        logits = features[list(features.keys())[-1]]
-        probs = torch.softmax(logits, 1)
-        scores = {}
-        for k in features:
-            # TODO: parallelize this loop
-            features[k] = self.pooling_op(features[k])
-            scores[k] = projection_layer_score(features[k], self.mus[k])  # type: ignore
-            scores[k] = torch.sum(scores[k] * probs, 1, keepdim=True)
-
-        # combine scores
-        scores = torch.cat(list(scores.values()), dim=-1)
-        scores = scores / self.max_trajectory
-        scores = torch.sum(scores * self.ref_trajectory, -1) / self.scale  # type: ignore
-
-        return scores
-
-
-def test():
-    import torchvision.models as models
-
-    model = models.resnet18(pretrained=True)
-    model.fc = torch.nn.Linear(512, 10)
-    model.eval()
-    x = torch.rand(128, 3, 224, 224)
-    y = torch.randint(0, 10, (128,))
-    projection = Projection(model, ["layer4", "fc"], "max")
-    projection.fit(x, y)
-    projection.end()
-    print(projection(x))
-    assert projection(x).shape == (128,)
-
-    mus = projection.mus
-    score1 = projection_layer_score(model(x), mus["fc"])
-    score2 = projection_layer_score2(model(x), mus["fc"])
-
-    assert torch.allclose(score1, score2)
-
-
-if __name__ == "__main__":
-    test()

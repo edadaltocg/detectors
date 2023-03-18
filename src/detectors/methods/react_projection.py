@@ -5,8 +5,8 @@ import torch
 import torch.fx as fx
 from torchvision.models.feature_extraction import get_graph_node_names
 
-from detectors.methods.ood.projection import Projection
-from detectors.methods.ood.react import condition_fn, insert_fn, reactify
+from detectors.methods.projection import Projection
+from detectors.methods.react import condition_fn, insert_fn, reactify
 
 
 class ReActProjection(Projection):

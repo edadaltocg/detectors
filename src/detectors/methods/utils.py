@@ -52,3 +52,11 @@ reductions_registry = {
 
 def create_reduction(reduction: str, **kwargs):
     return partial(reductions_registry[reduction], **kwargs)
+
+
+def get_penultimate_layer_name(model: nn.Module):
+    return list(model._modules.keys())[-2]
+
+
+def get_last_layer(model: nn.Module):
+    return list(model._modules.values())[-1]

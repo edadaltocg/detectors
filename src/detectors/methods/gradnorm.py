@@ -4,7 +4,7 @@ from torch import Tensor, nn
 from torchvision.models.feature_extraction import create_feature_extractor
 
 
-def gradnorm(x: Tensor, model: nn.Module, last_layer_name=None, **kwargs):
+def gradnorm(x: Tensor, model: nn.Module, last_layer_name=None, temperature: float = 1.0, **kwargs):
     if last_layer_name is None:
         last_layer_name = list(model._modules.keys())[-1]
     last_layer = model._modules[last_layer_name]
@@ -19,9 +19,8 @@ def gradnorm(x: Tensor, model: nn.Module, last_layer_name=None, **kwargs):
     for i, l in enumerate(features):
         l = l.unsqueeze(0)
         last_layer.zero_grad()
-        loss = torch.mean(torch.sum(-torch.log_softmax(last_layer(l), dim=-1), dim=-1))
+        loss = torch.mean(torch.sum(-torch.log_softmax(last_layer(l) / temperature, dim=-1), dim=-1))
         loss.backward()
-        layer_grad_abs = torch.abs(last_layer.weight.grad.data)
-        layer_grad_norm = torch.sum(layer_grad_abs)
+        layer_grad_norm = torch.sum(torch.abs(last_layer.weight.grad.data))
         scores[i] = layer_grad_norm
-    return scores
+    return -scores

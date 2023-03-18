@@ -20,6 +20,7 @@ class ViM:
 
     def __init__(self, model: nn.Module, last_layer_name: str = None, penultimate_layer_name: str = None, **kwargs):
         self.model = model
+        self.model.eval()
         self.last_layer_name = last_layer_name
         self.penultimate_layer_name = penultimate_layer_name
 
@@ -53,15 +54,15 @@ class ViM:
 
     def start(self):
         self.principal_subspace = None
-        self.train_features = []
-        self.train_logits = []
+        self.train_features = None
+        self.train_logits = None
         self.alpha = None
         self.top_k = None
 
     @torch.no_grad()
-    def update(self, x: torch.Tensor, y: torch.Tensor, **kwargs):
+    def update(self, x: torch.Tensor, y: torch.Tensor, *args, **kwargs):
+        self.feature_extractor = self.feature_extractor.to(x.device)
         features = self.feature_extractor(x)[self.penultimate_layer_name]
-
         if features.ndim == 4:
             # avg pooling if necessary
             features = features.mean(dim=[2, 3])
@@ -69,19 +70,24 @@ class ViM:
         if dist.is_initialized():
             dist.gather(features, dst=0)
 
-        self.train_features.append(features.detach().cpu())
-        self.train_logits.append(self._get_logits(features).detach().cpu())
+        if self.train_features is None:
+            self.train_features = features.cpu()
+        else:
+            self.train_features = torch.cat([self.train_features, features.cpu()])
+
+        if self.train_logits is None:
+            self.train_logits = self._get_logits(features).cpu()
+        else:
+            self.train_logits = torch.cat([self.train_logits, self._get_logits(features).cpu()])
 
     def end(self):
-        self.train_features = torch.cat(self.train_features)
-        self.train_logits = torch.cat(self.train_logits)
         self.top_k = 1000 if self.train_features.shape[1] > 1500 else 512
 
         _logger.info("Train features shape: %s", self.train_features.shape)
 
         # calculate eigenvectors of the covariance matrix
         ec = EmpiricalCovariance(assume_centered=True)
-        ec.fit(self.train_features.detach().cpu().numpy() - self.u.detach().cpu().numpy())
+        ec.fit(self.train_features.cpu().numpy() - self.u.detach().cpu().numpy())
         eig_vals, eigen_vectors = np.linalg.eig(ec.covariance_)
         determinant = np.linalg.det(ec.covariance_)
         _logger.debug("Determinant: %s", determinant)
@@ -102,9 +108,10 @@ class ViM:
         self.alpha = self.train_logits.max(dim=-1)[0].mean() / vlogits.mean()
         _logger.debug("Alpha: %s", self.alpha)
 
+    @torch.no_grad()
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
-        with torch.no_grad():
-            features = self.feature_extractor(x)[self.penultimate_layer_name]
+        self.feature_extractor = self.feature_extractor.to(x.device)
+        features = self.feature_extractor(x)[self.penultimate_layer_name]
 
         logits = self._get_logits(features)
 
@@ -112,5 +119,4 @@ class ViM:
         vlogit = x_p_t * self.alpha
         energy = torch.logsumexp(logits, dim=-1)
         score = -vlogit + energy
-        _logger.debug("Score: %s", score)
         return score

@@ -57,4 +57,4 @@ class Dice:
     @torch.no_grad()
     def __call__(self, x: Tensor) -> Tensor:
         logits = self.model(x)
-        return torch.logsumexp(logits, dim=-1)
+        return -torch.logsumexp(logits, dim=-1)

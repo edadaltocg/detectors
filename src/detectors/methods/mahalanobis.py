@@ -178,15 +178,10 @@ class Mahalanobis:
         self.model = model
         self.model.eval()
         self.features_nodes = features_nodes
-        if self.features_nodes is not None:
-            self.feature_extractor = create_feature_extractor(self.model, self.features_nodes)
-        else:
-            if not hasattr(self.model, "forward_features"):
-                raise ValueError(
-                    "Model does not have a forward_features method. "
-                    "Please provide a list of feature nodes to extract features from."
-                )
-            self.feature_extractor: nn.Module = self.model.forward_features  # type: ignore
+        if self.features_nodes is None:
+            self.features_nodes = [list(self.model._modules.keys())[-2]]
+        self.feature_extractor = create_feature_extractor(self.model, self.features_nodes)
+
         self.reduction_method = inv_mat_method
         self.aggregation_method = aggregation_method
         if aggregation_method is not None and features_nodes is not None and len(features_nodes) > 1:
@@ -208,10 +203,10 @@ class Mahalanobis:
 
     @torch.no_grad()
     def update(self, x: Tensor, y: Tensor) -> None:
-        if self.features_nodes is None:
-            features = {"penultimate": self.feature_extractor(x)}
-        else:
-            features = self.feature_extractor(x)
+        self.feature_extractor = self.feature_extractor.to(x.device)
+        features = self.feature_extractor(x)
+        if not isinstance(features, dict):
+            features = {"penultimate": features}
 
         for k in features:
             features[k] = self.pooling_op(features[k])
@@ -241,14 +236,14 @@ class Mahalanobis:
         del self.training_features
 
     def __call__(self, x: Tensor) -> Tensor:
+        self.feature_extractor = self.feature_extractor.to(x.device)
         if len(self.invs) == 0 or len(self.mus) == 0:
             raise ValueError("You must properly fit the Mahalanobis method first.")
 
         with torch.no_grad():
-            if self.features_nodes is None:
-                features = {"penultimate": self.feature_extractor(x)}
-            else:
-                features = self.feature_extractor(x)
+            features = self.feature_extractor(x)
+            if not isinstance(features, dict):
+                features = {"penultimate": features}
 
         for k in features:
             features[k] = self.pooling_op(features[k])

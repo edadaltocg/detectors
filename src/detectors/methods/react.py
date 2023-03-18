@@ -78,20 +78,12 @@ class ReAct:
         self.model.eval()
         self.features_nodes = features_nodes
         self.graph_nodes_names = graph_nodes_names
-        if self.features_nodes is not None:
-            self.feature_extractor = create_feature_extractor(self.model, self.features_nodes)
-        else:
-            if not hasattr(self.model, "forward_features"):
-                raise ValueError(
-                    "Model does not have a forward_features method. "
-                    "Please provide a list of feature nodes to extract features from."
-                )
-            self.feature_extractor: nn.Module = self.model.forward_features  # type: ignore
+        if self.features_nodes is None:
+            self.features_nodes = [list(self.model._modules.keys())[-2]]
+        self.feature_extractor = create_feature_extractor(self.model, self.features_nodes)
 
-        if self.graph_nodes_names is None and not hasattr(self.model, "forward_head"):
-            raise ValueError(
-                "You must pass graph_nodes_names if the model does not have forward_head attribute implemented."
-            )
+        self.last_layer = list(self.model._modules.values())[-1]
+        assert isinstance(self.last_layer, torch.nn.Linear)
 
         self.insert_node_fn = insert_node_fn
         self.p = p
@@ -103,6 +95,8 @@ class ReAct:
         self.training_features = {}
 
     def update(self, x: Tensor, y: Tensor) -> None:
+        self.device = x.device
+        self.feature_extractor = self.feature_extractor.to(x.device)
         if len(self.training_features.keys()) > 0:
             k = list(self.training_features.keys())[0]
             if self.training_features[k].view(-1).shape[0] > self.LIMIT:
@@ -135,14 +129,15 @@ class ReAct:
                     insert_fn=partial(insert_fn, thr=self.thrs[i]),
                 )
 
-        _logger.info(f"ReAct thresholds = {dict(zip(self.features_nodes, self.thrs))}")
+        _logger.info("ReAct thresholds = %s", dict(zip(self.features_nodes, self.thrs)))
 
     @torch.no_grad()
     def __call__(self, x: Tensor) -> Tensor:
-        self.model.eval()
+        self.feature_extractor = self.feature_extractor.to(x.device)
+        self.model = self.model.to(x.device)
         if self.graph_nodes_names is not None:
             logits = self.model(x)
         else:
             features = torch.clip(list(self.feature_extractor(x).values())[-1], max=self.thrs[-1])
-            logits = self.model.forward_head(features)
+            logits = self.last_layer(features)  # type: ignore
         return torch.logsumexp(logits, dim=-1)

@@ -122,6 +122,7 @@ class OODBenchmarkPipeline(Pipeline, ABC):
 
         if method.model is not None:
             _logger.info("Preparing model...")
+            method.model.eval()
             method.model = self.accelerator.prepare(method.model)
 
         progress_bar = tqdm(
@@ -141,6 +142,7 @@ class OODBenchmarkPipeline(Pipeline, ABC):
 
         if self.method.model is not None:
             _logger.info("Preparing model...")
+            self.method.model.eval()
             self.method.model = self.accelerator.prepare(self.method.model)
             # model device:
             device = next(self.method.model.parameters()).device
@@ -202,7 +204,7 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         for ood_dataset, res in results.items():
             df = pd.concat([df, pd.DataFrame(res, index=[ood_dataset])])
         df.columns = [METRICS_NAMES_PRETTY[k] for k in df.columns]
-        return df.to_string(index=True)
+        return df.to_string(index=True, float_format="{:.4f}".format)
 
 
 @register_pipeline("ood_cifar10_benchmark")

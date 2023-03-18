@@ -7,38 +7,63 @@ import timm
 import timm.data
 
 import detectors
+from detectors.config import RESULTS_DIR
 from detectors.utils import str_to_dict
 
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 def main(args):
     print(f"Running {args.pipeline} pipeline on {args.model} model")
     # create model
-    model = timm.create_model(args.model, pretrained=True, num_classes=10)
+    model = timm.create_model(args.model, pretrained=True)
     data_config = timm.data.resolve_data_config(model.default_cfg)
     test_transform = timm.data.create_transform(**data_config)
+    _logger.info("Test transform: %s", test_transform)
     # create pipeline
     pipeline = detectors.create_pipeline(
         args.pipeline, batch_size=args.batch_size, seed=args.seed, transform=test_transform, limit_fit=args.limit_fit
     )
-    filename = os.path.join(args.save_root, f"{args.pipeline}.csv")
+
     for method_name in args.methods:
         print(f"Method: {method_name}")
-        # create detector
-        method = detectors.create_detector(method_name, model=model, **args.methods_kwargs.get(method_name, {}))
-        # run pipeline
-        results = pipeline.run(method)
-        # print results
-        print(pipeline.report(results))
-        # save results to file
-        results = {
-            "model": args.model,
-            "method": method_name,
-            **results,
-            "method_kwargs": args.methods_kwargs.get(method_name, {}),
-        }
-        # detectors.utils.append_results_to_csv_file(results, filename)
+        if "vit" in args.model and "pooling_op_name" in args.methods_kwargs.get(method_name, {}):
+            args.methods_kwargs[method_name]["pooling_op_name"] = "getitem"
+
+        try:
+            # create detector
+            method = detectors.create_detector(method_name, model=model, **args.methods_kwargs.get(method_name, {}))
+            # run pipeline
+            pipeline_results = pipeline.run(method)
+            # print results
+            print(pipeline.report(pipeline_results["results"]))
+            # save results to file
+            results = {
+                "model": args.model,
+                "method": method_name,
+                **pipeline_results["results"],
+                "method_kwargs": args.methods_kwargs.get(method_name, {}),
+            }
+            filename = os.path.join(RESULTS_DIR, args.pipeline, "results.csv")
+            detectors.utils.append_results_to_csv_file(results, filename)
+
+            scores = pipeline_results["scores"]
+            labels = pipeline_results["labels"]
+
+            results = {
+                "model": args.model,
+                "in_dataset_name": pipeline.in_dataset_name,
+                "out_datasets_names": pipeline.out_datasets_names,
+                "method": method_name,
+                "method_kwargs": args.methods_kwargs.get(method_name, {}),
+                "scores": scores.numpy().tolist(),
+                "labels": labels.numpy().tolist(),
+            }
+            filename = os.path.join(RESULTS_DIR, args.pipeline, "scores.csv")
+            detectors.utils.append_results_to_csv_file(results, filename)
+        except Exception as e:
+            print(f"Error running method {method_name}: {e}")
+            raise e
 
 
 if __name__ == "__main__":
@@ -49,14 +74,13 @@ if __name__ == "__main__":
     )
     parser.add_argument("--pipeline", type=str, default="ood_cifar10_benchmark")
     parser.add_argument("--model", type=str, default="resnet18_cifar10")
-    parser.add_argument("--batch_size", type=int, default=128)
-    parser.add_argument("--limit_fit", type=int, default=None)
+    parser.add_argument("--batch_size", type=int, default=256)
+    parser.add_argument("--limit_fit", type=float, default=1)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--save_root", type=str, default="results")
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
-    logger.info(json.dumps(args.__dict__, indent=2))
+    _logger.info(json.dumps(args.__dict__, indent=2))
 
     main(args)
