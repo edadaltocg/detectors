@@ -3,24 +3,37 @@ from abc import ABC, abstractmethod
 from functools import partial
 from torch import Tensor
 from detectors.aggregations.anomaly import IFAggregation, LOFAggregation
-
+import logging
 from detectors.aggregations.basics import (
     avg_topk_aggregation,
+    depth_weighted_sum,
+    layer_idx,
     max_aggregation,
     mean_aggregation,
     min_aggregation,
     topk_aggregation,
+    median_aggregation,
 )
+from detectors.aggregations.cosine import CosineAggregation
+from detectors.aggregations.innerprod import InnerProductAggregation
+from detectors.aggregations.mahalanobis import MahalanobisAggregation
 
+
+_logger = logging.getLogger(__name__)
 aggregations_registry = {
     "mean": mean_aggregation,
     "max": max_aggregation,
     "min": min_aggregation,
+    "median": median_aggregation,
+    "dws": depth_weighted_sum,
     "avg_topk": avg_topk_aggregation,
     "topk": topk_aggregation,
     "lof": LOFAggregation,
     "if": IFAggregation,
-    "mahanalobis": ...,
+    "layer_idx": layer_idx,
+    "mahalanobis": MahalanobisAggregation,
+    "innerprod": InnerProductAggregation,
+    "cosine": CosineAggregation,
 }
 
 
@@ -30,18 +43,14 @@ class Aggregation:
     def __init__(self, aggregation_method, *args, **kwargs) -> None:
         self.aggregation_method = aggregation_method
 
-    def fit(self, stack: Tensor):
+    def fit(self, stack: Tensor, *args, **kwargs):
+        if not hasattr(self.aggregation_method, "fit"):
+            _logger.warning("Aggregation method does not have a `fit` method.")
+            return
         self.aggregation_method.fit(stack)
-
-    def predict(self, stack: Tensor):
-        return self.aggregation_method.predict(stack)
 
     def __call__(self, stack: Tensor, *args, **kwargs):
         return self.aggregation_method(stack, *args, **kwargs)
-
-
-def layer_idx(scores, layer_idx):
-    return scores[:, layer_idx]
 
 
 def register_aggregation(name: str):
