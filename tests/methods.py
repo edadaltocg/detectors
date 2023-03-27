@@ -2,7 +2,6 @@ import pytest
 import torch
 from torch import Tensor
 
-import detectors
 from detectors import create_detector
 
 
@@ -11,7 +10,9 @@ class Model(torch.nn.Module):
         super().__init__()
         self.conv1 = torch.nn.Conv2d(3, 6, 5)
         self.drop = torch.nn.Dropout()
-        self.linear = torch.nn.Linear(6 * 28 * 28, 10)
+        self.global_pool = torch.nn.AdaptiveAvgPool2d((1, 1))
+        self.flatten = torch.nn.Flatten()
+        self.linear = torch.nn.Linear(6, 10)
 
     def forward(self, x: Tensor) -> Tensor:
         x = self.forward_features(x)
@@ -24,7 +25,8 @@ class Model(torch.nn.Module):
         return x
 
     def forward_head(self, x: Tensor) -> Tensor:
-        x = torch.flatten(x, 1)
+        x = self.global_pool(x)
+        x = self.flatten(x)
         x = self.linear(x)
         return x
 
@@ -34,6 +36,7 @@ TEST_MODEL.eval()
 N = 100
 X = torch.randn(N, 3, 32, 32)
 Y = torch.randint(0, 2, (N,))
+print(list(TEST_MODEL._modules.keys())[-2])
 
 
 def test_msp():
@@ -198,5 +201,19 @@ def test_kl_matching():
     assert scores.shape == (N,)
 
 
+def test_gradnorm():
+    detector = create_detector("gradnorm", model=TEST_MODEL)
+    detector.start()
+    detector.update(X, Y)
+    detector.end()
+    scores = detector(X)
+    scores_std = scores.std()
+    assert scores_std > 0.0
+    assert scores.shape == (N,)
+
+
 if __name__ == "__main__":
-    test_kl_matching()
+    import logging
+
+    logging.basicConfig(level=logging.DEBUG)
+    test_gradnorm()

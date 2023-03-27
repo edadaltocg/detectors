@@ -17,7 +17,7 @@ _logger = logging.getLogger(__name__)
 
 
 def str_to_dict(string: str) -> Dict[str, Any]:
-    string = string.strip().strip("'")
+    string = string.strip().strip("'").replace("'", '"')
     return json.loads(string)
 
 

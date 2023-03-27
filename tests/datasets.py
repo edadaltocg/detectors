@@ -412,3 +412,27 @@ def test_openimage_o():
     assert type(img) == torch.Tensor
     assert len(dataset) > 15_000
     assert issubclass(openimage_o_class, torchvision.datasets.ImageFolder)
+
+
+def test_iwildcam():
+    transform = transforms.ToTensor()
+
+    dataset = create_dataset("iwildcam", root=DATA_DIR, split="val", transform=transform, download=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    x = next(iter(dataloader))
+    img = x[0]
+    print(len(dataset))
+
+    assert type(img) == torch.Tensor
+    assert len(dataset) == 14_961
+
+
+def test_camelyon17():
+    transform = transforms.ToTensor()
+
+    dataset = create_dataset("camelyon17", root=DATA_DIR, split="val", transform=transform, download=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    img = next(iter(dataloader))[0]
+
+    assert type(img) == torch.Tensor
+    assert len(dataset) == 34_904

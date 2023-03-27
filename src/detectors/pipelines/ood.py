@@ -85,7 +85,7 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         subset = np.random.choice(np.arange(len(self.fit_dataset)), self.limit_fit, replace=False).tolist()
         self.fit_dataset = torch.utils.data.Subset(self.fit_dataset, subset)
         self.fit_dataloader = torch.utils.data.DataLoader(
-            self.fit_dataset, batch_size=self.batch_size, shuffle=True, num_workers=6, pin_memory=True
+            self.fit_dataset, batch_size=self.batch_size, shuffle=True, num_workers=3, pin_memory=True
         )
 
         test_dataset = torch.utils.data.ConcatDataset([self.in_dataset, self.out_dataset])
@@ -97,8 +97,11 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         )
 
         test_dataset = ConcatDatasetsDim1([test_dataset, test_labels])
+        # shuffle and subsample test_dataset
+        # test_dataset = torch.utils.data.Subset(test_dataset, np.random.permutation(len(test_dataset)).tolist())
+        # test_dataset = torch.utils.data.Subset(test_dataset, np.arange(10_000).tolist())
         self.test_dataloader = torch.utils.data.DataLoader(
-            test_dataset, batch_size=self.batch_size, shuffle=True, num_workers=6, pin_memory=True
+            test_dataset, batch_size=self.batch_size, shuffle=True, num_workers=3, pin_memory=True
         )
 
         self.fit_dataloader = self.accelerator.prepare(self.fit_dataloader)
@@ -244,27 +247,39 @@ class OODCifar10BenchmarkPipeline(OODBenchmarkPipeline):
 
 
 @register_pipeline("ood_cifar100_benchmark")
-class OODCifar100BenchmarkPipeline(OODCifar10BenchmarkPipeline):
+class OODCifar100BenchmarkPipeline(OODBenchmarkPipeline):
     def __init__(self, transform: Callable, limit_fit=1, batch_size=128, seed=42, **kwargs) -> None:
-        self.in_dataset_name = "cifar100"
-        self.ood_datasets_names_splits = {
-            "cifar100": "test",
-            "svhn": "test",
-            "isun": None,
-            "lsun_c": None,
-            "lsun_r": None,
-            "tiny_imagenet_c": None,
-            "tiny_imagenet_r": None,
-            "textures": None,
-            "places365": None,
-            "english_chars": None,
-        }
-        self.transform = transform
-        self.batch_size = batch_size
-        self.limit_fit = limit_fit
-        self.seed = seed
+        super().__init__(
+            "cifar100",
+            {
+                "cifar10": "test",
+                "svhn": "test",
+                "isun": None,
+                "lsun_c": None,
+                "lsun_r": None,
+                "tiny_imagenet_c": None,
+                "tiny_imagenet_r": None,
+                "textures": None,
+                "places365": None,
+                "english_chars": None,
+            },
+            transform=transform,
+            batch_size=batch_size,
+            limit_fit=limit_fit,
+            seed=seed,
+        )
 
-        self.setup()
+    def _setup_datasets(self):
+        _logger.info("Loading In-distribution dataset...")
+        self.fit_dataset = create_dataset(self.in_dataset_name, split="train", transform=self.transform, download=True)
+        self.in_dataset = create_dataset(self.in_dataset_name, split="test", transform=self.transform, download=True)
+
+        _logger.info("Loading OOD datasets...")
+        self.out_datasets = {
+            ds: create_dataset(ds, split=split, transform=self.transform, download=True)
+            for ds, split in self.out_datasets_names_splits.items()
+        }
+        self.out_dataset = torch.utils.data.ConcatDataset(list(self.out_datasets.values()))
 
 
 @register_pipeline("ood_imagenet_benchmark")

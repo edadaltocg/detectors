@@ -14,6 +14,7 @@ install_requires = [
     "psutil",
     "jinja2",
     "pyod",
+    "pandas",
     "matplotlib",
 ]
 
