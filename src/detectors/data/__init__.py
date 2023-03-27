@@ -1,4 +1,5 @@
 """Data module."""
+from functools import partial
 import logging
 from typing import Callable, Optional, Type
 
@@ -13,6 +14,7 @@ from detectors.data.mnistc import MNISTC
 from detectors.data.mos import MOSSUN, MOSiNaturalist, MOSPlaces365
 from detectors.data.openimage_o import OpenImageO
 from detectors.data.places365 import Places365
+from detectors.data.wilds_ds import make_wilds_dataset
 
 from ..config import DATA_DIR, IMAGENET_ROOT
 from .constants import *
@@ -43,6 +45,7 @@ datasets_registry = {
     "tiny_imagenet_r": TinyImageNetResized,
     "tiny_imagenet": TinyImageNet,
     "textures": Textures,
+    "textures_curated": ...,
     "gaussian": Gaussian,
     "uniform": Uniform,
     "places365": Places365,
@@ -67,6 +70,12 @@ datasets_registry = {
     "oxford_pets": OxfordIIITPet,
     "oxford_flowers": ...,
     "cub200": ...,
+    "iwildcam": partial(make_wilds_dataset, dataset_name="iwildcam"),
+    "fmow": partial(make_wilds_dataset, dataset_name="fmow"),
+    "camelyon17": partial(make_wilds_dataset, dataset_name="camelyon17"),
+    "rxrx1": partial(make_wilds_dataset, dataset_name="rxrx1"),
+    "poverty": partial(make_wilds_dataset, dataset_name="poverty"),
+    "globalwheat": partial(make_wilds_dataset, dataset_name="globalwheat"),
 }
 
 
