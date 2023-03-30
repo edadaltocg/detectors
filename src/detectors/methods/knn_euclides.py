@@ -28,10 +28,10 @@ class KnnEuclides:
 
         self.alpha = alpha
         self.k = k
-        self.aggregation_method = aggregation_method
-        if aggregation_method is not None and features_nodes is not None and len(self.features_nodes) > 1:
-            _logger.warning("Disabling aggregation method because only one feature is used.")
-            self.aggregation_method = None
+        self.aggregation_method_name = aggregation_method_name
+        self.aggregation_method = None
+        if aggregation_method_name is not None:
+            self.aggregation_method = create_aggregation(aggregation_method_name, **kwargs)
 
         self.train_features = None
         self.mean_op = avg_topk

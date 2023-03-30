@@ -6,45 +6,28 @@ import numpy as np
 import torch
 from torch import Tensor, nn
 from torchvision.models.feature_extraction import create_feature_extractor
+from tqdm import tqdm
+
+from detectors.aggregations import create_aggregation
+from .utils import create_reduction
 
 _logger = logging.getLogger(__name__)
 
 
-def flatten(data: Tensor, **kwargs):
-    return torch.flatten(data, 1)
+def mahalanobis_distance_inv_fast(x: Tensor, y: Tensor, precision: Tensor):
+    """Mahalanobis distance betwee x and y with an accelerated implementation.
 
-
-def adaptive_avg_pool2d(data: Tensor, **kwargs):
-    if len(data.shape) > 2:
-        return torch.flatten(nn.AdaptiveAvgPool2d((1, 1))(data), 1)
-    return data
-
-
-def adaptive_max_pool2d(data: Tensor, **kwargs):
-    if len(data.shape) > 2:
-        return torch.flatten(nn.AdaptiveMaxPool2d((1, 1))(data), 1)
-    return data
-
-
-def getitem(data: Tensor, **kwargs):
-    return data[:, 0].clone().contiguous()
-
-
-def none_reduction(data: Tensor, **kwargs):
-    return data
-
-
-reductions_registry = {
-    "flatten": flatten,
-    "avg": adaptive_avg_pool2d,
-    "max": adaptive_max_pool2d,
-    "getitem": getitem,
-    "none": none_reduction,
-}
+    Args:
+        x (Tensor): first point.
+        y (Tensor): second point.
+        precision (Tensor): inverse of the covariance matrix.
+    """
+    d_squared = torch.mm(torch.mm(x - y, precision), (x - y).T).diag()
+    return torch.sqrt(d_squared)
 
 
 def mahalanobis_distance_inv(x: Tensor, y: Tensor, precision: Tensor):
-    """Mahalanobis distance betwee x and y normalized to the interval [0,1].
+    """Mahalanobis distance betwee x and y.
 
     Args:
         x (Tensor): first point.
@@ -52,7 +35,7 @@ def mahalanobis_distance_inv(x: Tensor, y: Tensor, precision: Tensor):
         precision (Tensor): inverse of the covariance matrix.
     """
 
-    d_squared = torch.mm(torch.mm(x - y, precision), (x - y).T).diag()
+    d_squared = torch.sum((x - y).T * torch.mm(precision, (x - y).T), dim=0)
     return torch.sqrt(d_squared)
 
 
@@ -61,7 +44,15 @@ def mahalanobis_inv_layer_score(x: Tensor, mus: Tensor, inv: Tensor) -> Tensor:
     for i, mu in enumerate(mus):
         stack[:, i] = mahalanobis_distance_inv(x, mu.reshape(1, -1), inv).reshape(-1)
 
-    return -stack.min(1, keepdim=True)[0]
+    return -torch.nan_to_num(stack.min(1, keepdim=True)[0], nan=1e6)
+
+
+def mahalanobis_inv_layer_score_fast(x: Tensor, mus: Tensor, inv: Tensor) -> Tensor:
+    stack = torch.zeros((x.shape[0], mus.shape[0]), device=x.device, dtype=torch.float32)
+    for i, mu in enumerate(mus):
+        stack[:, i] = mahalanobis_distance_inv_fast(x, mu.reshape(1, -1), inv).reshape(-1)
+
+    return -torch.nan_to_num(stack.min(1, keepdim=True)[0], nan=1e6)
 
 
 def torch_reduction_matrix(sigma: Tensor, reduction_method="pseudo"):
@@ -160,6 +151,7 @@ class Mahalanobis:
         self,
         model: nn.Module,
         features_nodes: Optional[List[str]] = None,
+        all_blocks: bool = False,
         cov_mat_method: Literal[
             "EmpiricalCovariance",
             "GraphicalLasso",
@@ -171,27 +163,33 @@ class Mahalanobis:
         ] = "EmpiricalCovariance",
         inv_mat_method: Literal["cholesky", "svd", "pseudo", "inverse"] = "pseudo",
         pooling_op_name: Literal["max", "avg", "flatten", "getitem", "none"] = "avg",
-        aggregation_method=None,
+        aggregation_method_name=None,
         mu_cov_inv_est_fn=class_cond_mus_cov_inv_matrix,
         **kwargs,
     ) -> None:
         self.model = model
         self.model.eval()
         self.features_nodes = features_nodes
+        if hasattr(self.model, "feature_info") and self.features_nodes is None and all_blocks:
+            self.features_nodes = [fi["module"] for fi in self.model.feature_info][1:]
         if self.features_nodes is None:
             self.features_nodes = [list(self.model._modules.keys())[-2]]
+        _logger.info("Using features nodes: %s", self.features_nodes)
         self.feature_extractor = create_feature_extractor(self.model, self.features_nodes)
 
         self.reduction_method = inv_mat_method
-        self.aggregation_method = aggregation_method
-        if aggregation_method is not None and features_nodes is not None and len(features_nodes) > 1:
-            _logger.warning("Disabling aggregation method because only one feature is used.")
-            self.aggregation_method = None
+
+        self.aggregation_method_name = aggregation_method_name
+        self.aggregation_method = None
+        if aggregation_method_name is not None:
+            self.aggregation_method = create_aggregation(aggregation_method_name, **kwargs)
 
         self.pooling_name = pooling_op_name
-        self.pooling_op = reductions_registry[pooling_op_name]
+        self.pooling_op = create_reduction(pooling_op_name)
+
         self.device = next(self.model.parameters()).device
         self.mu_cov_inv_est_fn = partial(mu_cov_inv_est_fn, cov_method=cov_mat_method, inv_method=inv_mat_method)
+        self.batch_size = 256
 
         self.mus = []
         self.invs = []
@@ -200,9 +198,13 @@ class Mahalanobis:
 
     def start(self, *args, **kwargs):
         self.training_features = {}
+        self.mus = []
+        self.invs = []
 
     @torch.no_grad()
     def update(self, x: Tensor, y: Tensor) -> None:
+        self.device = x.device
+        self.batch_size = x.shape[0]
         self.feature_extractor = self.feature_extractor.to(x.device)
         features = self.feature_extractor(x)
         if not isinstance(features, dict):
@@ -223,15 +225,31 @@ class Mahalanobis:
 
     def end(self, *args, **kwargs):
         _logger.info("Computing inverse matrix.")
+        targets = self.training_features.pop("targets")
         for k in self.training_features:
-            if k == "targets":
-                continue
-
-            mu, cov, inv = self.mu_cov_inv_est_fn(
-                self.training_features[k], self.training_features["targets"], device=self.device
-            )
+            _logger.info("Training features shape for key %s is %s", k, self.training_features[k].shape)
+            mu, cov, inv = self.mu_cov_inv_est_fn(self.training_features[k], targets, device=self.device)
             self.mus.append(mu.to(self.device))
             self.invs.append(inv.to(self.device))
+
+        if self.aggregation_method is not None and hasattr:
+            _logger.info("Fitting aggregator %s...", self.aggregation_method_name)
+            all_scores = []
+            for i, k in enumerate(self.training_features):
+                train_scores = []
+                self.batch_size = self.training_features[k].shape[0]
+                idx = 0
+                for idx in tqdm(range(0, self.training_features[k].shape[0], self.batch_size)):
+                    score = mahalanobis_inv_layer_score(
+                        self.training_features[k][idx : idx + self.batch_size].to(self.device),
+                        self.mus[i].to(self.device),
+                        self.invs[i].to(self.device),
+                    )
+                    train_scores.append(score)
+                train_scores = torch.cat(train_scores, dim=0)
+                all_scores.append(train_scores.view(-1, 1))
+            stack = torch.cat(all_scores, dim=1)
+            self.aggregation_method.fit(stack, targets)
 
         del self.training_features
 
@@ -252,7 +270,7 @@ class Mahalanobis:
         stack = None
         for k, mu, inv in zip(features_keys, self.mus, self.invs):
             device = features[k].device
-            scores = mahalanobis_inv_layer_score(features[k], mu.to(device), inv.to(device))
+            scores = mahalanobis_inv_layer_score_fast(features[k], mu.to(device), inv.to(device)).view(-1, 1)
             if stack is None:
                 stack = scores
             else:
