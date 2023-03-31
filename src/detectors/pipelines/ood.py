@@ -85,7 +85,7 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         subset = np.random.choice(np.arange(len(self.fit_dataset)), self.limit_fit, replace=False).tolist()
         self.fit_dataset = torch.utils.data.Subset(self.fit_dataset, subset)
         self.fit_dataloader = torch.utils.data.DataLoader(
-            self.fit_dataset, batch_size=self.batch_size, shuffle=True, num_workers=3, pin_memory=True
+            self.fit_dataset, batch_size=self.batch_size, shuffle=True, num_workers=4, pin_memory=True
         )
 
         test_dataset = torch.utils.data.ConcatDataset([self.in_dataset, self.out_dataset])
@@ -101,7 +101,7 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         # test_dataset = torch.utils.data.Subset(test_dataset, np.random.permutation(len(test_dataset)).tolist())
         # test_dataset = torch.utils.data.Subset(test_dataset, np.arange(10_000).tolist())
         self.test_dataloader = torch.utils.data.DataLoader(
-            test_dataset, batch_size=self.batch_size, shuffle=True, num_workers=3, pin_memory=True
+            test_dataset, batch_size=self.batch_size, shuffle=True, num_workers=4, pin_memory=True
         )
 
         self.fit_dataloader = self.accelerator.prepare(self.fit_dataloader)
@@ -115,6 +115,11 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         self._setup_dataloaders()
 
     def preprocess(self, method: Detector) -> Detector:
+        if method.model is not None:
+            _logger.info("Preparing model...")
+            method.model.eval()
+            method.model = self.accelerator.prepare(method.model)
+
         if self.fit_dataset is None:
             _logger.warning("Fit dataset is not set or not supported. Returning.")
             return method
@@ -123,15 +128,12 @@ class OODBenchmarkPipeline(Pipeline, ABC):
             _logger.warning("Detector does not support fitting. Returning.")
             return method
 
-        if method.model is not None:
-            _logger.info("Preparing model...")
-            method.model.eval()
-            method.model = self.accelerator.prepare(method.model)
-
         progress_bar = tqdm(
             range(len(self.fit_dataloader)), desc="Fitting", disable=not self.accelerator.is_local_main_process
         )
-        method.start()
+        fit_length = len(self.fit_dataloader.dataset)
+        example = next(iter(self.fit_dataloader))[0]
+        method.start(example=example, fit_length=fit_length)
         for x, y in self.fit_dataloader:
             method.update(x, y)
             progress_bar.update(1)
@@ -143,20 +145,17 @@ class OODBenchmarkPipeline(Pipeline, ABC):
     def run(self, method: Detector) -> Dict[str, Any]:
         self.method = method
 
-        if self.method.model is not None:
-            _logger.info("Preparing model...")
-            self.method.model.eval()
-            self.method.model = self.accelerator.prepare(self.method.model)
-            # model device:
-            device = next(self.method.model.parameters()).device
-            _logger.info("Model device: %s", device)
-
         _logger.info("Running pipeline...")
         self.preprocess(self.method)
 
+        # initialize based on dataset size
+        self.infer_times = torch.empty(len(self.test_dataloader.dataset), dtype=torch.float32)
+        test_labels = torch.empty(len(self.test_dataloader.dataset), dtype=torch.int64)
+        test_scores = torch.empty(len(self.test_dataloader.dataset), dtype=torch.float32)
         self.infer_times = []
-        test_labels = []
-        test_scores = []
+        # test_labels = []
+        # test_scores = []
+        idx = 0
         progress_bar = tqdm(
             range(len(self.test_dataloader)), desc="Inference", disable=not self.accelerator.is_local_main_process
         )
@@ -167,17 +166,20 @@ class OODBenchmarkPipeline(Pipeline, ABC):
 
             labels, score = self.accelerator.gather_for_metrics((labels, score))
 
-            test_labels.append(labels.cpu())
-            test_scores.append(score.detach().cpu())
+            # test_labels.append(labels.cpu())
+            # test_scores.append(score.detach().cpu())
             self.infer_times.append(t2 - t1)
+            test_labels[idx : idx + x.shape[0]] = labels.cpu()
+            test_scores[idx : idx + x.shape[0]] = score.detach().cpu()
 
+            idx += x.shape[0]
             progress_bar.update(1)
         progress_bar.close()
 
         self.accelerator.wait_for_everyone()
         self.infer_times = np.mean(self.infer_times)
-        test_scores = torch.cat(test_scores).view(-1)
-        test_labels = torch.cat(test_labels).view(-1)
+        # test_scores = torch.cat(test_scores).view(-1)
+        # test_labels = torch.cat(test_labels).view(-1)
 
         res_obj = self.postprocess(test_scores, test_labels)
 
@@ -197,6 +199,8 @@ class OODBenchmarkPipeline(Pipeline, ABC):
             k: np.mean([results[ds][k] for ds in self.out_datasets_names])
             for k in results[self.out_datasets_names[0]].keys()
         }
+        results["average"]["time"] = self.infer_times
+        ood_scores = test_scores[test_labels > 0]
 
         return results
 
@@ -226,6 +230,8 @@ class OODCifar10BenchmarkPipeline(OODBenchmarkPipeline):
                 "textures": None,
                 "places365": None,
                 "english_chars": None,
+                "uniform": None,
+                "gaussian": None,
             },
             transform=transform,
             batch_size=batch_size,
@@ -262,6 +268,8 @@ class OODCifar100BenchmarkPipeline(OODBenchmarkPipeline):
                 "textures": None,
                 "places365": None,
                 "english_chars": None,
+                "uniform": None,
+                "gaussian": None,
             },
             transform=transform,
             batch_size=batch_size,
@@ -292,8 +300,12 @@ class OODImageNetBenchmarkPipeline(OODBenchmarkPipeline):
                 "mos_sun": None,
                 "mos_places365": None,
                 "textures": None,
-                # "imagenet_o": None,
-                # "openimage_o": None,
+                "imagenet_o": None,
+                "openimage_o": None,
+                "imagenet_a": None,
+                "imagenet_r": None,
+                "uniform": None,
+                "gaussian": None,
             },
             limit_fit=limit_fit,
             transform=transform,

@@ -2,6 +2,7 @@
 import logging
 import types
 from functools import partial
+from typing import Optional
 
 from torch import Tensor
 
@@ -71,29 +72,33 @@ class Detector:
             self.model = None
         self.keywords = kwargs
 
-    def start(self, *args, **kwargs):
+    def start(self, example: Optional[Tensor] = None, fit_length: Optional[int] = None, *args, **kwargs):
         if not hasattr(self.detector, "start"):
             _logger.warning("Detector does not have a start method.")
             return
-        self.detector.start()
+        self.detector.start(example, fit_length, *args, **kwargs)
 
-    def update(self, x: Tensor, y: Tensor):
+    def update(self, x: Tensor, y: Tensor, *args, **kwargs):
         if not hasattr(self.detector, "update"):
             _logger.warning("Detector does not have an update method.")
             return
-        self.detector.update(x, y)
+        self.detector.update(x, y, *args, **kwargs)
 
     def end(self, *args, **kwargs):
         if not hasattr(self.detector, "end"):
             _logger.warning("Detector does not have an end method.")
             return
-        self.detector.end()
+        self.detector.end(*args, **kwargs)
 
-    def fit(self, dataloader):
-        self.start()
+    def fit(self, dataloader, **kwargs):
+        # get fit length # CHECK BUG
+        fit_length = len(dataloader.dataset)
+        # get example
+        x, y = next(iter(dataloader))
+        self.start(example=x, fit_length=fit_length, **kwargs)
         for x, y in dataloader:
-            self.update(x, y)
-        self.end()
+            self.update(x, y, **kwargs)
+        self.end(**kwargs)
         return self
 
     def __call__(self, x: Tensor) -> Tensor:
@@ -115,6 +120,22 @@ class Detector:
         else:
             self.detector = self.detector.__class__(model=model, **self.keywords)
         return self
+
+    # def set_params(self, **params):
+    #     """Set the parameters of the detector."""
+    #     raise NotImplementedError
+
+    def save_params(self, path):
+        """Save the parameters of the detector."""
+        raise NotImplementedError
+
+    def load_params(self, path):
+        """Load the parameters of the detector."""
+        raise NotImplementedError
+
+    def __repr__(self):
+        """Return the string representation of the detector."""
+        return f"{self.__class__.__name__}()"
 
 
 def register_detector(name: str):
