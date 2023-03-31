@@ -23,17 +23,13 @@ def main(args: argparse.Namespace):
     save_root = os.path.join(detectors.config.CHECKPOINTS_DIR, folder_name)
 
     # model
-    model = timm.create_model(args.model, pretrained=False)
+    model = timm.create_model(args.model, pretrained=args.pretrained)
     # get transform
     data_config = timm.data.resolve_data_config(model.default_cfg)
     test_transform = timm.data.create_transform(**data_config)
-    train_transform = transforms.Compose(
-        [
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
-            test_transform,
-        ]
-    )
+    data_config["is_training"] = True
+    train_transform = timm.data.create_transform(**data_config, color_jitter=None)
+
     _logger.info(f"train_transform: {train_transform}")
     _logger.info(f"test_transform: {test_transform}")
 
@@ -95,6 +91,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--scheduler", type=str, default="StepLR")
     parser.add_argument("--scheduler_kwargs", type=str_to_dict, default={"step_size": 30, "gamma": 0.1})
+
+    parser.add_argument("--pretrained", action="store_true")
 
     parser.add_argument("--debug", action="store_true")
 

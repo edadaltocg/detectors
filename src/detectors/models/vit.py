@@ -36,23 +36,6 @@ default_cfgs = {
     ),
 }
 
-# import timm
-# import torch
-# from torch import nn
-
-# model = timm.create_model("timm/vit_base_patch16_224.orig_in21k_ft_in1k", pretrained=False)
-# model.head = nn.Linear(model.head.in_features, 10)
-# model.load_state_dict(
-#     torch.hub.load_state_dict_from_url(
-#         "https://huggingface.co/edadaltocg/vit_base_patch16_224_in21k_ft_svhn/resolve/main/pytorch_model.bin",
-#         map_location="cpu",
-#         file_name="vit_base_patch16_224_in21k_ft_svhn.pth",
-#     )
-# )
-# x = torch.randn(1, 3, 224, 224)
-# y = model(x)
-# assert y.shape == (1, 10)
-
 
 def _create_vit_ft(variant, pretrained=False, **kwargs):
     default_cfg = default_cfgs[variant]

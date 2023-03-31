@@ -1,6 +1,7 @@
-from torch import Tensor
-import torch
 import logging
+
+import torch
+from torch import Tensor
 
 _logger = logging.getLogger(__name__)
 

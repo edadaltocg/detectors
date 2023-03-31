@@ -1,6 +1,6 @@
 from typing import Callable, Optional
-import wilds
 
+import wilds
 
 datasets_info = {
     "iwildcam": {

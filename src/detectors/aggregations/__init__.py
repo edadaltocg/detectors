@@ -1,23 +1,25 @@
+import logging
 import types
 from abc import ABC, abstractmethod
 from functools import partial
+
 from torch import Tensor
+
 from detectors.aggregations.anomaly import IFAggregation, LOFAggregation
-import logging
 from detectors.aggregations.basics import (
     avg_topk_aggregation,
     depth_weighted_sum,
     layer_idx,
     max_aggregation,
     mean_aggregation,
+    median_aggregation,
     min_aggregation,
     topk_aggregation,
-    median_aggregation,
 )
 from detectors.aggregations.cosine import CosineAggregation
 from detectors.aggregations.innerprod import InnerProductAggregation
 from detectors.aggregations.mahalanobis import MahalanobisAggregation
-
+from detectors.aggregations.quantile import QuantileAggregation
 
 _logger = logging.getLogger(__name__)
 aggregations_registry = {
@@ -34,6 +36,7 @@ aggregations_registry = {
     "mahalanobis": MahalanobisAggregation,
     "innerprod": InnerProductAggregation,
     "cosine": CosineAggregation,
+    "quantile": QuantileAggregation,
 }
 
 

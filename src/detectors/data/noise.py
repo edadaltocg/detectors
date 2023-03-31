@@ -4,7 +4,6 @@ import numpy as np
 import torch
 import torch.utils.data
 from numpy.random import RandomState
-
 from PIL import Image
 
 
@@ -41,7 +40,7 @@ class Gaussian(CustomTensorDataset):
         transform (callable, optional): transform to apply.
         download (bool, optional): not used.
         nb_samples (int): number of samples.
-        shape (tuple[int]): shape of the samples.
+        shape (tuple[int, int, int]): shape of the samples.
         seed (int): seed for the random number generator.
     """
 
@@ -52,7 +51,7 @@ class Gaussian(CustomTensorDataset):
         transform: Optional[Callable] = None,
         download: bool = False,
         nb_samples=10000,
-        shape: Tuple[int] = tuple([32, 32, 3]),
+        shape: Tuple[int, int, int] = (224, 224, 3),
         seed=1,
         **kwargs,
     ):
@@ -71,7 +70,7 @@ class Uniform(CustomTensorDataset):
         transform (callable, optional): transform to apply.
         download (bool, optional): not used.
         nb_samples (int): number of samples.
-        shape (tuple[int]): shape of the samples.
+        shape (tuple[int, int, int]): shape of the samples.
         seed (int): seed for the random number generator.
     """
 
@@ -82,7 +81,7 @@ class Uniform(CustomTensorDataset):
         transform: Optional[Callable] = None,
         download: bool = False,
         nb_samples=10000,
-        shape=(32, 32, 3),
+        shape: Tuple[int, int, int] = (224, 224, 3),
         seed=1,
         **kwargs,
     ):

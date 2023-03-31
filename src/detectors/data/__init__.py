@@ -1,6 +1,6 @@
 """Data module."""
-from functools import partial
 import logging
+from functools import partial
 from typing import Callable, Optional, Type
 
 from torch.utils.data import Dataset
@@ -58,11 +58,14 @@ datasets_registry = {
     "imagenet1klt": ...,
     "cifar10c": CIFAR10_C,
     "cifar100c": CIFAR100_C,
+    "cifar10_c": CIFAR10_C,
+    "cifar100_c": CIFAR100_C,
     "imagenet": ImageNet,
     "imagenet1k": ImageNet,
     "ilsvrc2012": ImageNet,
     "imagenetc": ImageNetC,
-    "imagenet1kc": ImageNetC,
+    "imagenet_c": ImageNetC,
+    "imagenet1k_c": ImageNetC,
     "imagenet_a": ImageNetA,
     "imagenet_r": ImageNetR,
     "imagenet_o": ImageNetO,

@@ -3,13 +3,13 @@ import os
 from typing import Callable, Optional
 
 from PIL import Image
-from torchvision.datasets import DatasetFolder
+from torchvision.datasets import DatasetFolder, ImageFolder
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive, verify_str_arg
 
 _logger = logging.getLogger(__name__)
 
 
-class ImageNetA(DatasetFolder):
+class ImageNetA(ImageFolder):
     """ImageNetA dataset.
 
     - Paper: [https://arxiv.org/abs/1907.07174](https://arxiv.org/abs/1907.07174).
@@ -33,8 +33,7 @@ class ImageNetA(DatasetFolder):
         loader = Image.open
         super().__init__(
             root=os.path.join(root, self.base_folder),
-            loader=loader,
-            extensions=("jpg", "jpeg", "JPEG"),
+            # loader=loader,
             # is_valid_file=lambda x: x.endswith(".jpg") or x.endswith(".JPEG"),
             transform=transform,
             **kwargs,

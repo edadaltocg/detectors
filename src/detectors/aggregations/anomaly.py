@@ -1,7 +1,7 @@
-from sklearn.neighbors import LocalOutlierFactor
-from sklearn.ensemble import IsolationForest
-from torch import Tensor
 import torch
+from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
+from torch import Tensor
 
 
 class AnomalyBaseAggregation:
