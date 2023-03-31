@@ -44,5 +44,15 @@ def create_pipeline(task: str, **kwargs) -> Pipeline:
     return pipeline_registry[task](**kwargs)
 
 
+def list_pipelines() -> list:
+    """
+    List all available pipelines.
+
+    Returns:
+        list: A list of available pipelines.
+    """
+    return list(pipeline_registry.keys())
+
+
 from .covariate_drift import *
 from .ood import *

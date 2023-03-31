@@ -155,6 +155,10 @@ def expected_calibration_error(num_bins, logits, labels_true):
 
 
 def get_ood_results(in_scores: Tensor, ood_scores: Tensor) -> Dict[str, float]:
+    if isinstance(in_scores, np.ndarray) or isinstance(in_scores, list):
+        in_scores = torch.tensor(in_scores)
+    if isinstance(ood_scores, np.ndarray) or isinstance(ood_scores, list):
+        ood_scores = torch.tensor(ood_scores)
     in_labels = torch.ones(len(in_scores))
     ood_labels = torch.zeros(len(ood_scores))
 

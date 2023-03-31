@@ -4,8 +4,10 @@ import types
 from functools import partial
 
 from torch import Tensor
-from detectors.methods.gradnorm import gradnorm
 
+from detectors.methods.gradnorm import gradnorm
+from detectors.methods.maxcosine import MaxCosineSimilarity
+from detectors.methods.relative_mahalanobis import RelativeMahalanobis
 from detectors.methods.vim import ViM
 
 from .dice import Dice
@@ -35,8 +37,8 @@ detectors_registry = {
     "max_logits": max_logits,
     "mc_dropout": mc_dropout,
     "energy": energy,
-    "godin": ...,
     "mahalanobis": Mahalanobis,
+    "relative_mahalanobis": RelativeMahalanobis,
     "react": ReAct,
     "dice": Dice,
     "knn_euclides": KnnEuclides,
@@ -44,6 +46,7 @@ detectors_registry = {
     "igeood_features": ...,
     "projection": Projection,
     "react_projection": ReActProjection,
+    "godin": ...,
     "bats": ...,
     "gram": ...,
     "rankfeat": ...,
@@ -51,11 +54,12 @@ detectors_registry = {
     "kl_matching": KLMatching,
     "gradnorm": gradnorm,
     "gmm": GMM,
+    "maxcosine": MaxCosineSimilarity,
 }
 
 
 class Detector:
-    """Detector wrapper."""
+    """Detector interface."""
 
     def __init__(self, detector, **kwargs):
         self.detector = detector
@@ -141,3 +145,8 @@ def create_detector(detector_name: str, **kwargs) -> Detector:
     if not isinstance(detectors_registry[detector_name], types.FunctionType):
         return Detector(detectors_registry[detector_name](model=model, **kwargs), **kwargs)
     return Detector(partial(detectors_registry[detector_name], model=model, **kwargs), **kwargs)
+
+
+def list_detectors():
+    """List available detectors."""
+    return list(detectors_registry.keys())
