@@ -1,6 +1,5 @@
 import logging
 import types
-from abc import ABC, abstractmethod
 from functools import partial
 
 from torch import Tensor
@@ -14,6 +13,7 @@ from detectors.aggregations.basics import (
     mean_aggregation,
     median_aggregation,
     min_aggregation,
+    none_aggregation,
     topk_aggregation,
 )
 from detectors.aggregations.cosine import CosineAggregation
@@ -22,7 +22,9 @@ from detectors.aggregations.mahalanobis import MahalanobisAggregation
 from detectors.aggregations.quantile import QuantileAggregation
 
 _logger = logging.getLogger(__name__)
+
 aggregations_registry = {
+    "none": none_aggregation,
     "mean": mean_aggregation,
     "max": max_aggregation,
     "min": min_aggregation,
@@ -72,3 +74,7 @@ def create_aggregation(aggregation_name: str, **kwargs) -> Aggregation:
     if not isinstance(aggregations_registry[aggregation_name], types.FunctionType):
         return Aggregation(aggregations_registry[aggregation_name](**kwargs))
     return Aggregation(partial(aggregations_registry[aggregation_name], **kwargs))
+
+
+def list_aggregations() -> list:
+    return list(aggregations_registry.keys())

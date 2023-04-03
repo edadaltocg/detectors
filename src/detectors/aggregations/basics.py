@@ -2,6 +2,10 @@ import torch
 from torch import Tensor
 
 
+def none_aggregation(x: Tensor, *args, **kwargs) -> Tensor:
+    return x
+
+
 def mean_aggregation(x: Tensor, *args, **kwargs) -> Tensor:
     return x.mean(dim=1, keepdim=True)
 
