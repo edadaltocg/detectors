@@ -1,9 +1,9 @@
-import torch
 import logging
-from torch import Tensor
+from inspect import Parameter, isclass, signature
+
 import numpy as np
-from torch import linalg
-from inspect import signature, isclass, Parameter
+import torch
+from torch import Tensor, linalg
 from torch.distributions.multivariate_normal import MultivariateNormal
 from torch.distributions.normal import Normal
 from tqdm import tqdm
@@ -1014,7 +1014,7 @@ class GaussianMixture:
         -------
         weighted_log_prob : array, shape (n_samples, n_component)
         """
-        return self._estimate_log_prob(X) + self._estimate_log_weights()
+        return self._estimate_log_prob(X) + self._estimate_log_weights().to(X.device)
 
     def _estimate_log_prob_resp(self, X):
         """Estimate log probabilities and responsibilities for each sample.

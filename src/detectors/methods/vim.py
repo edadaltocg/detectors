@@ -1,11 +1,11 @@
-from sklearn.covariance import EmpiricalCovariance
+import logging
 
 import numpy as np
 import torch
+import torch.distributed as dist
+from sklearn.covariance import EmpiricalCovariance
 from torch import Tensor, nn
 from torchvision.models.feature_extraction import create_feature_extractor
-import logging
-import torch.distributed as dist
 
 _logger = logging.getLogger(__name__)
 

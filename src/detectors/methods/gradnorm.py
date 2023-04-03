@@ -1,5 +1,4 @@
 import torch
-
 from torch import Tensor, nn
 from torchvision.models.feature_extraction import create_feature_extractor
 

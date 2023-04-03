@@ -33,35 +33,17 @@ class MaxCosineSimilarity(DetectorWithFeatureExtraction):
         **kwargs
     """
 
-    def __init__(
-        self,
-        model: torch.nn.Module,
-        features_nodes: Optional[List[str]] = None,
-        all_blocks: bool = False,
-        pooling_op_name: str = "max",
-        aggregation_method_name=None,
-        **kwargs
-    ):
-        super().__init__(
-            model,
-            features_nodes=features_nodes,
-            all_blocks=all_blocks,
-            pooling_op_name=pooling_op_name,
-            aggregation_method_name=aggregation_method_name,
-            **kwargs,
-        )
-
     def _layer_score(self, x: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None):
         return max_cosine_sim_layer_score(x, self.mus[layer_name].to(x.device))
 
     def _fit_params(self) -> None:
         self.mus = {}
-        device = next(self.model.parameters()).device
         unique_classes = torch.unique(self.train_targets).detach().cpu().numpy().tolist()
         for layer_name, layer_features in self.train_features.items():
+            self.mus[layer_name] = []
             for c in unique_classes:
                 filt = self.train_targets == c
                 if filt.sum() == 0:
                     continue
-                self.mus[layer_name].append(layer_features[filt].to(device).mean(0, keepdim=True))
-            self.mus = torch.cat(self.mus[layer_name], dim=0)
+                self.mus[layer_name].append(layer_features[filt].mean(0, keepdim=True))
+            self.mus[layer_name] = torch.cat(self.mus[layer_name], dim=0)

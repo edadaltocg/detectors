@@ -17,10 +17,17 @@ class Dice:
     """
     DICE: Leveraging Sparsification for Out-of-Distribution Detection
 
-    - Paper: https://doi.org/10.48550/arXiv.2111.09805
+    Args:
+        model (torch.nn.Module)
+        last_layer_name (Optional[str]): Name of the last layer of the model. If None, it will be inferred from the model's
+            default_cfg.
+        p (float): Percentage of nodes to keep in the last layer. Default: 0.7
+
+    References:
+        - Paper: https://doi.org/10.48550/arXiv.2111.09805
     """
 
-    def __init__(self, model: torch.nn.Module, last_layer_name: Optional[str] = None, p=0.7, *args, **kwargs) -> None:
+    def __init__(self, model: torch.nn.Module, last_layer_name: Optional[str] = None, p=0.7, **kwargs) -> None:
         self.model = model
         self.p = p
 
@@ -57,4 +64,4 @@ class Dice:
     @torch.no_grad()
     def __call__(self, x: Tensor) -> Tensor:
         logits = self.model(x)
-        return -torch.logsumexp(logits, dim=-1)
+        return torch.logsumexp(logits, dim=-1)

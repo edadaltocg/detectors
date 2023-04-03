@@ -3,43 +3,12 @@ from collections import defaultdict
 from typing import List, Union
 
 import torch
-from torch import Tensor, nn
+from torch import Tensor
 from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
 
+from detectors.methods.utils import create_reduction
+
 _logger = logging.getLogger(__name__)
-
-
-def flatten(data: Tensor, *args, **kwargs):
-    return torch.flatten(data, 1)
-
-
-def adaptive_avg_pool2d(data: Tensor, *args, **kwargs):
-    if len(data.shape) > 2:
-        return torch.flatten(nn.AdaptiveAvgPool2d((1, 1))(data), 1)
-    return data
-
-
-def adaptive_max_pool2d(data: Tensor, *args, **kwargs):
-    if len(data.shape) > 2:
-        return torch.flatten(nn.AdaptiveMaxPool2d((1, 1))(data), 1)
-    return data
-
-
-def getitem(data: Tensor, *args, **kwargs):
-    return data[:, 0].clone().contiguous()
-
-
-def none_reduction(data: Tensor, *args, **kwargs):
-    return data
-
-
-reductions_registry = {
-    "flatten": flatten,
-    "avg": adaptive_avg_pool2d,
-    "max": adaptive_max_pool2d,
-    "getitem": getitem,
-    "none": none_reduction,
-}
 
 
 def projection_layer_score(x: Tensor, mus: Union[Tensor, List[Tensor]], eps=1e-7):
@@ -56,25 +25,24 @@ class Projection:
         self,
         model: torch.nn.Module,
         features_nodes: List[str],
-        pooling_name: str = "max",
+        pooling_op_name: str = "max",
         aggregation_method=None,
-        *args,
-        **kwargs,
+        **kwargs
     ):
         self.model = model
         self.model.eval()
-        self.pooling_name = pooling_name
+        self.pooling_op_name = pooling_op_name
         self.device = next(self.model.parameters()).device
         self.features_nodes = features_nodes
         self.feature_extractor = create_feature_extractor(self.model, features_nodes)
-        self.pooling_op = reductions_registry[pooling_name]
+        self.pooling_op = create_reduction(self.pooling_op_name)
         self.aggregation_method = aggregation_method
+
         self.n_classes = None
         self.mus = None
         self.max_trajectory = None
         self.ref_trajectory = None
         self.scale = 1.0
-
         self.all_train_features = {}
 
     def start(self, *args, **kwargs):

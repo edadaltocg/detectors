@@ -5,11 +5,12 @@ from functools import partial
 from typing import Optional
 
 from torch import Tensor
+from .doctor import doctor
 
-from detectors.methods.gradnorm import gradnorm
-from detectors.methods.maxcosine import MaxCosineSimilarity
-from detectors.methods.relative_mahalanobis import RelativeMahalanobis
-from detectors.methods.vim import ViM
+from .gradnorm import gradnorm
+from .maxcosine import MaxCosineSimilarity
+from .relative_mahalanobis import RelativeMahalanobis
+from .vim import ViM
 
 from .dice import Dice
 from .energy import energy
@@ -35,6 +36,7 @@ detectors_registry = {
     "always_zero": always_zero,
     "msp": msp,
     "odin": odin,
+    "doctor": doctor,
     "max_logits": max_logits,
     "mc_dropout": mc_dropout,
     "energy": energy,

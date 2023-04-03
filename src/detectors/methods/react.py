@@ -11,11 +11,7 @@ from torchvision.models.feature_extraction import create_feature_extractor, get_
 _logger = logging.getLogger(__name__)
 
 
-def reactify(
-    m: torch.nn.Module,
-    condition_fn: Callable,
-    insert_fn: Callable,
-) -> torch.nn.Module:
+def reactify(m: torch.nn.Module, condition_fn: Callable, insert_fn: Callable) -> torch.nn.Module:
     graph: fx.Graph = fx.Tracer().trace(m)
     # Transformation logic here
     for node in graph.nodes:
@@ -41,25 +37,6 @@ def insert_fn(node, graph: fx.Graph, thr: float = 1.0):
         new_node.replace_input_with(new_node, node)
 
 
-@torch.no_grad()
-def _compute_thresholds(feature_extractor, dataloader, device, limit=2000, p=0.9):
-    scores = []
-    feature_extractor.eval()
-    counter = 0
-    for x, _ in dataloader:
-        x = x.to(device)
-        outputs = feature_extractor(x)
-        outputs = {k: v.detach().cpu() for k, v in outputs.items()}
-        scores.append(outputs)
-        counter += x.shape[0]
-        if counter > limit:
-            break
-
-    scores = {k: torch.cat([s[k] for s in scores]) for k in scores[0].keys()}
-    thrs = {k: torch.quantile(scores[k], p).item() for k in scores.keys()}
-    return thrs
-
-
 class ReAct:
     LIMIT = 2_560_000
 
@@ -70,7 +47,6 @@ class ReAct:
         graph_nodes_names: Optional[List[str]] = None,  # annoying parameter
         insert_node_fn: Callable = insert_fn,
         p=0.9,
-        *args,
         **kwargs,
     ) -> None:
         self.model = model
@@ -133,11 +109,11 @@ class ReAct:
 
     @torch.no_grad()
     def __call__(self, x: Tensor) -> Tensor:
-        self.feature_extractor = self.feature_extractor.to(x.device)
-        self.model = self.model.to(x.device)
         if self.graph_nodes_names is not None:
+            self.model = self.model.to(x.device)
             logits = self.model(x)
         else:
+            self.feature_extractor = self.feature_extractor.to(x.device)
             features = torch.clip(list(self.feature_extractor(x).values())[-1], max=self.thrs[-1])
             logits = self.last_layer(features)  # type: ignore
         return torch.logsumexp(logits, dim=-1)

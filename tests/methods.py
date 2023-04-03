@@ -212,8 +212,42 @@ def test_gradnorm():
     assert scores.shape == (N,)
 
 
+def test_maxcosine():
+    detector = create_detector("maxcosine", model=TEST_MODEL)
+    detector.start()
+    detector.update(X, Y)
+    detector.end()
+    scores = detector(X)
+    scores_std = scores.std()
+    assert scores_std > 0.0
+    assert scores.shape == (N,)
+
+
+def test_gmm():
+    detector = create_detector("gmm", model=TEST_MODEL)
+    detector.start()
+    detector.update(X, Y)
+    detector.end()
+    scores = detector(X)
+    scores_std = scores.std()
+    assert scores_std > 0.0
+    assert scores.shape == (N,)
+
+
+def test_relative_mahalanobis():
+    detector = create_detector("relative_mahalanobis", model=TEST_MODEL)
+    detector.start()
+    detector.update(X, Y)
+    detector.end()
+    scores = detector(X)
+    scores_std = scores.std()
+    assert scores_std > 0.0
+    assert scores.shape == (N,)
+
+
 if __name__ == "__main__":
     import logging
 
     logging.basicConfig(level=logging.DEBUG)
-    test_gradnorm()
+    test_gmm()
+    test_relative_mahalanobis()

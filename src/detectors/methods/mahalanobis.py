@@ -134,7 +134,7 @@ class Mahalanobis(DetectorWithFeatureExtraction):
         self.cov_reg = cov_reg
 
     def _layer_score(self, x: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None):
-        return -mahalanobis_dist_forward_substitution(
+        return mahalanobis_inv_layer_score(
             x, self.mus[layer_name].to(x.device), self.precision_chols[layer_name].to(x.device)
         )
 
