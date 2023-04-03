@@ -298,7 +298,7 @@ def test_imagenet_o():
     dataset = create_dataset("imagenet_o", root=DATA_DIR, split=None, transform=transform, download=True)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
     img, label = next(iter(dataloader))
-
+    print(len(dataset))
     assert type(img) == torch.Tensor
     assert len(dataset) == 2000
     assert issubclass(imagenet_o_class, torchvision.datasets.DatasetFolder)
@@ -364,7 +364,7 @@ def test_imagenet_a():
     img, label = next(iter(dataloader))
     print(len(dataset))
     assert type(img) == torch.Tensor
-    # assert len(dataset) == 10000
+    assert len(dataset) == 7500
     assert issubclass(imagenet_a_class, torchvision.datasets.DatasetFolder)
 
 
@@ -378,7 +378,7 @@ def test_imagenet_r():
     img, label = next(iter(dataloader))
     print(len(dataset))
     assert type(img) == torch.Tensor
-    # assert len(dataset) == 10000
+    assert len(dataset) == 30000
     assert issubclass(imagenet_r_class, torchvision.datasets.DatasetFolder)
 
 
@@ -408,7 +408,7 @@ def test_openimage_o():
     dataset = create_dataset("openimage_o", root=DATA_DIR, split=None, transform=transform, download=True)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
     img, label = next(iter(dataloader))
-
+    print(len(dataset))
     assert type(img) == torch.Tensor
     assert len(dataset) > 15_000
     assert issubclass(openimage_o_class, torchvision.datasets.ImageFolder)

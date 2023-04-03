@@ -3,8 +3,8 @@ import json
 import logging
 import multiprocessing as mp
 import os
+import time
 from functools import wraps
-from time import time
 from typing import Any, Dict, List
 
 import pandas as pd
@@ -56,10 +56,11 @@ def timeit(func):
     # time in seconds
     @wraps(func)
     def _time_it(*args, **kwargs):
-        start = time()
-        func(*args, **kwargs)
-        end = time()
-        return end - start
+        start = time.perf_counter()
+        outputs = func(*args, **kwargs)
+        end = time.perf_counter()
+        _logger.info("Function %s took %.4f s" % (func.__name__, end - start))
+        return outputs
 
     return _time_it
 
