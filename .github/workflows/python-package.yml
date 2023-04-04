@@ -29,8 +29,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          python -m pip install -e . dev
-          python -m pip install -e .
+          python -m pip install -e ".[dev]"
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: Format and Lint
         run: |

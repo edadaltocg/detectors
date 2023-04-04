@@ -124,7 +124,7 @@ def test_mahalanobis():
 
 
 def test_react():
-    detector = create_detector("react", model=TEST_MODEL, features_nodes=["conv1"])
+    detector = create_detector("react", model=TEST_MODEL)
     detector.start()
     detector.update(X, Y)
     detector.end()

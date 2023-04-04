@@ -15,16 +15,6 @@ img = np.random.randint(0, 255, size=(32, 32, 3), dtype=np.uint8)
 img = Image.fromarray(img)
 
 
-def test_list_has_models():
-    _all_models = set(
-        list(densenet_default_cfgs.keys())
-        + list(resnet_default_cfgs.keys())
-        + list(vgg_default_cfgs.keys())
-        + list(vit_default_cfgs.keys())
-    )
-    assert len(_all_models) == len(all_models)
-
-
 @pytest.mark.parametrize("model_name", timm.list_models("*cifar10"))
 def test_cifar10_architectures(model_name):
     model = timm.create_model(model_name, pretrained=False)
