@@ -6,6 +6,7 @@ tqdm
 optuna
 scikit-learn
 scipy
+wilds
 jinja2
 pandas
 Pillow

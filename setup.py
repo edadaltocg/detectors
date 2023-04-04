@@ -16,6 +16,7 @@ install_requires = [
     "pyod",
     "pandas",
     "matplotlib",
+    "wilds",
 ]
 
 
