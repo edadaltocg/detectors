@@ -1,23 +1,21 @@
+# Detectors
+
 <p align="center">
     <br>
     <img src="_static/face-with-monocle.svg" width="150" height="150" />
     <br>
 </p>
 
-# Detectors
-
 Package to accelerate research on out-of-distribution (OOD) detection inspired by Huggingface's transformers.
 
 Under development.
 
-## Deployment & Documentation & Stats & License
+## Stats
 
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/edadaltocg/detectors/graphs/commit-activity)
 [![PyPi version](https://badgen.net/pypi/v/pip/)](https://pypi.org/project/pip)
 [![build](https://github.com/edadaltocg/detectors/actions/workflows/python-package.yml/badge.svg)](https://github.com/edadaltocg/detectors/actions/workflows/python-package.yml)
 [![Documentation Status](https://readthedocs.org/projects/ansicolortags/badge/?version=latest)](http://ansicolortags.readthedocs.io/?badge=latest)
-[![GitHub stars](https://img.shields.io/github/stars/edadaltocg/detectors.svg?style=social&label=Star&maxAge=2592000)](https://GitHub.com/edadaltocg/detectors/stargazers/)
-[![GitHub forks](https://badgen.net/github/forks/edadaltocg/detectors/)](https://github.com/edadaltocg/detectors/network/)
 [![PyPI download month](https://img.shields.io/pypi/dm/ansicolortags.svg)](https://pypi.python.org/pypi/ansicolortags/)
 [![GitHub contributors](https://img.shields.io/github/contributors/Naereen/badges.svg)](https://GitHub.com/Naereen/badges/graphs/contributors/)
 [![DOI:](https://zenodo.org/badge/DOI/.svg)](https://doi.org/)
@@ -25,22 +23,17 @@ Under development.
 
 -----
 
-## Table of Contents
-
-<!--
-## Examples
-
-```python
-``` -->
-
 ## Features
 
-- Datasets with md5 checksums.
-- Models pre-trained on CIFAR and integrated in `timm`.
-- Pipeline for evaluating OOD detectors on CIFAR and ImageNet benchmarks.
-- Multiple seed simulations.
-- Diverse aggregation methods for OOD detection.
-- Efficient OOD detection metrics.
+- Pipelines for evaluating OOD detectors on MNIST, CIFAR, and ImageNet benchmarks.
+- Automatic OOD datasets download with md5 checksums.
+- Support models implemented at `timm`.
+- Models on CIFAR and integrated in `timm`.
+- Random seed support for reproducible simulations.
+- Several aggregation methods for multi-layer OOD detection.
+- OOD detection metrics.
+- More than 15 detection methods implemented.
+- Pipelines for open set recognition and covariate drift detection.
 
 ## Installation
 
@@ -56,7 +49,12 @@ cd detectors
 pip install -e .
 ```
 
-## Running a benchmark
+## Examples
+
+### Running a benchmark
+
+```python
+```
 
 ### Optional: Acceleration
 
@@ -93,22 +91,7 @@ What GPU(s) (by id) should be used for training on this machine as a comma-seper
 Do you wish to use FP16 or BF16 (mixed precision)? [NO/fp16/bf16]: NO
 ```
 
-## Thanks to all our contributors
-
-<a href="https://github.com/edadaltocg/detectors/graphs/contributors">
-  <img src="https://contributors-img.web.app/image?repo=edadaltocg/detectors" />
-</a>
-
-### Contact
-
-Concerning this package, its use and bugs, use the [issue page](https://github.com/edadaltocg/detectors/issues) of the [ruptures repository](https://github.com/edadaltocg/detectors). For other inquiries, you can contact me [here](https://edadaltocg.github.io/contact/).
-
-### Important links
-
-- [Documentation](http://detectors.readthedocs.io/)
-- [Pypi package index](https://pypi.python.org/pypi/detectors)
-
-### Changelog
+## Changelog
 
 See the [changelog](https://github.com/edadaltocg/detectors/blob/master/CHANGELOG.md) for a history of notable changes to `detectors`.
 
@@ -116,11 +99,30 @@ See the [changelog](https://github.com/edadaltocg/detectors/blob/master/CHANGELO
 
 See the [contributing guidelines](https://github.com/edadaltocg/detectors/blob/master/CONTRIBUTING.md) for instructions on how to contribute to `detectors`.
 
-<!-- ## TODO
+### Thanks to all our contributors
 
-- Pipeline for generating results table.
+<a href="https://github.com/edadaltocg/detectors/graphs/contributors">
+  <img src="https://contributors-img.web.app/image?repo=edadaltocg/detectors" />
+</a>
+
+### Contact
+
+Concerning this package, its use, and bugs, use the [issue page](https://github.com/edadaltocg/detectors/issues) of the [ruptures repository](https://github.com/edadaltocg/detectors). For other inquiries, you can contact me [here](https://edadaltocg.github.io/contact/).
+
+### Important links
+
+- [Documentation](http://detectors.readthedocs.io/)
+- [Pypi package index](https://pypi.python.org/pypi/detectors)
 
 ## Citing detectors
 
 ```bibtex
-``` -->
+@software{detectors,
+author = {Dadalto, Eduardo and Colombo, Pierre and Darrin, Maxime and Staerman, Guillaume and Nathan, Noiry and Alberge, Florence and Duhamel, Pierre and Piantanida, Pablo},
+month = {3},
+title = {{detectors: .}},
+url = {https://github.com/edadaltocg/detectors},
+version = {0.1.0},
+year = {2023}
+}
+```
