@@ -1,11 +1,10 @@
 import logging
-from inspect import Parameter, isclass, signature
+from inspect import isclass
 
 import numpy as np
 import torch
-from torch import Tensor, linalg
+from torch import linalg
 from torch.distributions.multivariate_normal import MultivariateNormal
-from torch.distributions.normal import Normal
 from tqdm import tqdm
 
 _logger = logging.getLogger(__name__)
@@ -78,144 +77,6 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
 
     if not fitted:
         raise
-
-
-def _check_shape(param, param_shape, name):
-    """Validate the shape of the input parameter 'param'.
-
-    Parameters
-    ----------
-    param : array
-
-    param_shape : tuple
-
-    name : str
-    """
-    param = np.array(param)
-    if param.shape != param_shape:
-        raise ValueError(
-            "The parameter '%s' should have the shape of %s, but got %s" % (name, param_shape, param.shape)
-        )
-
-
-def _check_weights(weights, n_components):
-    """Check the user provided 'weights'.
-
-    Parameters
-    ----------
-    weights : array-like of shape (n_components,)
-        The proportions of components of each mixture.
-
-    n_components : int
-        Number of components.
-
-    Returns
-    -------
-    weights : array, shape (n_components,)
-    """
-    weights = check_array(weights, dtype=[np.float64, np.float32], ensure_2d=False)
-    _check_shape(weights, (n_components,), "weights")
-
-    # check range
-    if any(np.less(weights, 0.0)) or any(np.greater(weights, 1.0)):
-        raise ValueError(
-            "The parameter 'weights' should be in the range "
-            "[0, 1], but got max value %.5f, min value %.5f" % (np.min(weights), np.max(weights))
-        )
-
-    # check normalization
-    if not np.allclose(np.abs(1.0 - np.sum(weights)), 0.0):
-        raise ValueError("The parameter 'weights' should be normalized, but got sum(weights) = %.5f" % np.sum(weights))
-    return weights
-
-
-def _check_means(means, n_components, n_features):
-    """Validate the provided 'means'.
-
-    Parameters
-    ----------
-    means : array-like of shape (n_components, n_features)
-        The centers of the current components.
-
-    n_components : int
-        Number of components.
-
-    n_features : int
-        Number of features.
-
-    Returns
-    -------
-    means : array, (n_components, n_features)
-    """
-    means = check_array(means, dtype=[np.float64, np.float32], ensure_2d=False)
-    _check_shape(means, (n_components, n_features), "means")
-    return means
-
-
-def _check_precision_positivity(precision, covariance_type):
-    """Check a precision vector is positive-definite."""
-    if np.any(np.less_equal(precision, 0.0)):
-        raise ValueError("'%s precision' should be positive" % covariance_type)
-
-
-def _check_precision_matrix(precision, covariance_type):
-    """Check a precision matrix is symmetric and positive-definite."""
-    if not (np.allclose(precision, precision.T) and np.all(linalg.eigvalsh(precision) > 0.0)):
-        raise ValueError("'%s precision' should be symmetric, positive-definite" % covariance_type)
-
-
-def _check_precisions_full(precisions, covariance_type):
-    """Check the precision matrices are symmetric and positive-definite."""
-    for prec in precisions:
-        _check_precision_matrix(prec, covariance_type)
-
-
-def _check_precisions(precisions, covariance_type, n_components, n_features):
-    """Validate user provided precisions.
-
-    Parameters
-    ----------
-    precisions : array-like
-        'full' : shape of (n_components, n_features, n_features)
-        'tied' : shape of (n_features, n_features)
-        'diag' : shape of (n_components, n_features)
-        'spherical' : shape of (n_components,)
-
-    covariance_type : str
-
-    n_components : int
-        Number of components.
-
-    n_features : int
-        Number of features.
-
-    Returns
-    -------
-    precisions : array
-    """
-    precisions = check_array(
-        precisions,
-        dtype=[np.float64, np.float32],
-        ensure_2d=False,
-        allow_nd=covariance_type == "full",
-    )
-
-    precisions_shape = {
-        "full": (n_components, n_features, n_features),
-        "tied": (n_features, n_features),
-        "diag": (n_components, n_features),
-        "spherical": (n_components,),
-    }
-    _check_shape(precisions, precisions_shape[covariance_type], "%s precision" % covariance_type)
-
-    _check_precisions = {
-        "full": _check_precisions_full,
-        "tied": _check_precision_matrix,
-        "diag": _check_precision_positivity,
-        "spherical": _check_precision_positivity,
-    }
-    _check_precisions[covariance_type](precisions, covariance_type)
-    return precisions
 
 
 def _estimate_gaussian_covariances_full(resp, X, nk, means, reg_covar):
@@ -501,12 +362,12 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
 
     elif covariance_type == "spherical":
         raise NotImplementedError("spherical covariance is not implemented yet")
-        precisions = precisions_chol**2
-        log_prob = (
-            torch.sum(means**2, 1) * precisions
-            - 2 * torch.mm(X, means.T * precisions)
-            + torch.outer(row_norms(X, squared=True), precisions)
-        )
+        # precisions = precisions_chol**2
+        # log_prob = (
+        #     torch.sum(means**2, 1) * precisions
+        #     - 2 * torch.mm(X, means.T * precisions)
+        #     + torch.outer(row_norms(X, squared=True), precisions)
+        # )
     # Since we are using the precision of the Cholesky decomposition,
     # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
     return -0.5 * (n_features * torch.log(2 * torch.tensor(torch.pi)) + log_prob) + log_det.to(log_prob.device)
@@ -550,20 +411,6 @@ class GaussianMixture:
     def _check_parameters(self, X):
         """Check the Gaussian mixture parameters are well defined."""
         _, n_features = X.shape
-
-        if self.weights_init is not None:
-            self.weights_init = _check_weights(self.weights_init, self.n_components)
-
-        if self.means_init is not None:
-            self.means_init = _check_means(self.means_init, self.n_components, n_features)
-
-        if self.precisions_init is not None:
-            self.precisions_init = _check_precisions(
-                self.precisions_init,
-                self.covariance_type,
-                self.n_components,
-                n_features,
-            )
 
     def _initialize(self, X, resp):
         """Initialization of the Gaussian mixture parameters.
@@ -680,11 +527,11 @@ class GaussianMixture:
 
         if self.init_params == "kmeans":
             raise NotImplementedError("Kmeans initialization is not implemented for GaussianMixture")
-            resp = torch.zeros((n_samples, self.n_components))
-            label = (
-                cluster.KMeans(n_clusters=self.n_components, n_init=1, random_state=self.random_state).fit(X).labels_
-            )
-            resp[torch.arange(n_samples), label] = 1
+            # resp = torch.zeros((n_samples, self.n_components))
+            # label = (
+            #     cluster.KMeans(n_clusters=self.n_components, n_init=1, random_state=self.random_state).fit(X).labels_
+            # )
+            # resp[torch.arange(n_samples), label] = 1
         elif self.init_params == "random":
             resp = torch.rand(size=(n_samples, self.n_components), device=X.device, dtype=X.dtype)
             resp /= resp.sum(dim=1)[:, np.newaxis]
@@ -694,13 +541,13 @@ class GaussianMixture:
             resp[indices, :] = 1
         elif self.init_params == "k-means++":
             raise NotImplementedError("Kmeans++ initialization is not implemented for GaussianMixture")
-            resp = torch.zeros((n_samples, self.n_components))
-            _, indices = kmeans_plusplus(
-                X,
-                self.n_components,
-                random_state=self.random_state,
-            )
-            resp[indices, torch.arange(self.n_components)] = 1
+            # resp = torch.zeros((n_samples, self.n_components))
+            # _, indices = kmeans_plusplus(
+            #     X,
+            #     self.n_components,
+            #     random_state=self.random_state,
+            # )
+            # resp[indices, torch.arange(self.n_components)] = 1
         else:
             raise ValueError("Unimplemented initialization method '%s'" % self.init_params)
 
@@ -1068,59 +915,3 @@ def test():
 
         assert gmm.means_.shape == (c, d)
         assert scores.shape == (100,)
-
-
-def benchmark_accelerated_gmm():
-    import time
-
-    time_cpu = []
-    time_cuda = []
-    configs = []
-    for n in [10_000, 50_000, 200_000]:
-        for d in [512, 768, 1024, 2048]:
-            for c in [10, 100, 1000]:
-                try:
-                    configs.append((n, d, c))
-                    print(f"n={n}, d={d}, c={c}", end=": ")
-                    if len(time_cpu) == 0 or time_cpu[-1] < 10:
-                        X = torch.randn(n, d, dtype=torch.float32)
-                        gmm = GaussianMixture(
-                            n_components=c,
-                            covariance_type="full",
-                            max_iter=100,
-                            tol=1e-3,
-                            init_params="random_from_data",
-                        )
-                        start = time.time()
-                        gmm.fit(X)
-                        end = time.time()
-                        time_cpu.append(end - start)
-                        print(f"CPU time: {end - start:.4f}s", end=", ")
-
-                    X = torch.randn(n, d, dtype=torch.float32, device="cuda")
-                    gmm = GaussianMixture(
-                        n_components=c, covariance_type="full", max_iter=100, tol=1e-1, init_params="random_from_data"
-                    )
-                    start_cuda = time.time()
-                    gmm.fit(X)
-                    end_cuda = time.time()
-                    time_cuda.append(end_cuda - start_cuda)
-                    print(f"CUDA time: {end_cuda - start_cuda:.4f}s")
-                except RuntimeError as e:
-                    print(e)
-                    continue
-
-    print("CPU times:")
-    for (n, d, c), t in zip(configs, time_cpu):
-        print(f"n={n}, d={d}, c={c}: {t:.4f}s")
-
-    # sort configs and time_gpu
-    configs, time_cuda = zip(*sorted(zip(configs, time_cuda)))
-    print("CUDA times:")
-    for (n, d, c), t in zip(configs, time_cuda):
-        print(f"n={n}, d={d}, c={c}: {t:.4f}s")
-
-
-if __name__ == "__main__":
-    test()
-    benchmark_accelerated_gmm()

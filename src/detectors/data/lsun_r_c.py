@@ -38,7 +38,6 @@ class LSUNResized(ImageFolder):
 
         if not self._check_integrity():
             raise RuntimeError("Dataset not found or corrupted." + " You can use download=True to download it")
-            i
         super().__init__(self.dataset_folder, transform=transform, **kwargs)
 
     def _check_integrity(self) -> bool:

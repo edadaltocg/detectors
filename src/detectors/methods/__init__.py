@@ -1,7 +1,7 @@
 """Detection methods."""
-from enum import Enum
 import logging
 import types
+from enum import Enum
 from functools import partial
 from typing import Optional
 

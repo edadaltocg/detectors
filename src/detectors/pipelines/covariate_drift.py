@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import accelerate
 import matplotlib.pyplot as plt
@@ -285,7 +285,7 @@ class CovariateDriftPipeline(Pipeline):
         test_scores = results["test_scores"][::subsample]
         moving_average = results["moving_average"][::subsample]
         ema = results["ema"][::subsample]
-        test_labels = results["test_labels"][::subsample]
+        # test_labels = results["test_labels"][::subsample]
         drift_labels = results["drift_labels"][::subsample]
         mistakes = results["mistakes"][::subsample]
         moving_accuracy = results["moving_accuracy"][::subsample]

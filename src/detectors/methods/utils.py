@@ -5,7 +5,6 @@ from typing import Callable, Literal
 import numpy as np
 import torch
 from torch import Tensor, nn
-from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
 
 _logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 """Data module."""
-from enum import Enum
 import logging
+from enum import Enum
 from functools import partial
 from typing import Callable, Optional, Type
 

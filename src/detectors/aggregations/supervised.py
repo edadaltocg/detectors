@@ -1,5 +1,9 @@
 import numpy as np
 from sklearn.linear_model import LogisticRegressionCV
+import logging
+import sklearn.metrics as skm
+
+_logger = logging.getLogger(__name__)
 
 
 class WeightRegression:
@@ -31,7 +35,7 @@ class WeightRegression:
         x_train, y_train, x_test, y_test = self.split_data(in_data, out_data)
         # fit
         self.regressor.fit(x_train, y_train)
-        logger.info(f"Coeficients: {self.regressor.coef_}")
+        _logger.info(f"Coeficients: {self.regressor.coef_}")
 
         # predict
         y_pred_test = self.regressor.predict_proba(x_test)[:, 1]
@@ -39,10 +43,10 @@ class WeightRegression:
         if self.verbose:
             print(self.regressor.coef_)
             y_pred_train = self.regressor.predict_proba(x_train)[:, 1]
-            logger.info(
+            _logger.info(
                 "training fpr: {:.4f}".format(self.scoring_obj(y_train, y_pred_train)),
             )
-            logger.info(
+            _logger.info(
                 "test fpr: {:.4f}".format(self.scoring_obj(y_test, y_pred_test)),
             )
         in_scores = y_pred_test[y_test == 1]
@@ -72,4 +76,3 @@ class WeightRegression:
 
     def scoring_obj(self, y_true, y_pred):
         fprs, tprs, thresholds = skm.roc_curve(y_true, y_pred, pos_label=1)
-        return em.compute_fpr_tpr(tprs, fprs, self.recall_level)
