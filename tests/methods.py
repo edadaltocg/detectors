@@ -243,11 +243,3 @@ def test_relative_mahalanobis():
     scores_std = scores.std()
     assert scores_std > 0.0
     assert scores.shape == (N,)
-
-
-if __name__ == "__main__":
-    import logging
-
-    logging.basicConfig(level=logging.DEBUG)
-    test_gmm()
-    test_relative_mahalanobis()
