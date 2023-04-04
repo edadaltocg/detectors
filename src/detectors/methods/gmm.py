@@ -7,7 +7,6 @@ from torch import Tensor, nn
 from detectors.methods.gmm_torch import GaussianMixture
 from detectors.methods.templates import DetectorWithFeatureExtraction
 
-
 _logger = logging.getLogger(__name__)
 
 

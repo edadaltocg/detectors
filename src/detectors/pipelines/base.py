@@ -1,12 +1,11 @@
 """Base abstract pipeline class."""
 import logging
-from abc import ABC
 from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
 
-class Pipeline(ABC):
+class Pipeline:
     """Base Pipeline class."""
 
     def __init__(self) -> None:

@@ -1,4 +1,5 @@
 """Pipeline module."""
+from enum import Enum
 from detectors.pipelines.base import Pipeline
 
 pipeline_registry = {}
@@ -36,9 +37,10 @@ def create_pipeline(task: str, **kwargs) -> Pipeline:
         [Pipeline]: A suitable pipeline for the task.
 
     Examples:
-    ```python
+
+        ```python
     >>> pipe = pipeline("ood_cifar10_benchmark")
-    ```
+        ```
     """
 
     return pipeline_registry[task](**kwargs)
@@ -56,3 +58,5 @@ def list_pipelines() -> list:
 
 from .covariate_drift import *
 from .ood import *
+
+PipelinesRegistry = Enum("PipelinesRegistry", dict(zip(list_pipelines(), list_pipelines())))

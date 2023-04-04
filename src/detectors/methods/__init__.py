@@ -1,25 +1,23 @@
 """Detection methods."""
+from enum import Enum
 import logging
 import types
 from functools import partial
 from typing import Optional
 
 from torch import Tensor
-from .doctor import doctor
-
-from .gradnorm import gradnorm
-from .maxcosine import MaxCosineSimilarity
-from .relative_mahalanobis import RelativeMahalanobis
-from .vim import ViM
 
 from .dice import Dice
+from .doctor import doctor
 from .energy import energy
 from .gmm import GMM
+from .gradnorm import gradnorm
 from .igeood import IgeoodLogits
 from .kl_matching import KLMatching
 from .knn_euclides import KnnEuclides
 from .mahalanobis import Mahalanobis
 from .max_logits import max_logits
+from .maxcosine import MaxCosineSimilarity
 from .mcdropout import mc_dropout
 from .msp import msp
 from .naive import always_one, always_zero, random_score
@@ -27,6 +25,8 @@ from .odin import odin
 from .projection import Projection
 from .react import ReAct
 from .react_projection import ReActProjection
+from .relative_mahalanobis import RelativeMahalanobis
+from .vim import ViM
 
 _logger = logging.getLogger(__name__)
 
@@ -52,6 +52,7 @@ detectors_registry = {
     "godin": ...,
     "bats": ...,
     "gram": ...,
+    "openmax": ...,
     "rankfeat": ...,
     "vim": ViM,
     "kl_matching": KLMatching,
@@ -173,3 +174,6 @@ def create_detector(detector_name: str, **kwargs) -> Detector:
 def list_detectors():
     """List available detectors."""
     return list(detectors_registry.keys())
+
+
+MethodsRegistry = Enum("MethodsRegistry", dict(zip(list_detectors(), list_detectors())))

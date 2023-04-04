@@ -15,7 +15,7 @@ class MOSSUN(ImageFolder):
             exists or will be saved to if download is set to True.
         split (string, optional): The dataset split, not used.
         transform (callable, optional): A function/transform that takes in an PIL image
-            and returns a transformed version. E.g, ``transforms.RandomCrop`.
+            and returns a transformed version. E.g, `transforms.RandomCrop`.
         download (bool, optional): If true, downloads the dataset from the internet and
             puts it in root directory. If dataset is already downloaded, it is not
             downloaded again.
@@ -65,7 +65,7 @@ class MOSPlaces365(MOSSUN):
             exists or will be saved to if download is set to True.
         split (string, optional): The dataset split, not used.
         transform (callable, optional): A function/transform that takes in an PIL image
-            and returns a transformed version. E.g, ``transforms.RandomCrop`.
+            and returns a transformed version. E.g, `transforms.RandomCrop`.
         download (bool, optional): If true, downloads the dataset from the internet and
             puts it in root directory. If dataset is already downloaded, it is not
             downloaded again.
@@ -86,7 +86,7 @@ class MOSiNaturalist(MOSSUN):
             exists or will be saved to if download is set to True.
         split (string, optional): The dataset split, not used.
         transform (callable, optional): A function/transform that takes in an PIL image
-            and returns a transformed version. E.g, ``transforms.RandomCrop`.
+            and returns a transformed version. E.g, `transforms.RandomCrop`.
         download (bool, optional): If true, downloads the dataset from the internet and
             puts it in root directory. If dataset is already downloaded, it is not
             downloaded again.

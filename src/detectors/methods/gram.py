@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import os
 
 import numpy as np
@@ -9,10 +7,6 @@ import torchvision
 import torchvision.transforms as transforms
 from sklearn.linear_model import LogisticRegressionCV
 from torch.autograd import Variable
-from util.args_loader import get_args
-from util.data_loader import get_loader_in, get_loader_out
-from util.metrics import compute_in, compute_traditional_ood
-from util.model_loader import get_model
 
 LAYERS = 5
 
@@ -197,29 +191,3 @@ def compute_deviations(model, inputs, Mins, Maxs, Eva, powers=range(1, 10)):
                 )
 
     return devs
-
-
-if __name__ == "__main__":
-    args.method_args = dict()
-    mode_args = dict()
-    mode_args["in_dist_only"] = args.in_dist_only
-    mode_args["out_dist_only"] = args.out_dist_only
-
-    loader_in_dict = get_loader_in(args, split=("train"))
-    trainloaderIn, num_classes = loader_in_dict.train_loader, loader_in_dict.num_classes
-    model = get_model(args, num_classes, load_ckpt=True)
-
-    os.makedirs("output/ood_scores/{}/{}".format(args.in_dataset, args.name), exist_ok=True)
-    cache_name = "output/ood_scores/{}/{}/minmax.npy".format(args.in_dataset, args.name)
-    if not os.path.exists(cache_name):
-        Mins, Maxs = estimate_minmax(model, trainloaderIn, num_classes, cache=cache_name)
-    else:
-        Mins, Maxs = np.load(cache_name)
-
-    loader_in_dict = get_loader_in(args, split=("val"))
-    valloaderIn, num_classes = loader_in_dict.val_loader, loader_in_dict.num_classes
-    cache_name = "output/ood_scores/{}/{}/eva.npy".format(args.in_dataset, args.name)
-    if not os.path.exists(cache_name):
-        Eva = estimate_deviations(model, valloaderIn, Mins, Maxs, cache=cache_name)
-    else:
-        Eva = np.load(cache_name)

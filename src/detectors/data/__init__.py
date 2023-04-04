@@ -1,4 +1,5 @@
 """Data module."""
+from enum import Enum
 import logging
 from functools import partial
 from typing import Callable, Optional, Type
@@ -117,7 +118,7 @@ def create_dataset(
         root (string): Root directory of dataset.
         split (string, optional): Depends on the selected dataset.
         transform (callable, optional): A function/transform that  takes in an PIL image
-            and returns a transformed version. E.g, ``transforms.RandomCrop``
+            and returns a transformed version. E.g, `transforms.RandomCrop``
         download (bool, optional): If true, downloads the dataset from the internet and
             puts it in root directory. If dataset is already downloaded, it is not
             downloaded again.
@@ -144,3 +145,6 @@ def get_dataset_cls(dataset_name: str) -> Type[Dataset]:
 def list_datasets():
     """Return list of available dataset names, sorted alphabetically"""
     return sorted(list(datasets_registry.keys()))
+
+
+DatasetsRegistry = Enum("DatasetsRegistry", dict(zip(list_datasets(), list_datasets())))

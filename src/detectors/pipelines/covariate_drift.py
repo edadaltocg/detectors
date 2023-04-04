@@ -60,6 +60,7 @@ class CovariateDriftPipeline(Pipeline):
         limit_fit = limit_fit or 1
         limit_fit = min(int(limit_fit * len(fit_dataset)), len(fit_dataset))
         indices = range(len(fit_dataset))[:limit_fit]
+        indices = torch.randperm(len(fit_dataset)).numpy()[:limit_fit]
         fit_dataset = torch.utils.data.Subset(fit_dataset, indices)
         in_dataset = create_dataset(dataset_name, split=dataset_splits[1], transform=transform)
         # shuffle in dataset

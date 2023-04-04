@@ -20,7 +20,7 @@ def _cfg(url="", **kwargs):
         num_classes=num_classes,
         input_size=(3, 32, 32),
         pool_size=(4, 4),
-        crop_pct=0.875,
+        crop_pct=1,
         interpolation="bilinear",
         mean=mean,
         std=std,
@@ -28,6 +28,18 @@ def _cfg(url="", **kwargs):
         classifier="classifier",
         **kwargs,
     )
+
+
+def _cfg_pretrained(url, architecture, **kwargs):
+    model = timm.create_model(architecture, pretrained=False)
+    base_cfg = model.default_cfg
+    num_classes = kwargs.pop("num_classes", 10)
+    # replace base cfg with new arguments
+    base_cfg.update(kwargs)
+    base_cfg["architecture"] = architecture
+    base_cfg["url"] = url
+    base_cfg["num_classes"] = num_classes
+    return ModelDefaultConfig(**base_cfg)
 
 
 default_cfgs = {
@@ -47,6 +59,12 @@ default_cfgs = {
         mean=SVHN_DEFAULT_MEAN,
         std=SVHN_DEFAULT_STD,
         architecture="densenet121",
+    ),
+    "densenet121_camelyon17": _cfg_pretrained(
+        url=hf_hub_url_template("densenet121_camelyon17"),
+        architecture="densenet121",
+        num_classes=2,
+        input_size=(3, 96, 96),
     ),
 }
 
@@ -77,6 +95,22 @@ def _create_densenet_small(variant, block_config, pretrained=False, **kwargs):
     return model
 
 
+def _create_densenet_pretrained(variant, pretrained=False, **kwargs):
+    default_cfg = default_cfgs[variant]
+
+    # load timm model
+    model = timm.create_model(default_cfg["architecture"], pretrained=not pretrained, **kwargs)
+    model.default_cfg = default_cfg
+    model.classifier = nn.Linear(model.classifier.in_features, model.default_cfg["num_classes"])
+
+    if pretrained:
+        model.load_state_dict(
+            torch.hub.load_state_dict_from_url(default_cfg["url"], map_location="cpu", file_name=f"{variant}.pth")
+        )
+
+    return model
+
+
 @timm_register_model
 def densenet121_cifar10(pretrained=False, **kwargs):
     return _create_densenet_small("densenet121_cifar10", block_config=(6, 12, 24, 16), pretrained=pretrained, **kwargs)
@@ -90,3 +124,26 @@ def densenet121_cifar100(pretrained=False, **kwargs):
 @timm_register_model
 def densenet121_svhn(pretrained=False, **kwargs):
     return _create_densenet_small("densenet121_svhn", block_config=(6, 12, 24, 16), pretrained=pretrained, **kwargs)
+
+
+@timm_register_model
+def densenet121_camelyon17(pretrained=False, **kwargs):
+    return _create_densenet_pretrained("densenet121_camelyon17", pretrained=pretrained, **kwargs)
+
+
+if __name__ == "__main__":
+    import timm.data
+
+    # model
+    model = timm.create_model("densenet121_cifar10", pretrained=False)
+    # get transform
+    print(model.default_cfg)
+    print(model.pretrained_cfg)
+    data_config = timm.data.resolve_data_config(model.default_cfg)
+    print(data_config)
+    test_transform = timm.data.create_transform(**data_config)
+    data_config["is_training"] = True
+    train_transform = timm.data.create_transform(**data_config, color_jitter=None)
+
+    print(test_transform)
+    print(train_transform)

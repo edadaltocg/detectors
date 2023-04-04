@@ -1,8 +1,8 @@
 import logging
 from typing import Optional
-from torch import Tensor
 
 import torch
+from torch import Tensor
 
 from .mahalanobis import Mahalanobis, mahalanobis_distance_inv
 
