@@ -1,14 +1,17 @@
-Welcome to detectors's documentation!
+Welcome to detectors' documentation!
 =====================================
-
-.. automodule:: detectors.config
-    :members:
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Getting Started
 
+   readme_link
+   examples
+   api
+   modules
 
+.. include:: readme_link.md
+   :parser: myst_parser.sphinx_
 
 Indices and tables
 ==================

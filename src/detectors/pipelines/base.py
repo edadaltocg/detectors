@@ -1,11 +1,13 @@
+"""Base abstract pipeline class."""
 import logging
-from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
 
-class Pipeline(ABC):
+class Pipeline:
+    """Base Pipeline class."""
+
     def __init__(self) -> None:
         self.setup()
 
@@ -27,6 +29,5 @@ class Pipeline(ABC):
     def run(self, *args, **kwargs) -> Dict[str, Any]:
         raise NotImplementedError
 
-    @classmethod
-    def report(cls, *args, **kwargs) -> str:
+    def report(self, *args, **kwargs) -> str:
         raise NotImplementedError

@@ -50,15 +50,7 @@ class TinyImageNet(ImageFolder):
     filename = "tiny-imagenet-200.zip"
     url = "http://cs231n.stanford.edu/tiny-imagenet-200.zip"
 
-    def __init__(
-        self,
-        root,
-        split="train",
-        transform: Optional[Callable] = None,
-        target_transform: Optional[Callable] = None,
-        download=False,
-        **kwargs,
-    ):
+    def __init__(self, root, split="train", transform: Optional[Callable] = None, download=False, **kwargs):
         self.data_root = os.path.expanduser(root)
         self.split = verify_str_arg(split, "split", self.splits)
 
@@ -67,7 +59,7 @@ class TinyImageNet(ImageFolder):
 
         if not self._check_exists():
             raise RuntimeError("Dataset not found." + " You can use download=True to download it")
-        super().__init__(self.split_folder, transform=transform, target_transform=target_transform, **kwargs)
+        super().__init__(self.split_folder, transform=transform, **kwargs)
 
     @property
     def dataset_folder(self):

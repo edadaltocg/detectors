@@ -1,3 +1,4 @@
+"""Trainer for classification models."""
 import json
 import logging
 import os
@@ -92,7 +93,6 @@ def trainer_classification(
     progress_bar = tqdm(range(epochs), disable=not accelerator.is_local_main_process, dynamic_ncols=True)
     for epoch in progress_bar:
         # train
-        avg_loss = 0.0
         model.train()
         for batch in train_loader:
             step += 1
@@ -102,8 +102,6 @@ def trainer_classification(
             progress_bar.set_description_str(f"{step}it, loss={tr_loss:.4f}, lr={lr:.4f}")
             accelerator.log({f"train/{k}": v for k, v in tr_obj.items()}, step=step)
             accelerator.log({"lr": lr}, step=step)
-            avg_loss += tr_loss
-        avg_loss /= len(train_loader)
 
         # validate
         if (epoch + 1) % validation_frequency == 0 or epoch == 0 or epoch == epochs - 1:
@@ -133,10 +131,10 @@ def trainer_classification(
                 if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                     scheduler.step(val_acc)
 
-            # finish training if method not learning
+            # finish training if model is not learning
             num_classes = model(batch[0]).shape[1]  # temporary fix
             if val_acc < 1 / num_classes:
-                _logger.warning("Accuracy is too low, stopping training")
+                _logger.error("Accuracy is too low, stopping training")
                 break
 
         # sync accelerator after epoch

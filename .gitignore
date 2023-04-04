@@ -159,3 +159,6 @@ dmypy.json
 /scripts/bash
 
 .pypirc
+/images
+slurm/
+tmp/

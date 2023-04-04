@@ -9,8 +9,7 @@ class ModelDefaultConfig(dict):
     """
     Default configuration for models from `timm` library.
 
-    Example:
-    --------
+    Examples:
     ```
     {
         'url': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
