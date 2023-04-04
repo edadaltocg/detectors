@@ -151,34 +151,3 @@ class Mahalanobis(DetectorWithFeatureExtraction):
             self.precision_chols[layer_name] = torch.linalg.solve_triangular(
                 cov_chol, torch.eye(cov_chol.shape[1], device=device), upper=False
             ).T
-
-
-# if __name__ == "__main__":
-#     import timm
-
-#     model = timm.create_model("resnet18", pretrained=False)
-#     detector = Mahalanobis(model, all_blocks=True, last_layer=True, pooling_op_name="avg", aggregation_method_name="if")
-#     data = torch.rand(100, 3, 224, 224)
-#     targets = torch.randint(0, 10, (100,))
-
-#     # def output_reduce(x):
-#     #     return {k: torch.flatten(v, 1) for k, v in x.items()}
-
-#     # graph = detector.feature_extractor.graph
-#     # last_node = [n for n in graph.nodes if n.op == "output"][0]
-#     # last_node_args = last_node.args
-#     # graph.erase_node(last_node)
-#     # nodes = [n for n in graph.nodes]
-#     # with graph.inserting_after(nodes[-1]):
-#     #     new_node = graph.call_function(output_reduce, args=last_node_args)
-#     # nodes = [n for n in graph.nodes]
-#     # with graph.inserting_after(nodes[-1]):
-#     #     graph.output(new_node)
-#     # detector.feature_extractor.graph = graph
-#     # detector.feature_extractor.recompile()
-#     # print(detector.feature_extractor.graph)
-
-#     detector.start()
-#     detector.update(data, targets)
-#     detector.end()
-#     print(detector(data))
