@@ -20,6 +20,7 @@ from .max_logits import max_logits
 from .maxcosine import MaxCosineSimilarity
 from .mcdropout import mc_dropout
 from .msp import msp
+from .logit_norm import logit_norm
 from .naive import always_one, always_zero, random_score
 from .odin import odin
 from .projection import Projection
@@ -59,6 +60,7 @@ detectors_registry = {
     "gradnorm": gradnorm,
     "gmm": GMM,
     "maxcosine": MaxCosineSimilarity,
+    "logit_norm": logit_norm,
 }
 
 
