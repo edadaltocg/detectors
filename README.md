@@ -189,15 +189,14 @@ Concerning this package, its use, and bugs, use the [issue page](https://github.
 
 ## Citing detectors
 
-If you use this software, please cite it as below:
+If you use this library, please cite it as below:
 
 ```bibtex
 @software{detectors,
 author = {Dadalto, Eduardo and Colombo, Pierre and Darrin, Maxime and Staerman, Guillaume and Nathan, Noiry and Alberge, Florence and Duhamel, Pierre and Piantanida, Pablo},
-month = {3},
 title = {Detectors: generalized out-of-distribution detection library},
 url = {https://github.com/edadaltocg/detectors},
-version = {0.1.0},
+month = {3},
 year = {2023}
 }
 ```
