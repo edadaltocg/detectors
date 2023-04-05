@@ -116,6 +116,14 @@ detectors.methods.knn\_euclides module
    :undoc-members:
    :show-inheritance:
 
+detectors.methods.logit\_norm module
+------------------------------------
+
+.. automodule:: detectors.methods.logit_norm
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 detectors.methods.mahalanobis module
 ------------------------------------
 

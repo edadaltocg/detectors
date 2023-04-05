@@ -32,14 +32,6 @@ detectors.eval module
    :undoc-members:
    :show-inheritance:
 
-detectors.running\_stats module
--------------------------------
-
-.. automodule:: detectors.running_stats
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 detectors.trainer module
 ------------------------
 
