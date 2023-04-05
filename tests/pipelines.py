@@ -7,9 +7,9 @@ import detectors
 @pytest.mark.parametrize(
     "pipeline_name",
     [
-        "ood_cifar10_benchmark",
-        "ood_cifar100_benchmark",
-        "ood_imagenet_benchmark",
+        "ood_benchmark_cifar10",
+        "ood_benchmark_cifar100",
+        "ood_benchmark_imagenet",
         "ood_mnist_benchmark",
     ],
 )
