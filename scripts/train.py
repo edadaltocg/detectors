@@ -7,7 +7,6 @@ import timm
 import timm.data
 import torch
 import torch.utils.data
-from torchvision import transforms
 
 import detectors
 from detectors.data import create_dataset

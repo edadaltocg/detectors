@@ -40,7 +40,7 @@ def create_pipeline(task: str, **kwargs) -> Pipeline:
     Examples:
 
         ```python
-    >>> pipe = pipeline("ood_cifar10_benchmark")
+    >>> pipe = pipeline("ood_benchmark_cifar10")
         ```
     """
 

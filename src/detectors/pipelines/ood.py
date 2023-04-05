@@ -214,7 +214,7 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         return df.to_string(index=True, float_format="{:.4f}".format)
 
 
-@register_pipeline("ood_cifar10_benchmark")
+@register_pipeline("ood_benchmark_cifar10")
 class OODCifar10BenchmarkPipeline(OODBenchmarkPipeline):
     def __init__(self, transform: Callable, limit_fit=1, batch_size=128, seed=42, **kwargs) -> None:
         super().__init__(
@@ -252,7 +252,7 @@ class OODCifar10BenchmarkPipeline(OODBenchmarkPipeline):
         self.out_dataset = torch.utils.data.ConcatDataset(list(self.out_datasets.values()))
 
 
-@register_pipeline("ood_cifar100_benchmark")
+@register_pipeline("ood_benchmark_cifar100")
 class OODCifar100BenchmarkPipeline(OODBenchmarkPipeline):
     def __init__(self, transform: Callable, limit_fit=1, batch_size=128, seed=42, **kwargs) -> None:
         super().__init__(
@@ -290,7 +290,7 @@ class OODCifar100BenchmarkPipeline(OODBenchmarkPipeline):
         self.out_dataset = torch.utils.data.ConcatDataset(list(self.out_datasets.values()))
 
 
-@register_pipeline("ood_imagenet_benchmark")
+@register_pipeline("ood_benchmark_imagenet")
 class OODImageNetBenchmarkPipeline(OODBenchmarkPipeline):
     def __init__(self, transform: Callable, limit_fit=1, batch_size=64, seed=42, **kwargs) -> None:
         super().__init__(
