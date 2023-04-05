@@ -43,6 +43,7 @@ setup(
             "pytest-xdist",
             "twine",
             "sphinx",
+            "sphinx_rtd_theme",
             "myst-parser",
             "six",
             "flake8",
