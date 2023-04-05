@@ -9,5 +9,3 @@ from .methods import create_detector, list_detectors, register_detector
 from .methods.templates import Detector
 from .models import create_model, list_models, timm_register_model
 from .pipelines import create_pipeline, list_pipelines, register_pipeline
-
-__version__ = "0.1.0"
