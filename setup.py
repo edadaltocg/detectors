@@ -19,7 +19,6 @@ install_requires = [
     "wilds",
 ]
 
-
 setup(
     name="detectors",
     author="Eduardo Dadalto with the help of all our contributors.",

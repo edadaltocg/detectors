@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 from detectors.data import create_dataset
 from detectors.eval import get_ood_results
-from detectors.methods import Detector
+from detectors.methods import DetectorWrapper
 from detectors.pipelines import register_pipeline
 from detectors.pipelines.base import Pipeline
 from detectors.utils import ConcatDatasetsDim1
@@ -114,7 +114,7 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         self._setup_datasets()
         self._setup_dataloaders()
 
-    def preprocess(self, method: Detector) -> Detector:
+    def preprocess(self, method: DetectorWrapper) -> DetectorWrapper:
         if method.model is not None:
             _logger.info("Preparing model...")
             method.model.eval()
@@ -142,7 +142,7 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         method.end()
         return method
 
-    def run(self, method: Detector) -> Dict[str, Any]:
+    def run(self, method: DetectorWrapper) -> Dict[str, Any]:
         self.method = method
 
         _logger.info("Running pipeline...")
@@ -360,7 +360,7 @@ class OODMNISTBenchmarkPipeline(OODBenchmarkPipeline):
 class OODValidationPipeline(OODBenchmarkPipeline, ABC):
     def run(
         self,
-        method: Detector,
+        method: DetectorWrapper,
         hyperparameters: Dict[str, List[Any]],
         objective_metric: Literal["fpr_at_0.95_tpr", "auroc"] = "fpr_at_0.95_tpr",
         n_trials=20,

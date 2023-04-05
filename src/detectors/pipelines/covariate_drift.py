@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 import detectors
 from detectors.data import create_dataset
-from detectors.methods import Detector
+from detectors.methods import DetectorWrapper
 from detectors.pipelines import register_pipeline
 from detectors.pipelines.base import Pipeline
 from detectors.utils import ConcatDatasetsDim1
@@ -119,7 +119,7 @@ class CovariateDriftPipeline(Pipeline):
         self.fit_dataloader = self.accelerator.prepare(self.fit_dataloader)  # careful with this with multiple gpus
         self.test_dataloader = self.accelerator.prepare(self.test_dataloader)
 
-    def preprocess(self, method: Detector) -> Detector:
+    def preprocess(self, method: DetectorWrapper) -> DetectorWrapper:
         if not hasattr(method.detector, "update"):
             return method
 
