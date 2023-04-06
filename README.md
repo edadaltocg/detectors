@@ -170,7 +170,7 @@ Do you wish to use FP16 or BF16 (mixed precision)? [NO/fp16/bf16]: NO
 
 As an open source project in a rapidly developing field, we are extremely open to contributions, whether it be in the form of a new feature, improved infra, or better documentation.
 
-See the [contributing guidelines](https://github.com/edadaltocg/detectors/blob/master/CONTRIBUTING.md) for instructions on how to make your first contribution to `detectors`.
+See the [contributing guidelines](https://github.com/edadaltocg/detectors/blob/master/CONTRIBUTING.md) for instructions on how to make your first contribution to `detectors`
 
 ### Thanks to all our contributors
 
