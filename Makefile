@@ -1,5 +1,3 @@
-all: help
-
 package:
 	python -m pip install --upgrade pip
 	pip install build
@@ -12,7 +10,11 @@ test:
 		--cov-report term-missing:skip-covered
 
 docs_build:
-	cd docs && sphinx-apidoc -o ./source -f ../src/detectors -d 4 && make clean && make html
+	pip install -r docs/requirements.txt
+	cd docs
+	sphinx-apidoc -o ./source -f ../src/detectors -d 4
+	make clean
+	make html
 
 format:
 	black --config pyproject.toml .
@@ -25,7 +27,7 @@ lint:
 
 help:
 	@echo 'package      - build the package'
-	@echo 'test         - run unit tests and generate coverage report'
 	@echo 'docs_build   - build the documentation'
+	@echo 'test         - run unit tests and generate coverage report'
 	@echo 'format       - run code formatters'
 	@echo 'lint         - run linters'

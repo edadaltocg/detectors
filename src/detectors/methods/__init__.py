@@ -14,12 +14,12 @@ from .gradnorm import gradnorm
 from .igeood import IgeoodLogits
 from .kl_matching import KLMatching
 from .knn_euclides import KnnEuclides
+from .logit_norm import logit_norm
 from .mahalanobis import Mahalanobis
 from .max_logits import max_logits
 from .maxcosine import MaxCosineSimilarity
 from .mcdropout import mc_dropout
 from .msp import msp
-from .logit_norm import logit_norm
 from .naive import always_one, always_zero, random_score
 from .odin import odin
 from .projection import Projection

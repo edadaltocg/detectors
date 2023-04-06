@@ -1,5 +1,4 @@
 import torch
-import torch.nn.functional as F
 from torch import Tensor, nn
 
 DefaultConfig = dict(temperature=1.3, eps=0.0)

@@ -57,7 +57,7 @@ def test_svhn_architectures(model_name):
 @pytest.mark.parametrize("model_name", all_models)
 def test_pretrained_model(model_name):
     model = detectors.create_model(model_name, pretrained=True)
-    model2 = detectors.create_model(f"edadaltocg/{model_name}", pretrained=True)
+    _ = detectors.create_model(f"edadaltocg/{model_name}", pretrained=True)
     model.eval()
     model.default_cfg.input_size
     num_classes = model.default_cfg.num_classes

@@ -16,9 +16,9 @@ class MNISTC:
 
     Split can be one of `train`, `test` and `leftovers`.
 
-    Subsets can be one of `all`, `brightness`, `canny_edges`, `dotted_line`, `fog`, `glass_blur`, `identity`, `impulse_noise`,
-    `motion_blur`, `rotate`, `scale`, `shear`, `shot_noise`,
-    `spatter`, `stripe`, `translate` and `zigzag`.
+    Subsets can be one of:
+        `all`, `brightness`, `canny_edges`, `dotted_line`, `fog`, `glass_blur`, `identity`, `impulse_noise`,
+        `motion_blur`, `rotate`, `scale`, `shear`, `shot_noise`, `spatter`, `stripe`, `translate` and `zigzag`.
     """
 
     splits = ["train", "test", "leftovers"]

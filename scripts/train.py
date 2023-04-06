@@ -41,8 +41,8 @@ def main(args: argparse.Namespace):
 
     # criterion, optimizer, scheduler
     criterion = get_criterion_cls(args.criterion)(**args.criterion_kwargs)
-    optimizer = get_optimizer_cls(args.optimizer)(model.parameters(), lr=args.lr, **args.optimizer_kwargs)  # type: ignore
-    scheduler = get_scheduler_cls(args.scheduler)(optimizer, **args.scheduler_kwargs)  # type: ignore
+    optimizer = get_optimizer_cls(args.optimizer)(model.parameters(), lr=args.lr, **args.optimizer_kwargs)
+    scheduler = get_scheduler_cls(args.scheduler)(optimizer, **args.scheduler_kwargs)
 
     # train
     trainer_classification(

@@ -1,8 +1,8 @@
 """Pipeline module."""
 from enum import Enum
+from typing import Any, List, Tuple
 
 from detectors.pipelines.base import Pipeline
-from typing import Any, List, Tuple
 
 pipeline_registry = {}
 

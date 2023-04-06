@@ -6,7 +6,7 @@ import torch
 import torch.fx as fx
 import torch.utils.data
 from torch import Tensor
-from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
+from torchvision.models.feature_extraction import create_feature_extractor
 
 _logger = logging.getLogger(__name__)
 

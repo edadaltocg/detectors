@@ -1,7 +1,7 @@
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Literal, Tuple, Union
 
 import accelerate
 import numpy as np
@@ -17,7 +17,6 @@ from tqdm import tqdm
 from detectors.data import create_dataset
 from detectors.eval import get_ood_results
 from detectors.methods import DetectorWrapper
-from detectors.methods.templates import Detector
 from detectors.pipelines import register_pipeline
 from detectors.pipelines.base import Pipeline
 from detectors.utils import ConcatDatasetsDim1

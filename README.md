@@ -41,7 +41,7 @@ pip install -e .
 
 ## Examples
 
-The following examples show how to use the library and how it can be integrated into your research.
+The following examples show how to use the library and how it can be integrated into your research. For more examples, please check the [documentation](https://detectors.readthedocs.io/en/latest/use_cases/).
 
 ### Creating a detector
 
@@ -178,7 +178,7 @@ See the [contributing guidelines](https://github.com/edadaltocg/detectors/blob/m
   <img src="https://contributors-img.web.app/image?repo=edadaltocg/detectors" />
 </a>
 
-### Contact
+## Contact
 
 Concerning this package, its use, and bugs, use the [issue page](https://github.com/edadaltocg/detectors/issues) of the [ruptures repository](https://github.com/edadaltocg/detectors). For other inquiries, you can contact me [here](https://edadaltocg.github.io/contact/).
 
@@ -186,6 +186,12 @@ Concerning this package, its use, and bugs, use the [issue page](https://github.
 
 - [Documentation](http://detectors.readthedocs.io/)
 - [Pypi package index](https://pypi.python.org/pypi/detectors)
+- [Github repository](https://github.com/edadaltocg/detectors)
+
+## Limitations
+
+- This library is only compatible with PyTorch models.
+- This library has implemented only computer vision pipelines and datasets.
 
 ## Citing detectors
 
@@ -193,7 +199,7 @@ If you use this library, please cite it as below:
 
 ```bibtex
 @software{detectors,
-author = {Dadalto, Eduardo and Colombo, Pierre and Darrin, Maxime and Staerman, Guillaume and Nathan, Noiry and Alberge, Florence and Duhamel, Pierre and Piantanida, Pablo},
+author = {Dadalto, Eduardo and Colombo, Pierre and Darrin, Maxime and Staerman, Guillaume and and Alberge, Florence and Duhamel, Pierre and Piantanida, Pablo},
 title = {Detectors: generalized out-of-distribution detection library},
 url = {https://github.com/edadaltocg/detectors},
 month = {3},
