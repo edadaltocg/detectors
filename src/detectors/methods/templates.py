@@ -144,9 +144,9 @@ class DetectorWrapper(Detector):
         """
         return self.detector(x)
 
-    def set_params(self, **params):
+    def set_hyperparameters(self, **params):
         """Set the parameters of the detector."""
-        model = params.pop("model", None)
+        model = params.pop("model", self.model)
         self.keywords.update(params)
         if hasattr(self.detector, "keywords"):
             self.detector.keywords.update(**params)
