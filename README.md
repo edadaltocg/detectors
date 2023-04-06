@@ -1,38 +1,28 @@
-# Detectors
+# 🧐 Detectors
 
-<p align="center">
-    <br>
-    <img src="_static/face-with-monocle.svg" width="150" height="150" />
-    <br>
-</p>
-
-Package to accelerate research on out-of-distribution (OOD) detection inspired by Huggingface's transformers.
-
-Under development.
+Package to accelerate research on out-of-distribution (OOD) detection.
 
 ## Stats
 
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/edadaltocg/detectors/graphs/commit-activity)
-[![PyPi version](https://badgen.net/pypi/v/pip/)](https://pypi.org/project/pip)
-[![build](https://github.com/edadaltocg/detectors/actions/workflows/python-package.yml/badge.svg)](https://github.com/edadaltocg/detectors/actions/workflows/python-package.yml)
-[![Documentation Status](https://readthedocs.org/projects/ansicolortags/badge/?version=latest)](http://ansicolortags.readthedocs.io/?badge=latest)
-[![PyPI download month](https://img.shields.io/pypi/dm/ansicolortags.svg)](https://pypi.python.org/pypi/ansicolortags/)
-[![GitHub contributors](https://img.shields.io/github/contributors/Naereen/badges.svg)](https://GitHub.com/Naereen/badges/graphs/contributors/)
+[![build](https://github.com/edadaltocg/detectors/actions/workflows/build.yml/badge.svg)](https://github.com/edadaltocg/detectors/actions/workflows/build.yml)
+[![Documentation Status](https://readthedocs.org/projects/detectors/badge/?version=latest)](http://detectors.readthedocs.io/?badge=latest)
+[![PyPI download month](https://img.shields.io/pypi/dm/detectors.svg)](https://pypi.python.org/pypi/detectors/)
 [![DOI:](https://zenodo.org/badge/DOI/.svg)](https://doi.org/)
-[![PyPi license](https://badgen.net/pypi/license/pip/)](https://pypi.org/project/pip/)
+![AUR license](https://img.shields.io/aur/license/detectors)
 
------
+## What is it?
 
-## Features
+This library is aimed at assisting researchers in the field of generalized OOD detection. It is inspired by [HF's Transformers](https://https://github.com/huggingface/transformers) and provides a set of tools to run benchmarks, evaluate detectors, and compare them. It includes:
 
+- More than 15 detection methods implemented.
 - Pipelines for evaluating OOD detectors on MNIST, CIFAR, and ImageNet benchmarks.
 - Automatic OOD datasets download with md5 checksums.
-- Support models implemented at `timm`.
-- Models on CIFAR and integrated in `timm`.
+- Support models implemented at [`timm`](https://github.com/huggingface/pytorch-image-models).
+- Models on CIFAR integrated at `timm`.
 - Random seed support for reproducible simulations.
+- Implementation of fast OOD evaluation metrics.
 - Several aggregation methods for multi-layer OOD detection.
-- OOD detection metrics.
-- More than 15 detection methods implemented.
 - Pipelines for open set recognition and covariate drift detection.
 
 ## Installation
@@ -51,12 +41,87 @@ pip install -e .
 
 ## Examples
 
-### Running a benchmark
+The following examples show how to use the library and how it can be integrated into your research. For more examples, please check the [documentation](https://detectors.readthedocs.io/en/latest/use_cases/).
+
+### Creating a detector
+
+The following example shows how to create a detector. The only requirement is that the method takes an input `x` and returns a score.
 
 ```python
+import torch
+import detectors
+
+
+@detectors.register_detector("awesome_detector")
+def awesome_detector(x: torch.Tensor, model, **kwargs):
+    # Do something awesome with the model and the input
+    return scores
+
+# Instantiating the detector
+method = detectors.create_detector("awesome_detector", model=model)
 ```
 
-### Optional: Acceleration
+Alternatively, you can use the `Detector` class to create a detector that requires some initialization or state to be fitted before being called (e.g., Mahalanobis detector):
+
+```python
+import torch
+import detectors
+
+
+@detectors.register_detector("awesome_detector")
+class AwesomeDetector(detectors.Detector):
+    def __init__(self, model, **kwargs):
+        self.model = model
+
+    def __call__(self, x: torch.Tensor, **kwargs):
+        # Do something awesome with the model and the input
+        return scores
+
+# Instantiating the detector
+method = detectors.create_detector("awesome_detector", model=model)
+```
+
+Check the [documentation](https://detectors.readthedocs.io/en/latest/use_cases/) for more information.
+
+### Running a benchmark
+
+The following example shows how to run a benchmark.
+
+```python
+import detectors
+
+
+model = detectors.create_model("resnet18_cifar10", pretrained=True)
+test_transform = detectors.create_transform(model)
+
+pipeline = detectors.create_pipeline("ood_benchmark_cifar10", transform=test_transform)
+method = detectors.create_detector("awesome_detector", model=model)
+
+pipeline_results = pipeline.run(method)
+print(pipeline.report(pipeline_results["results"]))
+```
+
+### Listing available resources
+
+The following example shows how to list all available resources in the library.
+
+```python
+import detectors
+
+
+# list all available models (same as timm.list_models)
+print(detectors.list_models())
+# list all available models with a specific pattern
+print(detectors.list_models("*cifar*"))
+# list all available datasets
+print(detectors.list_datasets())
+# list all available detectors
+print(detectors.list_detectors())
+# list all available pipelines
+print(detectors.list_pipelines())
+```
+
+### Optional: Pipeline acceleration
 
 This package is compatible with the `accelerate` package to allow for parallel computing.
 
@@ -91,13 +156,21 @@ What GPU(s) (by id) should be used for training on this machine as a comma-seper
 Do you wish to use FP16 or BF16 (mixed precision)? [NO/fp16/bf16]: NO
 ```
 
-## Changelog
+## FAQ over specific documents
 
-See the [changelog](https://github.com/edadaltocg/detectors/blob/master/CHANGELOG.md) for a history of notable changes to `detectors`.
+**Methods**
+
+- [Documentation](https://detectors.readthedocs.io/en/latest/use_cases/)
+
+**Pipelines**
+
+- [Documentation](https://detectors.readthedocs.io/en/latest/use_cases/)
 
 ## Contributing
 
-See the [contributing guidelines](https://github.com/edadaltocg/detectors/blob/master/CONTRIBUTING.md) for instructions on how to contribute to `detectors`.
+As an open source project in a rapidly developing field, we are extremely open to contributions, whether it be in the form of a new feature, improved infra, or better documentation.
+
+See the [contributing guidelines](https://github.com/edadaltocg/detectors/blob/master/CONTRIBUTING.md) for instructions on how to make your first contribution to `detectors`
 
 ### Thanks to all our contributors
 
@@ -105,24 +178,31 @@ See the [contributing guidelines](https://github.com/edadaltocg/detectors/blob/m
   <img src="https://contributors-img.web.app/image?repo=edadaltocg/detectors" />
 </a>
 
-### Contact
+## Contact
 
 Concerning this package, its use, and bugs, use the [issue page](https://github.com/edadaltocg/detectors/issues) of the [ruptures repository](https://github.com/edadaltocg/detectors). For other inquiries, you can contact me [here](https://edadaltocg.github.io/contact/).
 
-### Important links
+## Important links
 
 - [Documentation](http://detectors.readthedocs.io/)
 - [Pypi package index](https://pypi.python.org/pypi/detectors)
+- [Github repository](https://github.com/edadaltocg/detectors)
+
+## Limitations
+
+- This library is only compatible with PyTorch models.
+- This library has implemented only computer vision pipelines and datasets.
 
 ## Citing detectors
 
+If you use this library, please cite it as below:
+
 ```bibtex
 @software{detectors,
-author = {Dadalto, Eduardo and Colombo, Pierre and Darrin, Maxime and Staerman, Guillaume and Nathan, Noiry and Alberge, Florence and Duhamel, Pierre and Piantanida, Pablo},
-month = {3},
-title = {{detectors: .}},
+author = {Dadalto, Eduardo and Colombo, Pierre and Darrin, Maxime and Staerman, Guillaume and and Alberge, Florence and Duhamel, Pierre and Piantanida, Pablo},
+title = {Detectors: generalized out-of-distribution detection library},
 url = {https://github.com/edadaltocg/detectors},
-version = {0.1.0},
+month = {3},
 year = {2023}
 }
 ```

@@ -53,4 +53,6 @@ class KnnEuclides(DetectorWithFeatureExtraction):
                 torch.randperm(layer_features.shape[0])[: int(self.alpha * layer_features.shape[0])]
             ]
             # normalize train features
-            self.ref[layer_name] = self.ref[layer_name] / torch.norm(self.ref[layer_name], p=2, dim=-1, keepdim=True)  # type: ignore
+            self.ref[layer_name] = self.ref[layer_name] / torch.norm(
+                self.ref[layer_name], p="fro", dim=-1, keepdim=True
+            )

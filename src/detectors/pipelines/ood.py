@@ -1,7 +1,7 @@
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Literal, Optional
+from typing import Any, Callable, Dict, List, Literal, Tuple, Union
 
 import accelerate
 import numpy as np
@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 from detectors.data import create_dataset
 from detectors.eval import get_ood_results
-from detectors.methods import Detector
+from detectors.methods import DetectorWrapper
 from detectors.pipelines import register_pipeline
 from detectors.pipelines.base import Pipeline
 from detectors.utils import ConcatDatasetsDim1
@@ -37,19 +37,33 @@ METRICS_NAMES_PRETTY = {
 
 
 class OODBenchmarkPipeline(Pipeline, ABC):
+    """OOD Benchmark pipeline.
+
+    Args:
+        in_dataset_name (str): Name of the in-distribution dataset.
+        out_datasets_names_splits (Dict[str, Any]): Dictionary mapping out-distribution dataset names to their splits.
+        transform (Callable): Transform to apply to the datasets.
+        batch_size (int): Batch size.
+        limit_fit (float, optional): Fraction of the training set to use for fitting. Defaults to 1.0.
+        limit_run (float, optional): Fraction of the testing set to use for running. Defaults to 1.0.
+        seed (int, optional): Random seed. Defaults to 42.
+    """
+
     def __init__(
         self,
         in_dataset_name: str,
         out_datasets_names_splits: Dict[str, Any],
         transform: Callable,
         batch_size: int,
-        limit_fit: Optional[float] = 1.0,
+        limit_fit: float = 1.0,
+        limit_run: float = 1.0,
         seed: int = 42,
     ) -> None:
         self.in_dataset_name = in_dataset_name
         self.out_datasets_names_splits = out_datasets_names_splits
         self.out_datasets_names = list(out_datasets_names_splits.keys())
         self.limit_fit = limit_fit
+        self.limit_run = limit_run
         self.transform = transform
         self.batch_size = batch_size
         self.seed = seed
@@ -88,7 +102,7 @@ class OODBenchmarkPipeline(Pipeline, ABC):
             self.fit_dataset, batch_size=self.batch_size, shuffle=True, num_workers=4, pin_memory=True
         )
 
-        test_dataset = torch.utils.data.ConcatDataset([self.in_dataset, self.out_dataset])
+        self.test_dataset = torch.utils.data.ConcatDataset([self.in_dataset, self.out_dataset])
         test_labels = torch.utils.data.TensorDataset(
             torch.cat(
                 [torch.zeros(len(self.in_dataset))]  # type: ignore
@@ -96,25 +110,29 @@ class OODBenchmarkPipeline(Pipeline, ABC):
             ).long()
         )
 
-        test_dataset = ConcatDatasetsDim1([test_dataset, test_labels])
+        self.test_dataset = ConcatDatasetsDim1([self.test_dataset, test_labels])
+        subset = np.random.choice(
+            np.arange(len(self.test_dataset)), int(self.limit_run * len(self.test_dataset)), replace=False
+        ).tolist()
+        self.test_dataset = torch.utils.data.Subset(self.test_dataset, subset)
         # shuffle and subsample test_dataset
         # test_dataset = torch.utils.data.Subset(test_dataset, np.random.permutation(len(test_dataset)).tolist())
         # test_dataset = torch.utils.data.Subset(test_dataset, np.arange(10_000).tolist())
         self.test_dataloader = torch.utils.data.DataLoader(
-            test_dataset, batch_size=self.batch_size, shuffle=True, num_workers=4, pin_memory=True
+            self.test_dataset, batch_size=self.batch_size, shuffle=True, num_workers=4, pin_memory=True
         )
 
         self.fit_dataloader = self.accelerator.prepare(self.fit_dataloader)
         self.test_dataloader = self.accelerator.prepare(self.test_dataloader)
 
         _logger.info(f"Using {len(self.fit_dataset)} samples for fitting.")
-        _logger.info(f"Using {len(test_dataset)} samples for testing.")
+        _logger.info(f"Using {len(self.test_dataset)} samples for testing.")
 
     def setup(self):
         self._setup_datasets()
         self._setup_dataloaders()
 
-    def preprocess(self, method: Detector) -> Detector:
+    def preprocess(self, method: DetectorWrapper) -> DetectorWrapper:
         if method.model is not None:
             _logger.info("Preparing model...")
             method.model.eval()
@@ -142,7 +160,7 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         method.end()
         return method
 
-    def run(self, method: Detector) -> Dict[str, Any]:
+    def run(self, method: DetectorWrapper) -> Dict[str, Any]:
         self.method = method
 
         _logger.info("Running pipeline...")
@@ -214,9 +232,9 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         return df.to_string(index=True, float_format="{:.4f}".format)
 
 
-@register_pipeline("ood_cifar10_benchmark")
+@register_pipeline("ood_benchmark_cifar10")
 class OODCifar10BenchmarkPipeline(OODBenchmarkPipeline):
-    def __init__(self, transform: Callable, limit_fit=1, batch_size=128, seed=42, **kwargs) -> None:
+    def __init__(self, transform: Callable, limit_fit=1.0, limit_run=1.0, batch_size=128, seed=42, **kwargs) -> None:
         super().__init__(
             "cifar10",
             {
@@ -236,6 +254,7 @@ class OODCifar10BenchmarkPipeline(OODBenchmarkPipeline):
             transform=transform,
             batch_size=batch_size,
             limit_fit=limit_fit,
+            limit_run=limit_run,
             seed=seed,
         )
 
@@ -252,9 +271,9 @@ class OODCifar10BenchmarkPipeline(OODBenchmarkPipeline):
         self.out_dataset = torch.utils.data.ConcatDataset(list(self.out_datasets.values()))
 
 
-@register_pipeline("ood_cifar100_benchmark")
+@register_pipeline("ood_benchmark_cifar100")
 class OODCifar100BenchmarkPipeline(OODBenchmarkPipeline):
-    def __init__(self, transform: Callable, limit_fit=1, batch_size=128, seed=42, **kwargs) -> None:
+    def __init__(self, transform: Callable, limit_fit=1.0, limit_run=1.0, batch_size=128, seed=42, **kwargs) -> None:
         super().__init__(
             "cifar100",
             {
@@ -274,6 +293,7 @@ class OODCifar100BenchmarkPipeline(OODBenchmarkPipeline):
             transform=transform,
             batch_size=batch_size,
             limit_fit=limit_fit,
+            limit_run=limit_run,
             seed=seed,
         )
 
@@ -290,9 +310,9 @@ class OODCifar100BenchmarkPipeline(OODBenchmarkPipeline):
         self.out_dataset = torch.utils.data.ConcatDataset(list(self.out_datasets.values()))
 
 
-@register_pipeline("ood_imagenet_benchmark")
+@register_pipeline("ood_benchmark_imagenet")
 class OODImageNetBenchmarkPipeline(OODBenchmarkPipeline):
-    def __init__(self, transform: Callable, limit_fit=1, batch_size=64, seed=42, **kwargs) -> None:
+    def __init__(self, transform: Callable, limit_fit=1.0, limit_run=1.0, batch_size=64, seed=42, **kwargs) -> None:
         super().__init__(
             "ilsvrc2012",
             {
@@ -308,6 +328,7 @@ class OODImageNetBenchmarkPipeline(OODBenchmarkPipeline):
                 "gaussian": None,
             },
             limit_fit=limit_fit,
+            limit_run=limit_run,
             transform=transform,
             batch_size=batch_size,
             seed=seed,
@@ -358,11 +379,22 @@ class OODMNISTBenchmarkPipeline(OODBenchmarkPipeline):
 
 
 class OODValidationPipeline(OODBenchmarkPipeline, ABC):
+    """Pipeline for OOD validation.
+
+    This pipeline is used to validate the performance of a model on OOD datasets.
+
+    Args:
+        method (DetectorWrapper): The OOD detection method to use.
+        hyperparameters (Dict[str, Union[List[Any], Tuple[Any], Dict[str, Any]]]): The hyperparameters to use for the method.
+        objective_metric (Literal["fpr_at_0.95_tpr", "auroc"], optional): The metric to optimize. Defaults to "auroc".
+        n_trials (int, optional): The number of trials to run. Defaults to 20.
+    """
+
     def run(
         self,
-        method: Detector,
-        hyperparameters: Dict[str, List[Any]],
-        objective_metric: Literal["fpr_at_0.95_tpr", "auroc"] = "fpr_at_0.95_tpr",
+        method: DetectorWrapper,
+        hyperparameters: Dict[str, Union[List[Any], Tuple[Any], Dict[str, Any]]],
+        objective_metric: Literal["fpr_at_0.95_tpr", "auroc"] = "auroc",
         n_trials=20,
     ) -> Dict[str, Any]:
         self.method = method
@@ -373,21 +405,30 @@ class OODValidationPipeline(OODBenchmarkPipeline, ABC):
         study = optuna.create_study(direction=direction)
         study.optimize(self.objective, n_trials=n_trials, show_progress_bar=True)
 
-        self.method = self.method.set_params(**study.best_params)
-        return {"method": self.method, "study": study}
+        self.method.set_hyperparameters(**study.best_params)
+        return {"method": self.method, "study": study, "best_params": study.best_params}
 
     def objective(self, trial: optuna.trial.Trial) -> float:
         # build detector from trial params
         new_params = {}
         for k in self.hyperparameters:
-            new_params[k] = trial.suggest_categorical(k, self.hyperparameters[k])
-        self.method = self.method.set_params(**new_params)
+            if isinstance(self.hyperparameters[k], (list, tuple)):
+                new_params[k] = trial.suggest_categorical(k, self.hyperparameters[k])
+            elif isinstance(self.hyperparameters[k], dict):
+                param_type = type(self.hyperparameters[k]["step"])
+                if param_type == float:
+                    new_params[k] = trial.suggest_float(k, **self.hyperparameters[k])
+                elif param_type == int:
+                    new_params[k] = trial.suggest_int(k, **self.hyperparameters[k])
 
+        self.method.set_hyperparameters(**new_params)
+        # print methods params
         run_obj = super().run(self.method)
         results = run_obj["results"]
         return results["average"][self.objective_metric]
 
-    def report(self, study: optuna.study.Study):
+    def report(self, results: Dict[str, Any]):
+        study = results["study"]
         pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
         complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
         best_trial = study.best_trial
@@ -405,9 +446,17 @@ Study statistics:
         return report_str
 
 
-@register_pipeline("ood_cifar10_noise_validation")
-class OODCifar10ValidationPipeline(OODValidationPipeline):
-    def __init__(self, transform: Callable, limit_fit=1, batch_size=128, seed=42, **kwargs) -> None:
+@register_pipeline("ood_validation_cifar10")
+class OODCifar10ValidationPipeline(OODCifar10BenchmarkPipeline, OODValidationPipeline):
+    def __init__(self, transform: Callable, limit_fit=1, limit_run=0.1, batch_size=128, seed=42, **kwargs) -> None:
+        super().__init__(
+            transform=transform, batch_size=batch_size, limit_fit=limit_fit, limit_run=limit_run, seed=seed
+        )
+
+
+@register_pipeline("ood_validation_noise_cifar10")
+class OODCifar10NoiseValidationPipeline(OODValidationPipeline):
+    def __init__(self, transform: Callable, limit_fit=1, limit_run=0.1, batch_size=128, seed=42, **kwargs) -> None:
         super().__init__(
             "cifar10",
             {
@@ -417,6 +466,7 @@ class OODCifar10ValidationPipeline(OODValidationPipeline):
             transform=transform,
             batch_size=batch_size,
             limit_fit=limit_fit,
+            limit_run=limit_run,
             seed=seed,
         )
 
@@ -433,9 +483,17 @@ class OODCifar10ValidationPipeline(OODValidationPipeline):
         self.out_dataset = torch.utils.data.ConcatDataset(list(self.out_datasets.values()))
 
 
-@register_pipeline("ood_cifar100_noise_validation")
-class OODCifar100ValidationPipeline(OODValidationPipeline):
-    def __init__(self, transform: Callable, limit_fit=1, batch_size=128, seed=42, **kwargs) -> None:
+@register_pipeline("ood_validation_cifar100")
+class OODCifar100ValidationPipeline(OODCifar100BenchmarkPipeline, OODValidationPipeline):
+    def __init__(self, transform: Callable, limit_fit=1, limit_run=0.1, batch_size=128, seed=42, **kwargs) -> None:
+        super().__init__(
+            transform=transform, batch_size=batch_size, limit_fit=limit_fit, limit_run=limit_run, seed=seed
+        )
+
+
+@register_pipeline("ood_validation_noise_cifar100")
+class OODCifar100NoiseValidationPipeline(OODValidationPipeline):
+    def __init__(self, transform: Callable, limit_fit=1, limit_run=0.1, batch_size=128, seed=42, **kwargs) -> None:
         super().__init__(
             "cifar100",
             {
@@ -445,6 +503,7 @@ class OODCifar100ValidationPipeline(OODValidationPipeline):
             transform=transform,
             batch_size=batch_size,
             limit_fit=limit_fit,
+            limit_run=limit_run,
             seed=seed,
         )
 
@@ -459,3 +518,11 @@ class OODCifar100ValidationPipeline(OODValidationPipeline):
             for ds, split in self.out_datasets_names_splits.items()
         }
         self.out_dataset = torch.utils.data.ConcatDataset(list(self.out_datasets.values()))
+
+
+@register_pipeline("ood_validation_imagenet")
+class OODImageNetValidationPipeline(OODImageNetBenchmarkPipeline, OODValidationPipeline):
+    def __init__(self, transform: Callable, limit_fit=1, limit_run=0.1, batch_size=64, seed=42, **kwargs) -> None:
+        super().__init__(
+            transform=transform, batch_size=batch_size, limit_fit=limit_fit, limit_run=limit_run, seed=seed
+        )

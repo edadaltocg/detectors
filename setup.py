@@ -19,7 +19,6 @@ install_requires = [
     "wilds",
 ]
 
-
 setup(
     name="detectors",
     author="Eduardo Dadalto with the help of all our contributors.",
@@ -44,6 +43,7 @@ setup(
             "pytest-xdist",
             "twine",
             "sphinx",
+            "sphinx_rtd_theme",
             "myst-parser",
             "six",
             "flake8",

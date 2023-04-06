@@ -1,7 +1,7 @@
 """Generalized OOD detection methods templates.
 """
 import logging
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Literal, Optional
 
 import torch
@@ -31,7 +31,143 @@ def add_output_op(feature_extractor, output_op: Callable) -> nn.Module:
     return feature_extractor
 
 
-class DetectorWithFeatureExtraction:
+class Detector(ABC):
+    """Detector base class."""
+
+    def __init__(self, **kwargs):
+        pass
+
+    def start(self, example: Optional[Tensor] = None, fit_length: Optional[int] = None, *args, **kwargs):
+        """Setup detector for fitting parameters.
+
+        Args:
+            example (Optional[Tensor], optional): Input example. Useful for pre-allocating memory.
+                Defaults to None.
+            fit_length (Optional[int], optional): Length of the fitting dataset. Useful for pre-allocating memory.
+                Defaults to None.
+
+        This is called before the first call to `update` and is optional.
+        """
+        pass
+
+    def update(self, x: Tensor, y: Tensor, *args, **kwargs):
+        """Accumulate features for detector.
+
+        Args:
+            x (Tensor): input tensor.
+            y (Tensor): target tensor.
+
+        This is called for each batch of the fitting dataset and is optional.
+        """
+        pass
+
+    def end(self, *args, **kwargs):
+        """Finalize detector fitting process.
+
+        This is called after the last call to `update` and is optional.
+        """
+        pass
+
+    def fit(self, dataloader, **kwargs):
+        fit_length = len(dataloader.dataset)
+        # get example
+        x, y = next(iter(dataloader))
+        self.start(example=x, fit_length=fit_length, **kwargs)
+        for x, y in dataloader:
+            self.update(x, y, **kwargs)
+        self.end(**kwargs)
+        return self
+
+    @abstractmethod
+    def __call__(self, x: Tensor) -> Tensor:
+        """Compute scores for each input at test time.
+
+        Args:
+            x (Tensor): input tensor.
+
+        Returns:
+            Tensor: scores for each input.
+        """
+        raise NotImplementedError
+
+
+class DetectorWrapper(Detector):
+    """Detector interface."""
+
+    def __init__(self, detector, **kwargs):
+        self.detector = detector
+        if hasattr(self.detector, "model"):
+            self.model = self.detector.model
+        elif hasattr(self.detector, "keywords") and "model" in self.detector.keywords:
+            self.model = self.detector.keywords["model"]
+        else:
+            self.model = None
+        self.keywords = kwargs
+
+    def start(self, example: Optional[Tensor] = None, fit_length: Optional[int] = None, *args, **kwargs):
+        if not hasattr(self.detector, "start"):
+            _logger.warning("Detector does not have a start method.")
+            return
+        self.detector.start(example, fit_length, *args, **kwargs)
+
+    def update(self, x: Tensor, y: Tensor, *args, **kwargs):
+        if not hasattr(self.detector, "update"):
+            _logger.warning("Detector does not have an update method.")
+            return
+        self.detector.update(x, y, *args, **kwargs)
+
+    def end(self, *args, **kwargs):
+        if not hasattr(self.detector, "end"):
+            _logger.warning("Detector does not have an end method.")
+            return
+        self.detector.end(*args, **kwargs)
+
+    def fit(self, dataloader, **kwargs):
+        # get fit length # CHECK BUG
+        fit_length = len(dataloader.dataset)
+        # get example
+        x, y = next(iter(dataloader))
+        self.start(example=x, fit_length=fit_length, **kwargs)
+        for x, y in dataloader:
+            self.update(x, y, **kwargs)
+        self.end(**kwargs)
+        return self
+
+    def __call__(self, x: Tensor) -> Tensor:
+        """
+
+        Args:
+            x (Tensor): input tensor.
+
+        Returns:
+            Tensor: scores for each input.
+        """
+        return self.detector(x)
+
+    def set_hyperparameters(self, **params):
+        """Set the parameters of the detector."""
+        model = params.pop("model", self.model)
+        self.keywords.update(params)
+        if hasattr(self.detector, "keywords"):
+            self.detector.keywords.update(**params)
+        else:
+            self.detector = self.detector.__class__(model=model, **self.keywords)
+        return self
+
+    def save_params(self, path):
+        """Save the parameters of the detector."""
+        raise NotImplementedError
+
+    def load_params(self, path):
+        """Load the parameters of the detector."""
+        raise NotImplementedError
+
+    def __repr__(self):
+        """Return the string representation of the detector."""
+        return f"{self.__class__.__name__}()"
+
+
+class DetectorWithFeatureExtraction(Detector):
     """Base class for OOD detectors with feature extraction.
 
     Args:

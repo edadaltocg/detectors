@@ -13,8 +13,6 @@
 import os
 import sys
 
-import detectors
-
 sys.path.insert(0, os.path.abspath("../../src/"))
 
 
@@ -25,7 +23,6 @@ copyright = "2023, Eduardo Dadalto"
 author = "Eduardo Dadalto"
 
 # The full version, including alpha/beta/rc tags
-release = detectors.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -39,10 +36,10 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.coverage",
     "sphinx.ext.autosummary",
-    "myst_parser",
     "sphinx.ext.napoleon",
     "sphinx.ext.imgmath",
     "sphinx.ext.viewcode",
+    "myst_parser",
 ]
 
 source_suffix = [".rst", ".md"]
@@ -77,13 +74,13 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "classic"
-html_logo = "../../_static/face-with-monocle.png"
+html_theme = "sphinx_rtd_theme"
+html_logo = "_static/face-with-monocle.png"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["../../_static"]
+html_static_path = ["_static"]
 html_sidebars = {
     "**": ["globaltoc.html", "sourcelink.html", "searchbox.html"],
     "using/windows": ["windowssidebar.html", "searchbox.html"],

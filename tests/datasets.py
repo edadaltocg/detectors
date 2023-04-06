@@ -3,8 +3,7 @@ import torch.utils.data
 import torchvision
 import torchvision.transforms as transforms
 
-import detectors
-from detectors import create_dataset, get_dataset_cls, list_datasets
+from detectors import create_dataset, get_dataset_cls
 from detectors.config import DATA_DIR, IMAGENET_ROOT
 from detectors.data.cifar_wrapper import CIFAR10Wrapped, CIFAR100Wrapped
 

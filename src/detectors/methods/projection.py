@@ -4,7 +4,7 @@ from typing import List, Union
 
 import torch
 from torch import Tensor
-from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
+from torchvision.models.feature_extraction import create_feature_extractor
 
 from detectors.methods.utils import create_reduction
 
