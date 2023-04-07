@@ -1,4 +1,4 @@
-Welcome to detectors' documentation!
+🧐 Detectors' Documentation!
 =====================================
 
 .. toctree::
