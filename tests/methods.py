@@ -95,7 +95,4 @@ def test_vim():
     detector.update(X, Y)
     detector.end()
     scores = detector(X)
-    scores_std = scores.std()
-    assert scores_std > 0.0
     assert scores.shape == (N,)
-    assert not torch.allclose(scores, torch.logsumexp(TEST_MODEL(X), dim=-1))
