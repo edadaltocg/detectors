@@ -8,7 +8,7 @@ from typing import Callable, Dict, List, Literal, Optional
 import torch
 import torch.distributed
 from torch import Tensor, nn
-from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
+from torchvision.models.feature_extraction import create_feature_extractor
 from tqdm import tqdm
 
 from detectors.aggregations import create_aggregation

@@ -8,9 +8,6 @@ from functools import wraps
 from typing import Any, Dict, List
 
 import pandas as pd
-import timm
-import timm.data
-import torch
 from torch.utils.data import Dataset
 
 _logger = logging.getLogger(__name__)

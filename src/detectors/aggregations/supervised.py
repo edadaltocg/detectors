@@ -24,7 +24,7 @@ class WeightRegression:
             n_jobs=-1
             # scoring=skm.make_scorer(self.scoring_obj, greater_is_better=False)
         )
-        self.__name__ = f"weight_regression"
+        self.__name__ = "weight_regression"
         self.ignore_dim = ignore_dim
         self.recall_level = recall_level
 

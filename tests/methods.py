@@ -1,6 +1,5 @@
 import pytest
 import torch
-from torch import Tensor
 
 from detectors import create_detector, create_hyperparameters, create_model
 

@@ -2,8 +2,7 @@ import logging
 import os
 from typing import Callable, Optional
 
-from PIL import Image
-from torchvision.datasets import DatasetFolder, ImageFolder
+from torchvision.datasets import ImageFolder
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive, verify_str_arg
 
 _logger = logging.getLogger(__name__)
@@ -30,14 +29,7 @@ class ImageNetA(ImageFolder):
         if not self._check_integrity():
             raise RuntimeError("Dataset not found or corrupted." + " You can use download=True to download it")
 
-        loader = Image.open
-        super().__init__(
-            root=os.path.join(root, self.base_folder),
-            # loader=loader,
-            # is_valid_file=lambda x: x.endswith(".jpg") or x.endswith(".JPEG"),
-            transform=transform,
-            **kwargs,
-        )
+        super().__init__(root=os.path.join(root, self.base_folder), transform=transform, **kwargs)
 
     def _check_exists(self) -> bool:
         return os.path.exists(os.path.join(self.root, self.base_folder))
