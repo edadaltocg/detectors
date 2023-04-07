@@ -11,10 +11,7 @@ test:
 
 docs_build:
 	pip install -r docs/requirements.txt
-	cd docs
-	sphinx-apidoc -o ./source -f ../src/detectors -d 4
-	make clean
-	make html
+	cd docs && sphinx-apidoc -o ./source -f ../src/detectors -d 4 && make clean && make html
 
 format:
 	black --config pyproject.toml .

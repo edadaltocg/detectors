@@ -1,7 +1,8 @@
-import numpy as np
-from sklearn.linear_model import LogisticRegressionCV
 import logging
+
+import numpy as np
 import sklearn.metrics as skm
+from sklearn.linear_model import LogisticRegressionCV
 
 _logger = logging.getLogger(__name__)
 
