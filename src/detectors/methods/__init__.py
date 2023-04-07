@@ -5,7 +5,9 @@ import logging
 import types
 from enum import Enum
 from functools import partial
+
 from typing import Any, Dict, List
+
 
 from detectors.methods.templates import Detector, DetectorWrapper
 
@@ -17,6 +19,7 @@ from .gradnorm import gradnorm
 from .igeood_logits import IgeoodLogits
 from .kl_matching import KLMatching
 from .knn_euclides import KnnEuclides
+from .logit_norm import logit_norm
 from .mahalanobis import Mahalanobis
 from .max_logits import max_logits
 from .maxcosine import MaxCosineSimilarity

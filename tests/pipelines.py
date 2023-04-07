@@ -81,15 +81,7 @@ def test_ood_validation_pipeline(pipeline_name):
     transform = detectors.create_transform(model)
     method = detectors.create_detector(method_name, model=model)
     pipeline = detectors.create_pipeline(pipeline_name, transform=transform, batch_size=512, limit_run=0.01)
-    hyperparameters = {
-        "temperature": [1, 1000],
-        "eps": {"low": 0.0, "high": 0.001, "step": 0.0001},
-    }
     hyperparameters = detectors.methods.create_hyperparameters(method_name)
     print(hyperparameters)
     results = pipeline.run(method, hyperparameters=hyperparameters, n_trials=3)
     print(pipeline.report(results))
-
-
-if __name__ == "__main__":
-    test_ood_validation_pipeline("ood_validation_cifar10")
