@@ -34,10 +34,8 @@ class Dice:
         self.p = p
 
         self.last_layer_name = last_layer_name
-        if self.last_layer_name is None and hasattr(model, "default_cfg"):
-            self.last_layer_name = model.default_cfg["classifier"]
-        elif self.last_layer_name is None:
-            raise ValueError("last_layer_name must be specified")
+        if self.last_layer_name is None:
+            self.last_layer_name = list(model._modules.keys())[-1]
 
         self._weight_backup = get_composed_attr(self.model, self.last_layer_name.split(".")).weight.clone()
         self._bias_backup = get_composed_attr(self.model, self.last_layer_name.split(".")).bias.clone()

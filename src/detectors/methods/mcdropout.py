@@ -3,7 +3,7 @@ from torch import Tensor, nn
 
 
 @torch.no_grad()
-def mc_dropout(x: Tensor, model: nn.Module, k: int = 5, **kwargs) -> Tensor:
+def mcdropout(x: Tensor, model: nn.Module, k: int = 5, **kwargs) -> Tensor:
     """MC Dropout
 
     Forward-propagates the input through the model several times with activated dropout and averages the results.

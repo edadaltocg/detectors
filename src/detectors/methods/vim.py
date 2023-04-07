@@ -20,7 +20,7 @@ class ViM:
         penultimate_layer_name (Optional[str]): Name of the penultimate layer. Defaults to None.
 
     References:
-        [1]https://arxiv.org/abs/2203.10807
+        [1] https://arxiv.org/abs/2203.10807
     """
 
     def __init__(
@@ -63,7 +63,7 @@ class ViM:
         logits = torch.matmul(features, self.w.T.to(features.device)) + self.b.to(features.device)
         return logits
 
-    def start(self):
+    def start(self, *args, **kwargs):
         self.principal_subspace = None
         self.train_features = None
         self.train_logits = None
@@ -103,8 +103,6 @@ class ViM:
         determinant = np.linalg.det(ec.covariance_)
         _logger.debug("Determinant: %s", determinant)
         _logger.debug("Eigen values: %s", eig_vals)
-        # cov_mat=torch.cov(self.train_features.cpu() - self.u.cpu())
-        # eig_vals, eigen_vectors = torch.linalg.eig(cov_mat)
 
         # select largest eigenvectors to get the principal subspace
         largest_eigvals_idx = np.argsort(eig_vals * -1)[self.top_k :]
@@ -130,4 +128,4 @@ class ViM:
         vlogit = x_p_t * self.alpha
         energy = torch.logsumexp(logits, dim=-1)
         score = -vlogit + energy
-        return score
+        return torch.nan_to_num(score, 1e6)

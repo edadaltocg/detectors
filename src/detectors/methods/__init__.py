@@ -15,11 +15,10 @@ from .gradnorm import gradnorm
 from .igeood_logits import IgeoodLogits
 from .kl_matching import KLMatching
 from .knn_euclides import KnnEuclides
-from .logit_norm import logit_norm
 from .mahalanobis import Mahalanobis
 from .max_logits import max_logits
 from .maxcosine import MaxCosineSimilarity
-from .mcdropout import mc_dropout
+from .mcdropout import mcdropout
 from .msp import msp
 from .naive import always_one, always_zero, random_score
 from .odin import odin
@@ -35,31 +34,36 @@ detectors_registry = {
     "random": random_score,
     "always_one": always_one,
     "always_zero": always_zero,
+    #
     "msp": msp,
+    "max_logits": max_logits,
+    "kl_matching": KLMatching,
+    "vim": ViM,
+    "mcdropout": mcdropout,
+    "maxcosine": MaxCosineSimilarity,
+    #
     "odin": odin,
     "doctor": doctor,
-    "max_logits": max_logits,
-    "mcdropout": mc_dropout,
     "energy": energy,
-    "mahalanobis": Mahalanobis,
-    "relative_mahalanobis": RelativeMahalanobis,
-    "react": ReAct,
     "dice": Dice,
-    "knn_euclides": KnnEuclides,
+    "react": ReAct,
     "igeood_logits": IgeoodLogits,
-    "igeood_features": ...,
+    "gradnorm": gradnorm,
+    "knn_euclides": KnnEuclides,
+    #
+    "mahalanobis": Mahalanobis,
+    "gmm": GMM,
+    "relative_mahalanobis": RelativeMahalanobis,
     "projection": Projection,
     "react_projection": ReActProjection,
-    "godin": ...,
+    #
+    "igeood_features": ...,
     "bats": ...,
     "gram": ...,
     "openmax": ...,
     "rankfeat": ...,
-    "vim": ViM,
-    "kl_matching": KLMatching,
-    "gradnorm": gradnorm,
-    "gmm": GMM,
-    "maxcosine": MaxCosineSimilarity,
+    #
+    "godin": ...,
     "logit_norm": ...,
 }
 
@@ -119,6 +123,8 @@ def create_hyperparameters(detector_name: str) -> Dict[str, Any]:
         module = importlib.import_module(f"detectors.methods.{detector_name}")
         hyperparameters = module.HYPERPARAMETERS
     except ModuleNotFoundError:
+        raise ValueError(f"Unknown detector: {detector_name}")
+    except AttributeError:
         hyperparameters = {}
     return hyperparameters
 
