@@ -1,4 +1,4 @@
-"""Generalized OOD detection methods templates.
+"""Generalized detection methods templates.
 """
 import logging
 from abc import ABC, abstractmethod
@@ -241,7 +241,7 @@ class DetectorWithFeatureExtraction(Detector):
         if example is not None and fit_length is not None:
             example_output = self.feature_extractor(example)
             for node_name, v in example_output.items():
-                print((fit_length,) + v.shape[1:], v.dtype)
+                _logger.debug((fit_length,) + v.shape[1:])
                 self.train_features[node_name] = torch.empty((fit_length,) + v.shape[1:], dtype=v.dtype)
                 self.train_targets = torch.empty((fit_length,), dtype=torch.long)
 

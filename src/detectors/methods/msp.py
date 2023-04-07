@@ -4,8 +4,7 @@ from torch import Tensor
 
 @torch.no_grad()
 def msp(input: Tensor, model: torch.nn.Module, **kwargs) -> Tensor:
-    """
-    `Maximum Softmax Response <MSP_PAPER_URL>` OOD detector.
+    """Maximum Softmax Response OOD detector.
 
     Args:
         input (Tensor): input tensor.
@@ -13,6 +12,9 @@ def msp(input: Tensor, model: torch.nn.Module, **kwargs) -> Tensor:
 
     Returns:
         Tensor: OOD scores for each input.
+
+    References:
+        [1] https://arxiv.org/abs/1610.02136
     """
     model.eval()
     logits = model(input)

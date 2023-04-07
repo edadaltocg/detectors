@@ -47,6 +47,23 @@ def compute_detection_error(fpr: float, tpr: float, pos_ratio: float):
     return detection_error
 
 
+def minimum_detection_error(fprs: np.ndarray, tprs: np.ndarray, pos_ratio: float):
+    """Compute the minimum detection error.
+
+    Args:
+        fprs (np.ndarray): False positive rates.
+        tprs (np.ndarray): True positive rates.
+        thresholds (np.ndarray): Thresholds.
+        pos_ratio (float): Ratio of positive labels.
+
+    Returns:
+        Tuple[float, float, float]: FPR, TPR, threshold.
+    """
+    detection_errors = [compute_detection_error(fpr, tpr, pos_ratio) for fpr, tpr in zip(fprs, tprs)]
+    idx = np.argmin(detection_errors)
+    return detection_errors[idx]
+
+
 def false_positive_rate(tn, fp, fn, tp):
     return fp / (fp + tn)
 
@@ -174,7 +191,7 @@ def get_ood_results(in_scores: Tensor, ood_scores: Tensor) -> Dict[str, float]:
     aupr_out = sklearn.metrics.auc(recall_out, precision_out)
 
     pos_ratio = np.mean(_test_labels == 1)
-    detection_error = compute_detection_error(fpr, tpr, pos_ratio)
+    detection_error = minimum_detection_error(fprs, tprs, pos_ratio)
 
     results = {
         "fpr_at_0.95_tpr": fpr,

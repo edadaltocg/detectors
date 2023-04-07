@@ -9,13 +9,13 @@ from torch import Tensor, nn
 _logger = logging.getLogger(__name__)
 
 
-def input_pre_processing(method: Callable, x: Tensor, eps: float):
+def input_pre_processing(score_fn: Callable, x: Tensor, eps: float):
     x.requires_grad_()
     assert x.requires_grad
     assert eps >= 0
 
-    scores = method(x)
-    scores.sum().backward()
+    scores = score_fn(x)
+    scores.mean().backward()
     x = x - eps * torch.sign(-x.grad)
     return x
 

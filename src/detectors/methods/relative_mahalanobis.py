@@ -22,7 +22,7 @@ def relative_mahalanobis_inv_layer_score(
 
 
 class RelativeMahalanobis(Mahalanobis):
-    """`RelativeMahalanobis <PAPER_URL>` detector.
+    """RelativeMahalanobis detector.
 
     Args:
         model (nn.Module): Model to be used to extract features
@@ -39,7 +39,9 @@ class RelativeMahalanobis(Mahalanobis):
         mu_cov_inv_est_fn (function, optional): Function to be used to estimate the means, covariance and inverse matrix.
             Defaults to `class_cond_mus_cov_inv_matrix`.
         cov_reg (float, optional): Covariance regularization. Defaults to 1e-6.
-        **kwargs
+
+    References:
+        [1] https://arxiv.org/abs/2106.03004
     """
 
     def _layer_score(self, x: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None):

@@ -3,6 +3,7 @@ import logging
 import types
 from enum import Enum
 from functools import partial
+from typing import Any, Dict
 
 from detectors.methods.templates import Detector, DetectorWrapper
 
@@ -11,7 +12,7 @@ from .doctor import doctor
 from .energy import energy
 from .gmm import GMM
 from .gradnorm import gradnorm
-from .igeood import IgeoodLogits
+from .igeood_logits import IgeoodLogits
 from .kl_matching import KLMatching
 from .knn_euclides import KnnEuclides
 from .logit_norm import logit_norm
@@ -38,7 +39,7 @@ detectors_registry = {
     "odin": odin,
     "doctor": doctor,
     "max_logits": max_logits,
-    "mc_dropout": mc_dropout,
+    "mcdropout": mc_dropout,
     "energy": energy,
     "mahalanobis": Mahalanobis,
     "relative_mahalanobis": RelativeMahalanobis,
@@ -59,7 +60,7 @@ detectors_registry = {
     "gradnorm": gradnorm,
     "gmm": GMM,
     "maxcosine": MaxCosineSimilarity,
-    "logit_norm": logit_norm,
+    "logit_norm": ...,
 }
 
 
@@ -101,6 +102,25 @@ def create_detector(detector_name: str, **kwargs) -> Detector:
 def list_detectors():
     """List available detectors."""
     return list(detectors_registry.keys())
+
+
+def create_hyperparameters(detector_name: str) -> Dict[str, Any]:
+    """Create hyperparameters for the detector.
+
+    Args:
+        detector_name (string): Name of the detector.
+
+    Returns:
+        dict: Hyperparameters for the detector.
+    """
+    import importlib
+
+    try:
+        module = importlib.import_module(f"detectors.methods.{detector_name}")
+        hyperparameters = module.HYPERPARAMETERS
+    except ModuleNotFoundError:
+        hyperparameters = {}
+    return hyperparameters
 
 
 MethodsRegistry = Enum("MethodsRegistry", dict(zip(list_detectors(), list_detectors())))

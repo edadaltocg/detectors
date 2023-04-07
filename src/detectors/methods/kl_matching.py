@@ -12,9 +12,14 @@ def js_divergence(p: Tensor, q: Tensor):
 
 
 class KLMatching:
-    """KL-Matching
+    """KL-Matching detector.
 
-    - Paper: https://arxiv.org/abs/1911.11132"""
+    Args:
+        model (nn.Module): classifier.
+
+    References:
+        [1] https://arxiv.org/abs/1911.11132
+    """
 
     def __init__(self, model: nn.Module, **kwargs):
         self.model = model

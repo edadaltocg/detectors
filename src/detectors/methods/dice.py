@@ -8,6 +8,8 @@ from torch import Tensor
 
 _logger = logging.getLogger(__name__)
 
+HYPERPARAMETERS = dict(p=dict(low=0.0, high=1.0, step=0.05))
+
 
 def get_composed_attr(model, attrs: List[str]):
     return reduce(lambda x, y: getattr(x, y), attrs, model)

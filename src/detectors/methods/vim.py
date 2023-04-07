@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import numpy as np
 import torch
@@ -11,14 +12,24 @@ _logger = logging.getLogger(__name__)
 
 
 class ViM:
-    """Virtual Logit Matching (ViM)
+    """Virtual Logit Matching (ViM) detector.
 
-    - Title: ViM: Out-Of-Distribution with Virtual-logit Matching.
-    - Paper: [https://arxiv.org/abs/2203.10807](https://arxiv.org/abs/2203.10807)
-    - GitHub: [https://github.com/haoqiwang/vim/](https://github.com/haoqiwang/vim/)
+    Args:
+        model (torch.nn.Module): Model to be used to extract features
+        last_layer_name (Optional[str]): Name of the last layer. Defaults to None.
+        penultimate_layer_name (Optional[str]): Name of the penultimate layer. Defaults to None.
+
+    References:
+        [1]https://arxiv.org/abs/2203.10807
     """
 
-    def __init__(self, model: nn.Module, last_layer_name: str = None, penultimate_layer_name: str = None, **kwargs):
+    def __init__(
+        self,
+        model: nn.Module,
+        last_layer_name: Optional[str] = None,
+        penultimate_layer_name: Optional[str] = None,
+        **kwargs
+    ):
         self.model = model
         self.model.eval()
         self.last_layer_name = last_layer_name

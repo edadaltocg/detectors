@@ -10,6 +10,8 @@ from torchvision.models.feature_extraction import create_feature_extractor
 
 _logger = logging.getLogger(__name__)
 
+HYPERPARAMETERS = dict(p=dict(low=0.0, high=1.0, type=float, default=0.9, step=0.1))
+
 
 def reactify(m: torch.nn.Module, condition_fn: Callable, insert_fn: Callable) -> torch.nn.Module:
     graph: fx.Graph = fx.Tracer().trace(m)
@@ -38,13 +40,28 @@ def insert_fn(node, graph: fx.Graph, thr: float = 1.0):
 
 
 class ReAct:
+    """ReAct detector.
+
+    Args:
+        model (torch.nn.Module): Model to be used to extract features
+        features_nodes (Optional[List[str]]): List of strings that represent the feature nodes.
+            Defaults to None.
+        graph_nodes_names (Optional[List[str]]): List of strings that represent the graph nodes.
+            Defaults to None.
+        insert_node_fn (Callable): Function to be used to insert the node. Defaults to insert_fn.
+        p (float, optional): Threshold to be used to clip the features. Defaults to 0.9.
+
+    References:
+        [1] https://arxiv.org/abs/2111.12797
+    """
+
     LIMIT = 2_560_000
 
     def __init__(
         self,
         model: torch.nn.Module,
         features_nodes: Optional[List[str]] = None,
-        graph_nodes_names: Optional[List[str]] = None,  # annoying parameter
+        graph_nodes_names: Optional[List[str]] = None,
         insert_node_fn: Callable = insert_fn,
         p=0.9,
         **kwargs,

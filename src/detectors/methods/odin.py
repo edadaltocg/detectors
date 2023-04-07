@@ -2,11 +2,13 @@ import torch
 import torch.nn.functional as F
 from torch import Tensor, nn
 
-DefaultConfig = dict(temperature=1000, eps=0.0)
+HYPERPARAMETERS = dict(
+    temperature={"low": 0.1, "high": 1000, "step": 0.1}, eps={"low": 0.0, "high": 0.005, "step": 0.0001}
+)
 
 
 def odin(x: Tensor, model: nn.Module, temperature: float = 1000, eps: float = 0.0, **kwargs) -> Tensor:
-    """`ODIN <ODIN_PAPER_URL>` OOD detector.
+    """ODIN OOD detector.
 
     Args:
         x (Tensor): input tensor.
@@ -16,6 +18,9 @@ def odin(x: Tensor, model: nn.Module, temperature: float = 1000, eps: float = 0.
 
     Returns:
         Tensor: OOD scores for each input.
+
+    References:
+        [1] https://arxiv.org/abs/1706.02690
     """
     model.eval()
     if eps > 0:
