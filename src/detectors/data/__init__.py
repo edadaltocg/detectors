@@ -1,8 +1,10 @@
-"""Data module."""
+"""
+Data module.
+"""
 import logging
 from enum import Enum
 from functools import partial
-from typing import Callable, Optional, Type
+from typing import Callable, List, Optional, Type
 
 from torch.utils.data import Dataset
 from torchvision.datasets import STL10, SVHN, ImageNet, OxfordIIITPet, StanfordCars
@@ -74,17 +76,29 @@ datasets_registry = {
     "oxford_pets": OxfordIIITPet,
     "oxford_flowers": ...,
     "cub200": ...,
-    "iwildcam": partial(make_wilds_dataset, dataset_name="iwildcam"),
-    "fmow": partial(make_wilds_dataset, dataset_name="fmow"),
-    "camelyon17": partial(make_wilds_dataset, dataset_name="camelyon17"),
-    "rxrx1": partial(make_wilds_dataset, dataset_name="rxrx1"),
-    "poverty": partial(make_wilds_dataset, dataset_name="poverty"),
-    "globalwheat": partial(make_wilds_dataset, dataset_name="globalwheat"),
+    "wilds_iwildcam": partial(make_wilds_dataset, dataset_name="iwildcam"),
+    "wilds_fmow": partial(make_wilds_dataset, dataset_name="fmow"),
+    "wilds_camelyon17": partial(make_wilds_dataset, dataset_name="camelyon17"),
+    "wilds_rxrx1": partial(make_wilds_dataset, dataset_name="rxrx1"),
+    "wilds_poverty": partial(make_wilds_dataset, dataset_name="poverty"),
+    "wilds_globalwheat": partial(make_wilds_dataset, dataset_name="globalwheat"),
 }
 
 
 def register_dataset(dataset_name: str):
-    """Register a dataset on the `datasets_registry`."""
+    """Register a dataset on the `datasets_registry`.
+
+    Args:
+        dataset_name (str): Name of the dataset.
+
+    Example::
+
+        @register_dataset("my_dataset")
+        class MyDataset(Dataset):
+            ...
+
+        dataset = create_dataset("my_dataset")
+    """
 
     def register_model_cls(cls):
         if dataset_name in datasets_registry:
@@ -108,13 +122,15 @@ def create_dataset(
     Args:
         dataset_name (string): Name of the dataset.
             Already implemented:
-            [`cifar10`, `cifar100`, `stl10`, `svhn`, `mnist`, `fashion_mnist`,
-              `kmnist`, `emnist`, `mnist_c`, `english_chars`, `isun`, `lsun_c`, `lsun_r`,
-              `tiny_imagenet_c`, `tiny_imagenet_r`, `tiny_imagenet`, `textures`, `gaussian`,
-              `uniform`, `places365`, `stanford_cars`, `imagenet`, `imagenet1k`, `ilsvrc2012`,
-              `mos_inaturalist`, `mos_places365`, `mos_sun`, `cifar10lt`, `cifar100lt`,
-              `imagenet1klt`, `cifar10c`, `cifar100c`, `imagenet_c`, `imagenet_a`,
-              `imagenet_r`, `imagenet_o`, `oxford_pets`, `oxford_flowers`, `cub200`]
+                `cifar10`, `cifar100`, `stl10`, `svhn`, `mnist`, `fashion_mnist`,
+                `kmnist`, `emnist`, `mnist_c`, `english_chars`, `isun`, `lsun_c`, `lsun_r`,
+                `tiny_imagenet_c`, `tiny_imagenet_r`, `tiny_imagenet`, `textures`, `gaussian`,
+                `uniform`, `places365`, `stanford_cars`, `imagenet`, `imagenet1k`, `ilsvrc2012`,
+                `mos_inaturalist`, `mos_places365`, `mos_sun`, `cifar10lt`, `cifar100lt`,
+                imagenet1klt`, `cifar10c`, `cifar100c`, `imagenet_c`, `imagenet_a`,
+                `imagenet_r`, `imagenet_o`, `oxford_pets`, `oxford_flowers`, `cub200`,
+                `wilds_iwildcam`, `wilds_fmow`, `wilds_camelyon17`, `wilds_rxrx1`,
+                `wilds_poverty`, `wilds_globalwheat`.
         root (string): Root directory of dataset.
         split (string, optional): Depends on the selected dataset.
         transform (callable, optional): A function/transform that  takes in an PIL image
@@ -139,11 +155,26 @@ def create_dataset(
 
 
 def get_dataset_cls(dataset_name: str) -> Type[Dataset]:
+    """Return dataset class by name.
+
+    Args:
+        dataset_name (string): Name of the dataset.
+
+    Raises:
+        ValueError: If dataset name is not available in `datasets_registry`.
+
+    Returns:
+        Dataset: Dataset class.
+    """
     return datasets_registry[dataset_name]
 
 
-def list_datasets():
-    """Return list of available dataset names, sorted alphabetically"""
+def list_datasets() -> List[str]:
+    """List of available dataset names, sorted alphabetically.
+
+    Returns:
+        list: List of available dataset names.
+    """
     return sorted(list(datasets_registry.keys()))
 
 

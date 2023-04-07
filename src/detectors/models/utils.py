@@ -9,23 +9,22 @@ class ModelDefaultConfig(dict):
     """
     Default configuration for models from `timm` library.
 
-    Examples:
-    ```
-    {
-        'url': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
-        'num_classes': 1000,
-        'input_size': (3, 224, 224),
-        'pool_size': (7, 7),
-        'crop_pct': 0.875,
-        'interpolation': 'bilinear',
-        'fixed_input_size': True,
-        'mean': (0.485, 0.456, 0.406),
-        'std': (0.229, 0.224, 0.225),
-        'first_conv': 'conv1',
-        'classifier': 'fc',
-        'architecture': 'resnet18'
-    }
-    ```
+    Example::
+
+        {
+            'url': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
+            'num_classes': 1000,
+            'input_size': (3, 224, 224),
+            'pool_size': (7, 7),
+            'crop_pct': 0.875,
+            'interpolation': 'bilinear',
+            'fixed_input_size': True,
+            'mean': (0.485, 0.456, 0.406),
+            'std': (0.229, 0.224, 0.225),
+            'first_conv': 'conv1',
+            'classifier': 'fc',
+            'architecture': 'resnet18'
+        }
     """
 
     __getattr__ = dict.get

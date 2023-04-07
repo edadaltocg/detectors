@@ -1,9 +1,11 @@
-"""Detection methods."""
+"""
+Detection methods.
+"""
 import logging
 import types
 from enum import Enum
 from functools import partial
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from detectors.methods.templates import Detector, DetectorWrapper
 
@@ -73,6 +75,20 @@ def register_detector(name: str):
 
     Args:
         name (string): Name of the detector.
+
+    Example::
+
+        @register_detector("my_detector")
+        class MyDetector(Detector):
+            ...
+
+        detector = create_detector("my_detector")
+
+        @register_detector("my_detector")
+        def my_detector(model, **kwargs):
+            ...
+
+        detector = create_detector("my_detector")
     """
 
     def decorator(f):
@@ -89,11 +105,12 @@ def create_detector(detector_name: str, **kwargs) -> Detector:
         detector_name (string): Name of the detector.
             Already implemented:
                 `random`, `msp`, `odin`, `energy`, `mahalanobis`, `react`, `dice`, `knn_euclides`, `igeood_logits`,
-                `projection`, `react_projection`
+                `projection`, `react_projection`, `gradnorm`, `maxcosine`, `mcdropout`, `max_logits`, `kl_matching`,
+                `gmm`, `relative_mahalanobis`, `doctor`, `always_one`, `always_zero`, `random_score`.
         **kwargs: Additional arguments for the detector.
 
     Returns:
-        Detector
+        Detector: the corresponding detector.
     """
     model = kwargs.pop("model", None)
     if detector_name not in detectors_registry:
@@ -103,8 +120,12 @@ def create_detector(detector_name: str, **kwargs) -> Detector:
     return DetectorWrapper(partial(detectors_registry[detector_name], model=model, **kwargs), **kwargs)
 
 
-def list_detectors():
-    """List available detectors."""
+def list_detectors() -> List[str]:
+    """List available detectors.
+
+    Returns:
+        List[str]: List of available detectors.
+    """
     return list(detectors_registry.keys())
 
 
@@ -115,7 +136,7 @@ def create_hyperparameters(detector_name: str) -> Dict[str, Any]:
         detector_name (string): Name of the detector.
 
     Returns:
-        dict: Hyperparameters for the detector.
+        Dict[str, Any]: Hyperparameters for the detector.
     """
     import importlib
 

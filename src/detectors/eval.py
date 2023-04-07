@@ -1,4 +1,5 @@
-"""Module containing evaluation metrics.
+"""
+Module containing evaluation metrics.
 """
 from typing import Dict
 
@@ -172,6 +173,16 @@ def expected_calibration_error(num_bins, logits, labels_true):
 
 
 def get_ood_results(in_scores: Tensor, ood_scores: Tensor) -> Dict[str, float]:
+    """Compute OOD detection metrics.
+
+    Args:
+        in_scores (Tensor): In-distribution scores.
+        ood_scores (Tensor): Out-of-distribution scores.
+
+    Returns:
+        Dict[str, float]: OOD detection metrics.
+            keys: `fpr_at_0.95_tpr`, `tnr_at_0.95_tpr`, `detection_error`, `auroc`, `aupr_in`, `aupr_out`, `thr`.
+    """
     if isinstance(in_scores, np.ndarray) or isinstance(in_scores, list):
         in_scores = torch.tensor(in_scores)
     if isinstance(ood_scores, np.ndarray) or isinstance(ood_scores, list):

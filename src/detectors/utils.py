@@ -74,10 +74,3 @@ def run_parallel(input_space, wrapper_fn):
     p.close()
     p.join()
     return results
-
-
-def create_transform(model: torch.nn.Module, is_training: bool = False):
-    data_config = timm.data.resolve_data_config(model.default_cfg)
-    data_config["is_training"] = is_training
-    transform = timm.data.create_transform(**data_config)
-    return transform

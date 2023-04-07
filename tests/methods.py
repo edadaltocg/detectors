@@ -4,7 +4,6 @@ from torch import Tensor
 
 from detectors import create_detector, create_hyperparameters, create_model
 
-
 torch.manual_seed(0)
 TEST_MODEL = create_model("resnet18_cifar10")
 TEST_MODEL.eval()
@@ -59,7 +58,6 @@ def test_detectors_with_hyperparameters(method_name):
         "msp",
         "max_logits",
         "kl_matching",
-        "vim",
         "mcdropout",
         "maxcosine",
     ],
@@ -80,6 +78,20 @@ def test_hyperparameter_free_detectors(method_name):
 
 def test_react():
     detector = create_detector("react", model=TEST_MODEL)
+    detector.start()
+    detector.update(X, Y)
+    detector.end()
+    scores = detector(X)
+    scores_std = scores.std()
+    assert scores_std > 0.0
+    assert scores.shape == (N,)
+    assert not torch.allclose(scores, torch.logsumexp(TEST_MODEL(X), dim=-1))
+
+
+def test_vim():
+    model = create_model("resnet18_cifar10", pretrained=True)
+    model.eval()
+    detector = create_detector("vim", model=TEST_MODEL)
     detector.start()
     detector.update(X, Y)
     detector.end()

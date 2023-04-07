@@ -8,7 +8,14 @@ Welcome to detectors' documentation!
    readme_link
    examples
    api
-   modules
+   leaderboard
+   faq
+
+.. toctree::
+    :maxdepth: 2
+    :caption: Package
+
+    modules
 
 .. include:: readme_link.md
    :parser: myst_parser.sphinx_

@@ -1,4 +1,5 @@
-"""Generalized detection methods templates.
+"""
+Generalized detection methods templates.
 """
 import logging
 from abc import ABC, abstractmethod
@@ -69,6 +70,11 @@ class Detector(ABC):
         pass
 
     def fit(self, dataloader, **kwargs):
+        """Fit detector to a dataset.
+
+        Args:
+            dataloader (Dataloader): Dataloader for the fitting dataset.
+        """
         fit_length = len(dataloader.dataset)
         # get example
         x, y = next(iter(dataloader))
@@ -134,14 +140,6 @@ class DetectorWrapper(Detector):
         return self
 
     def __call__(self, x: Tensor) -> Tensor:
-        """
-
-        Args:
-            x (Tensor): input tensor.
-
-        Returns:
-            Tensor: scores for each input.
-        """
         return self.detector(x)
 
     def set_hyperparameters(self, **params):
@@ -301,6 +299,13 @@ class DetectorWithFeatureExtraction(Detector):
 
     @abstractmethod
     def _layer_score(self, x: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None):
+        """Compute the anomaly score for a single layer.
+
+        Args:
+            x (Tensor): input tensor.
+            layer_name (str, optional): name of the layer. Defaults to None.
+            index (int, optional): index of the layer in the feature extractor. Defaults to None.
+        """
         raise NotImplementedError
 
     @torch.no_grad()
