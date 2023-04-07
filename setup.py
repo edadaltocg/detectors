@@ -13,7 +13,6 @@ install_requires = [
     "accelerate",
     "psutil",
     "jinja2",
-    "pyod",
     "pandas",
     "matplotlib",
     "wilds",
