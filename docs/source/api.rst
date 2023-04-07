@@ -1,18 +1,18 @@
 Main API
 =============
 
-Pipelines
----------
-
-.. automodule:: detectors.pipelines
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Methods
 -------
 
 .. automodule:: detectors.methods
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Pipelines
+---------
+
+.. automodule:: detectors.pipelines
    :members:
    :undoc-members:
    :show-inheritance:

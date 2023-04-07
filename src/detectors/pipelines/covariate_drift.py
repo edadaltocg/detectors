@@ -48,7 +48,6 @@ class CovariateDriftPipeline(Pipeline):
             intensities (List[int]): List of intensities to apply.
             batch_size (int, optional): Batch size. Defaults to 128.
 
-        Example:
         """
         self.accelerator = accelerate.Accelerator()
         accelerate.utils.set_seed(seed)

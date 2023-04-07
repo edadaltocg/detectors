@@ -85,7 +85,7 @@ def class_cond_mus_cov_inv_matrix(
 
 
 class Mahalanobis(DetectorWithFeatureExtraction):
-    """`Mahalanobis <MAHALANOBIS_PAPER_URL>` detector.
+    """Mahalanobis OOD detector.
 
     Args:
         model (nn.Module): Model to be used to extract features
@@ -102,7 +102,9 @@ class Mahalanobis(DetectorWithFeatureExtraction):
         mu_cov_inv_est_fn (function, optional): Function to be used to estimate the means, covariance and inverse matrix.
             Defaults to `class_cond_mus_cov_inv_matrix`.
         cov_reg (float, optional): Covariance regularization. Defaults to 1e-6.
-        **kwargs
+
+    References:
+        [1] https://arxiv.org/abs/1807.03888
     """
 
     def __init__(

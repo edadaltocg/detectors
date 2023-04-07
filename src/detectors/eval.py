@@ -1,4 +1,5 @@
-"""Module containing evaluation metrics.
+"""
+Module containing evaluation metrics.
 """
 from typing import Dict
 
@@ -45,6 +46,23 @@ def compute_detection_error(fpr: float, tpr: float, pos_ratio: float):
     # Get indexes of all TPR >= fixed tpr level
     detection_error = pos_ratio * (1 - tpr) + neg_ratio * fpr
     return detection_error
+
+
+def minimum_detection_error(fprs: np.ndarray, tprs: np.ndarray, pos_ratio: float):
+    """Compute the minimum detection error.
+
+    Args:
+        fprs (np.ndarray): False positive rates.
+        tprs (np.ndarray): True positive rates.
+        thresholds (np.ndarray): Thresholds.
+        pos_ratio (float): Ratio of positive labels.
+
+    Returns:
+        Tuple[float, float, float]: FPR, TPR, threshold.
+    """
+    detection_errors = [compute_detection_error(fpr, tpr, pos_ratio) for fpr, tpr in zip(fprs, tprs)]
+    idx = np.argmin(detection_errors)
+    return detection_errors[idx]
 
 
 def false_positive_rate(tn, fp, fn, tp):
@@ -155,6 +173,16 @@ def expected_calibration_error(num_bins, logits, labels_true):
 
 
 def get_ood_results(in_scores: Tensor, ood_scores: Tensor) -> Dict[str, float]:
+    """Compute OOD detection metrics.
+
+    Args:
+        in_scores (Tensor): In-distribution scores.
+        ood_scores (Tensor): Out-of-distribution scores.
+
+    Returns:
+        Dict[str, float]: OOD detection metrics.
+            keys: `fpr_at_0.95_tpr`, `tnr_at_0.95_tpr`, `detection_error`, `auroc`, `aupr_in`, `aupr_out`, `thr`.
+    """
     if isinstance(in_scores, np.ndarray) or isinstance(in_scores, list):
         in_scores = torch.tensor(in_scores)
     if isinstance(ood_scores, np.ndarray) or isinstance(ood_scores, list):
@@ -174,7 +202,7 @@ def get_ood_results(in_scores: Tensor, ood_scores: Tensor) -> Dict[str, float]:
     aupr_out = sklearn.metrics.auc(recall_out, precision_out)
 
     pos_ratio = np.mean(_test_labels == 1)
-    detection_error = compute_detection_error(fpr, tpr, pos_ratio)
+    detection_error = minimum_detection_error(fprs, tprs, pos_ratio)
 
     results = {
         "fpr_at_0.95_tpr": fpr,

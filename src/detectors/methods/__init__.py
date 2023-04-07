@@ -1,8 +1,13 @@
-"""Detection methods."""
+"""
+Detection methods.
+"""
 import logging
 import types
 from enum import Enum
 from functools import partial
+
+from typing import Any, Dict, List
+
 
 from detectors.methods.templates import Detector, DetectorWrapper
 
@@ -11,14 +16,13 @@ from .doctor import doctor
 from .energy import energy
 from .gmm import GMM
 from .gradnorm import gradnorm
-from .igeood import IgeoodLogits
+from .igeood_logits import IgeoodLogits
 from .kl_matching import KLMatching
 from .knn_euclides import KnnEuclides
-from .logit_norm import logit_norm
 from .mahalanobis import Mahalanobis
 from .max_logits import max_logits
 from .maxcosine import MaxCosineSimilarity
-from .mcdropout import mc_dropout
+from .mcdropout import mcdropout
 from .msp import msp
 from .naive import always_one, always_zero, random_score
 from .odin import odin
@@ -34,32 +38,37 @@ detectors_registry = {
     "random": random_score,
     "always_one": always_one,
     "always_zero": always_zero,
+    #
     "msp": msp,
+    "max_logits": max_logits,
+    "kl_matching": KLMatching,
+    "vim": ViM,
+    "mcdropout": mcdropout,
+    "maxcosine": MaxCosineSimilarity,
+    #
     "odin": odin,
     "doctor": doctor,
-    "max_logits": max_logits,
-    "mc_dropout": mc_dropout,
     "energy": energy,
-    "mahalanobis": Mahalanobis,
-    "relative_mahalanobis": RelativeMahalanobis,
-    "react": ReAct,
     "dice": Dice,
-    "knn_euclides": KnnEuclides,
+    "react": ReAct,
     "igeood_logits": IgeoodLogits,
-    "igeood_features": ...,
+    "gradnorm": gradnorm,
+    "knn_euclides": KnnEuclides,
+    #
+    "mahalanobis": Mahalanobis,
+    "gmm": GMM,
+    "relative_mahalanobis": RelativeMahalanobis,
     "projection": Projection,
     "react_projection": ReActProjection,
-    "godin": ...,
+    #
+    "igeood_features": ...,
     "bats": ...,
     "gram": ...,
     "openmax": ...,
     "rankfeat": ...,
-    "vim": ViM,
-    "kl_matching": KLMatching,
-    "gradnorm": gradnorm,
-    "gmm": GMM,
-    "maxcosine": MaxCosineSimilarity,
-    "logit_norm": logit_norm,
+    #
+    "godin": ...,
+    "logit_norm": ...,
 }
 
 
@@ -68,6 +77,20 @@ def register_detector(name: str):
 
     Args:
         name (string): Name of the detector.
+
+    Example::
+
+        @register_detector("my_detector")
+        class MyDetector(Detector):
+            ...
+
+        detector = create_detector("my_detector")
+
+        @register_detector("my_detector")
+        def my_detector(model, **kwargs):
+            ...
+
+        detector = create_detector("my_detector")
     """
 
     def decorator(f):
@@ -84,11 +107,12 @@ def create_detector(detector_name: str, **kwargs) -> Detector:
         detector_name (string): Name of the detector.
             Already implemented:
                 `random`, `msp`, `odin`, `energy`, `mahalanobis`, `react`, `dice`, `knn_euclides`, `igeood_logits`,
-                `projection`, `react_projection`
+                `projection`, `react_projection`, `gradnorm`, `maxcosine`, `mcdropout`, `max_logits`, `kl_matching`,
+                `gmm`, `relative_mahalanobis`, `doctor`, `always_one`, `always_zero`, `random_score`.
         **kwargs: Additional arguments for the detector.
 
     Returns:
-        Detector
+        Detector: the corresponding detector.
     """
     model = kwargs.pop("model", None)
     if detector_name not in detectors_registry:
@@ -98,9 +122,34 @@ def create_detector(detector_name: str, **kwargs) -> Detector:
     return DetectorWrapper(partial(detectors_registry[detector_name], model=model, **kwargs), **kwargs)
 
 
-def list_detectors():
-    """List available detectors."""
+def list_detectors() -> List[str]:
+    """List available detectors.
+
+    Returns:
+        List[str]: List of available detectors.
+    """
     return list(detectors_registry.keys())
+
+
+def create_hyperparameters(detector_name: str) -> Dict[str, Any]:
+    """Create hyperparameters for the detector.
+
+    Args:
+        detector_name (string): Name of the detector.
+
+    Returns:
+        Dict[str, Any]: Hyperparameters for the detector.
+    """
+    import importlib
+
+    try:
+        module = importlib.import_module(f"detectors.methods.{detector_name}")
+        hyperparameters = module.HYPERPARAMETERS
+    except ModuleNotFoundError:
+        raise ValueError(f"Unknown detector: {detector_name}")
+    except AttributeError:
+        hyperparameters = {}
+    return hyperparameters
 
 
 MethodsRegistry = Enum("MethodsRegistry", dict(zip(list_detectors(), list_detectors())))

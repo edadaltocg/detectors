@@ -1,4 +1,5 @@
-"""Generalized OOD detection methods templates.
+"""
+Generalized detection methods templates.
 """
 import logging
 from abc import ABC, abstractmethod
@@ -7,7 +8,7 @@ from typing import Callable, Dict, List, Literal, Optional
 import torch
 import torch.distributed
 from torch import Tensor, nn
-from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
+from torchvision.models.feature_extraction import create_feature_extractor
 from tqdm import tqdm
 
 from detectors.aggregations import create_aggregation
@@ -69,6 +70,11 @@ class Detector(ABC):
         pass
 
     def fit(self, dataloader, **kwargs):
+        """Fit detector to a dataset.
+
+        Args:
+            dataloader (Dataloader): Dataloader for the fitting dataset.
+        """
         fit_length = len(dataloader.dataset)
         # get example
         x, y = next(iter(dataloader))
@@ -134,14 +140,6 @@ class DetectorWrapper(Detector):
         return self
 
     def __call__(self, x: Tensor) -> Tensor:
-        """
-
-        Args:
-            x (Tensor): input tensor.
-
-        Returns:
-            Tensor: scores for each input.
-        """
         return self.detector(x)
 
     def set_hyperparameters(self, **params):
@@ -241,7 +239,7 @@ class DetectorWithFeatureExtraction(Detector):
         if example is not None and fit_length is not None:
             example_output = self.feature_extractor(example)
             for node_name, v in example_output.items():
-                print((fit_length,) + v.shape[1:], v.dtype)
+                _logger.debug((fit_length,) + v.shape[1:])
                 self.train_features[node_name] = torch.empty((fit_length,) + v.shape[1:], dtype=v.dtype)
                 self.train_targets = torch.empty((fit_length,), dtype=torch.long)
 
@@ -301,6 +299,13 @@ class DetectorWithFeatureExtraction(Detector):
 
     @abstractmethod
     def _layer_score(self, x: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None):
+        """Compute the anomaly score for a single layer.
+
+        Args:
+            x (Tensor): input tensor.
+            layer_name (str, optional): name of the layer. Defaults to None.
+            index (int, optional): index of the layer in the feature extractor. Defaults to None.
+        """
         raise NotImplementedError
 
     @torch.no_grad()

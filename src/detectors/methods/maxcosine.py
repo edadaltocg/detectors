@@ -19,7 +19,7 @@ def max_cosine_sim_layer_score(x: Tensor, mus: Union[Tensor, List[Tensor]], eps=
 
 
 class MaxCosineSimilarity(DetectorWithFeatureExtraction):
-    """`MaxCosineSimilarity <PAPER_URL>` detector.
+    """MaxCosineSimilarity  detector.
 
     Args:
         model (nn.Module): Model to be used to extract features
@@ -30,7 +30,9 @@ class MaxCosineSimilarity(DetectorWithFeatureExtraction):
         pooling_op_name (str, optional): Pooling operation to be applied to the features.
             Can be one of ["max", "avg", "flatten", "getitem", "none"]. Defaults to "avg".
         aggregation_method_name (str, optional): Aggregation method to be applied to the features. Defaults to None.
-        **kwargs
+
+    References:
+        [1] https://openaccess.thecvf.com/content/ACCV2020/html/Techapanurak_Hyperparameter-Free_Out-of-Distribution_Detection_Using_Cosine_Similarity_ACCV_2020_paper.html
     """
 
     def _layer_score(self, x: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None):

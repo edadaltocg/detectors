@@ -20,10 +20,10 @@ detectors.methods.bats module
    :undoc-members:
    :show-inheritance:
 
-detectors.methods.dbscan module
--------------------------------
+detectors.methods.csi module
+----------------------------
 
-.. automodule:: detectors.methods.dbscan
+.. automodule:: detectors.methods.csi
    :members:
    :undoc-members:
    :show-inheritance:
@@ -92,10 +92,10 @@ detectors.methods.gram module
    :undoc-members:
    :show-inheritance:
 
-detectors.methods.igeood module
--------------------------------
+detectors.methods.igeood\_logits module
+---------------------------------------
 
-.. automodule:: detectors.methods.igeood
+.. automodule:: detectors.methods.igeood_logits
    :members:
    :undoc-members:
    :show-inheritance:
@@ -176,6 +176,14 @@ detectors.methods.odin module
 -----------------------------
 
 .. automodule:: detectors.methods.odin
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+detectors.methods.oe module
+---------------------------
+
+.. automodule:: detectors.methods.oe
    :members:
    :undoc-members:
    :show-inheritance:

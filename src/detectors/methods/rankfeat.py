@@ -1,7 +1,7 @@
+# TODO
 import torch
 
 
-# Our proposed RankFeat Score
 def iterate_data_rankfeat(data_loader, model, temperature):
     confs = []
     for b, (x, y) in enumerate(data_loader):

@@ -1,8 +1,3 @@
-import torch
-from torch import Tensor
+# TODO
+"""https://arxiv.org/abs/2205.09310"""
 
-
-def logit_norm(model, x: Tensor, p="fro", **kwargs):
-    with torch.no_grad():
-        logits = model(x)
-    return torch.norm(logits, p=p, dim=-1)

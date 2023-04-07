@@ -1,4 +1,6 @@
-"""Pipeline module."""
+"""
+Pipeline module.
+"""
 from enum import Enum
 from typing import Any, List, Tuple
 
@@ -24,25 +26,25 @@ def register_pipeline(name: str):
 
 def create_pipeline(name: str, **kwargs) -> Pipeline:
     """
-    Utility factory method to build a [`Pipeline`].
+    Utility factory method to build a Pipeline.
 
     Args:
         name (str, optional):
             The name defining which pipeline will be returned. Currently accepted pipeline names are:
                 `ood_benchmark_cifar10`, `ood_benchmark_cifar100`, `ood_benchmark_imagenet`, `ood_mnist_benchmark`,
+                `ood_validation_cifar10`, `ood_validation_cifar100`, `ood_validation_imagenet`, `ood_validation_mnist`,
+
         **kwargs:
             Additional arguments to pass to the pipeline.
 
     Returns:
-        [Pipeline]: A suitable pipeline for the task.
+        Pipeline: A suitable pipeline for the task.
 
-    Examples:
+    Example::
 
-        ```python
-    >>> import detectors
-    >>> pipe = detectors.create_pipeline("ood_benchmark_cifar10")
-    >>> pipe.run(detector)
-        ```
+        >>> import detectors
+        >>> pipe = detectors.create_pipeline("ood_benchmark_cifar10")
+        >>> pipe.run(detector)
     """
 
     return pipeline_registry[name](**kwargs)
@@ -53,7 +55,7 @@ def list_pipelines() -> List[str]:
     List all available pipelines.
 
     Returns:
-        list: A list of available pipelines.
+        List[str]: A list of available pipelines.
     """
     return list(pipeline_registry.keys())
 

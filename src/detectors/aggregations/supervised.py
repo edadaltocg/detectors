@@ -1,7 +1,8 @@
-import numpy as np
-from sklearn.linear_model import LogisticRegressionCV
 import logging
+
+import numpy as np
 import sklearn.metrics as skm
+from sklearn.linear_model import LogisticRegressionCV
 
 _logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class WeightRegression:
             n_jobs=-1
             # scoring=skm.make_scorer(self.scoring_obj, greater_is_better=False)
         )
-        self.__name__ = f"weight_regression"
+        self.__name__ = "weight_regression"
         self.ignore_dim = ignore_dim
         self.recall_level = recall_level
 

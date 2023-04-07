@@ -9,12 +9,10 @@ test:
 		--cov-report xml \
 		--cov-report term-missing:skip-covered
 
-docs_build:
+doc:
 	pip install -r docs/requirements.txt
-	cd docs
-	sphinx-apidoc -o ./source -f ../src/detectors -d 4
-	make clean
-	make html
+	cd docs && sphinx-apidoc -o ./source -f ../src/detectors -d 4 && make clean && make html
+
 
 format:
 	black --config pyproject.toml .
@@ -27,7 +25,7 @@ lint:
 
 help:
 	@echo 'package      - build the package'
-	@echo 'docs_build   - build the documentation'
+	@echo 'doc		      - build the documentation'
 	@echo 'test         - run unit tests and generate coverage report'
 	@echo 'format       - run code formatters'
 	@echo 'lint         - run linters'

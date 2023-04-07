@@ -1,11 +1,22 @@
+from functools import partial
+
 import torch
 from torch import Tensor, nn
 
-DefaultConfig = dict(temperature=1.3, eps=0.0)
+from .utils import input_pre_processing
+
+HYPERPARAMETERS = dict(
+    temperature={"low": 0.1, "high": 1000, "step": 0.1}, eps={"low": 0.0, "high": 0.005, "step": 0.0001}
+)
 
 
-def doctor(x: Tensor, model: nn.Module, temperature: float = 1000, eps: float = 0.0, **kwargs) -> Tensor:
-    """`Doctor <DOCTOR_PAPER_URL>` detector.
+def _score_fn(x: Tensor, model: nn.Module, temperature: float = 1000, **kwargs) -> Tensor:
+    outputs = model(x)
+    return 1 - torch.softmax(outputs / temperature, dim=1).square().sum(dim=1)
+
+
+def doctor(x: Tensor, model: nn.Module, temperature: float = 1, eps: float = 0.0, **kwargs) -> Tensor:
+    """Doctor detector.
 
     Args:
         x (Tensor): input tensor.
@@ -15,20 +26,14 @@ def doctor(x: Tensor, model: nn.Module, temperature: float = 1000, eps: float = 
 
     Returns:
         Tensor: scores for each input.
+
+    References:
+        [1] https://arxiv.org/abs/2106.02395
     """
     model.eval()
-    if eps > 0:
-        x.requires_grad_()
-        # input preprocessing
-        outputs = model(x)
-        labels = torch.argmax(outputs, dim=1)
-        loss = torch.mean(1 - torch.softmax(outputs / temperature, dim=1).square().sum(dim=1))
-        loss.backward()
 
-        grad_sign = x.grad.data.sign()
-        # Adding small perturbations to images
-        x = x - eps * grad_sign
+    if eps > 0:
+        x = input_pre_processing(partial(_score_fn, model=model, temperature=temperature), x, eps)
 
     with torch.no_grad():
-        outputs = model(x)
-    return 1 - torch.softmax(outputs / temperature, dim=1).square().sum(dim=1)
+        return _score_fn(x, model, temperature)

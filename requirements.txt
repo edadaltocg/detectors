@@ -18,7 +18,6 @@ build==0.10.0
 gradio==3.20.1
 notebook==6.5.3
 pylint==2.15.5
-pyod==1.0.8
 pytest-timeout==2.1.0
 pytest-xdist==3.0.2
 seaborn==0.12.2
