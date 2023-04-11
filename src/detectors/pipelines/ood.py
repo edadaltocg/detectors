@@ -171,8 +171,6 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         test_labels = torch.empty(len(self.test_dataloader.dataset), dtype=torch.int64)
         test_scores = torch.empty(len(self.test_dataloader.dataset), dtype=torch.float32)
         self.infer_times = []
-        # test_labels = []
-        # test_scores = []
         idx = 0
         progress_bar = tqdm(
             range(len(self.test_dataloader)), desc="Inference", disable=not self.accelerator.is_local_main_process
@@ -184,8 +182,6 @@ class OODBenchmarkPipeline(Pipeline, ABC):
 
             labels, score = self.accelerator.gather_for_metrics((labels, score))
 
-            # test_labels.append(labels.cpu())
-            # test_scores.append(score.detach().cpu())
             self.infer_times.append(t2 - t1)
             test_labels[idx : idx + x.shape[0]] = labels.cpu()
             test_scores[idx : idx + x.shape[0]] = score.detach().cpu()
@@ -196,8 +192,6 @@ class OODBenchmarkPipeline(Pipeline, ABC):
 
         self.accelerator.wait_for_everyone()
         self.infer_times = np.mean(self.infer_times)
-        # test_scores = torch.cat(test_scores).view(-1)
-        # test_labels = torch.cat(test_labels).view(-1)
 
         res_obj = self.postprocess(test_scores, test_labels)
 
@@ -224,6 +218,8 @@ class OODBenchmarkPipeline(Pipeline, ABC):
 
     def report(self, results: Dict[str, Dict[str, Any]]) -> str:
         # log results in a table
+        if "results" in results:
+            results = results["results"]
         df = pd.DataFrame()
 
         for ood_dataset, res in results.items():
@@ -395,18 +391,30 @@ class OODValidationPipeline(OODBenchmarkPipeline, ABC):
         method: DetectorWrapper,
         hyperparameters: Dict[str, Union[List[Any], Tuple[Any], Dict[str, Any]]],
         objective_metric: Literal["fpr_at_0.95_tpr", "auroc"] = "auroc",
+        objective_dataset: str = "average",
         n_trials=20,
     ) -> Dict[str, Any]:
         self.method = method
         self.hyperparameters = hyperparameters
         self.objective_metric = objective_metric
+        self.objective_dataset = objective_dataset
 
         direction = "maximize" if objective_metric == "auroc" else "minimize"
-        study = optuna.create_study(direction=direction)
+        sampler = None
+        if all(isinstance(v, (list, tuple)) for v in hyperparameters.values()):
+            sampler = optuna.samplers.GridSampler(search_space=hyperparameters)
+            lengths = np.array([len(v) for v in hyperparameters.values()])
+            n_trials = min(int(np.prod(lengths)), n_trials)
+        study = optuna.create_study(study_name="ood-val", sampler=sampler, direction=direction)
         study.optimize(self.objective, n_trials=n_trials, show_progress_bar=True)
 
         self.method.set_hyperparameters(**study.best_params)
-        return {"method": self.method, "study": study, "best_params": study.best_params}
+        return {
+            "method": self.method,
+            "study": study,
+            "best_params": study.best_params,
+            "best_value": study.best_trial.value,
+        }
 
     def objective(self, trial: optuna.trial.Trial) -> float:
         # build detector from trial params
@@ -425,9 +433,11 @@ class OODValidationPipeline(OODBenchmarkPipeline, ABC):
         # print methods params
         run_obj = super().run(self.method)
         results = run_obj["results"]
-        return results["average"][self.objective_metric]
+        return results[self.objective_dataset][self.objective_metric]
 
     def report(self, results: Dict[str, Any]):
+        if "study" not in results:
+            raise ValueError("The results dict must contain a 'study' key.")
         study = results["study"]
         pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
         complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
