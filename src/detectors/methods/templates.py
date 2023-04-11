@@ -175,7 +175,9 @@ class DetectorWithFeatureExtraction(Detector):
         all_blocks (bool, optional): If True, use all blocks of the model. Defaults to False.
         last_layer (bool, optional): If True, use also the last layer of the model. Defaults to False.
         pooling_op_name (str, optional): Pooling operation to be applied to the features.
-            Can be one of ["max", "avg", "flatten", "getitem", "none"]. Defaults to "avg".
+            Can be one of:
+                `max`, `avg`, `none`, `flatten`, `getitem`, `avg_or_getitem`, `max_or_getitem`.
+            Defaults to "avg".
         aggregation_method_name (str, optional): Aggregation method to be applied to the features. Defaults to None.
         **kwargs
     """
@@ -186,7 +188,7 @@ class DetectorWithFeatureExtraction(Detector):
         features_nodes: Optional[List[str]] = None,
         all_blocks: bool = False,
         last_layer: bool = False,
-        pooling_op_name: Literal["max", "avg", "flatten", "getitem", "none"] = "avg",
+        pooling_op_name: str = "avg",
         aggregation_method_name: Optional[str] = "mean",
         **kwargs,
     ):

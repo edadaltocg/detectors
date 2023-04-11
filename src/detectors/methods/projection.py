@@ -25,7 +25,7 @@ class Projection:
         self,
         model: torch.nn.Module,
         features_nodes: List[str],
-        pooling_op_name: str = "max",
+        pooling_op_name: str = "max_or_getitem",
         aggregation_method=None,
         **kwargs
     ):

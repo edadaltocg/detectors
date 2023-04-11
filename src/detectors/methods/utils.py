@@ -45,6 +45,22 @@ def getitem(data: Tensor, **kwargs):
     return data
 
 
+def avg_or_getitem(data: Tensor, **kwargs):
+    if data.dim() == 3:
+        return data[:, 0].clone().contiguous()
+    elif data.dim() > 3:
+        return torch.flatten(nn.AdaptiveAvgPool2d((1, 1))(data), 1)
+    return data
+
+
+def max_or_getitem(data: Tensor, **kwargs):
+    if data.dim() == 3:
+        return data[:, 0].clone().contiguous()
+    elif data.dim() > 3:
+        return torch.flatten(nn.AdaptiveMaxPool2d((1, 1))(data), 1)
+    return data
+
+
 def none_reduction(data: Tensor, **kwargs):
     return data
 
@@ -54,6 +70,8 @@ reductions_registry = {
     "avg": adaptive_avg_pool2d,
     "max": adaptive_max_pool2d,
     "getitem": getitem,
+    "avg_or_getitem": avg_or_getitem,
+    "max_or_getitem": max_or_getitem,
     "none": none_reduction,
 }
 
