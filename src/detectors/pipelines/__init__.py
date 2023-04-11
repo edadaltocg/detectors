@@ -33,6 +33,7 @@ def create_pipeline(name: str, **kwargs) -> Pipeline:
             The name defining which pipeline will be returned. Currently accepted pipeline names are:
                 `ood_benchmark_cifar10`, `ood_benchmark_cifar100`, `ood_benchmark_imagenet`, `ood_mnist_benchmark`,
                 `ood_validation_cifar10`, `ood_validation_cifar100`, `ood_validation_imagenet`, `ood_validation_mnist`,
+                `ood_validation_noise_cifar10`, `ood_validation_noise_cifar100`, `ood_validation_noise_imagenet`,
 
         **kwargs:
             Additional arguments to pass to the pipeline.
