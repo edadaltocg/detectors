@@ -94,7 +94,10 @@ class IgeoodLogits:
         self.mus = torch.cat(self.mus, dim=0)
 
     def __call__(self, x: Tensor) -> Tensor:
+        self.mus = self.mus.to(x.device)
         if self.eps > 0:
-            x = input_pre_processing(partial(_score_fn, temperature=self.temperature, centroids=self.mus), x, self.eps)
+            x = input_pre_processing(
+                partial(_score_fn, model=self.model, temperature=self.temperature, centroids=self.mus), x, self.eps
+            )
         with torch.no_grad():
             return _score_fn(x, self.model, self.mus, temperature=self.temperature)

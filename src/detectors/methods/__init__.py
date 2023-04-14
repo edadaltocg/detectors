@@ -5,10 +5,9 @@ import logging
 import types
 from enum import Enum
 from functools import partial
-
 from typing import Any, Dict, List
 
-
+from detectors.methods.entropy import entropy
 from detectors.methods.templates import Detector, DetectorWrapper
 
 from .dice import Dice
@@ -45,6 +44,7 @@ detectors_registry = {
     "vim": ViM,
     "mcdropout": mcdropout,
     "maxcosine": MaxCosineSimilarity,
+    "entropy": entropy,
     #
     "odin": odin,
     "doctor": doctor,
@@ -61,14 +61,13 @@ detectors_registry = {
     "projection": Projection,
     "react_projection": ReActProjection,
     #
-    "igeood_features": ...,
-    "bats": ...,
-    "gram": ...,
-    "openmax": ...,
-    "rankfeat": ...,
+    "igeood_features": None,
+    "bats": None,
+    "gram": None,
+    "openmax": None,
+    "rankfeat": None,
     #
-    "godin": ...,
-    "logit_norm": ...,
+    "godin": None,
 }
 
 
@@ -108,7 +107,8 @@ def create_detector(detector_name: str, **kwargs) -> Detector:
             Already implemented:
                 `random`, `msp`, `odin`, `energy`, `mahalanobis`, `react`, `dice`, `knn_euclides`, `igeood_logits`,
                 `projection`, `react_projection`, `gradnorm`, `maxcosine`, `mcdropout`, `max_logits`, `kl_matching`,
-                `gmm`, `relative_mahalanobis`, `doctor`, `always_one`, `always_zero`, `random_score`.
+                `gmm`, `relative_mahalanobis`, `doctor`, `always_one`, `always_zero`, `random_score`, `vim`,
+                `entropy`, .
         **kwargs: Additional arguments for the detector.
 
     Returns:
@@ -128,7 +128,7 @@ def list_detectors() -> List[str]:
     Returns:
         List[str]: List of available detectors.
     """
-    return list(detectors_registry.keys())
+    return list(k for k in detectors_registry.keys() if detectors_registry[k] is not None)
 
 
 def create_hyperparameters(detector_name: str) -> Dict[str, Any]:

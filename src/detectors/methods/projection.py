@@ -1,12 +1,12 @@
 import logging
 from collections import defaultdict
-from typing import List, Union
+from typing import List, Optional, Union
 
 import torch
 from torch import Tensor
-from torchvision.models.feature_extraction import create_feature_extractor
+from tqdm import tqdm
 
-from detectors.methods.utils import create_reduction
+from detectors.methods.templates import DetectorWithFeatureExtraction
 
 _logger = logging.getLogger(__name__)
 
@@ -20,104 +20,76 @@ def projection_layer_score(x: Tensor, mus: Union[Tensor, List[Tensor]], eps=1e-7
     return torch.norm(x, p=2, dim=-1, keepdim=True) * stack  # type: ignore
 
 
-class Projection:
+class Projection(DetectorWithFeatureExtraction):
     def __init__(
         self,
         model: torch.nn.Module,
-        features_nodes: List[str],
+        features_nodes: Optional[List[str]] = None,
         pooling_op_name: str = "max_or_getitem",
-        aggregation_method=None,
         **kwargs
     ):
-        self.model = model
-        self.model.eval()
-        self.pooling_op_name = pooling_op_name
-        self.device = next(self.model.parameters()).device
-        self.features_nodes = features_nodes
-        self.feature_extractor = create_feature_extractor(self.model, features_nodes)
-        self.pooling_op = create_reduction(self.pooling_op_name)
-        self.aggregation_method = aggregation_method
+        super().__init__(
+            model=model,
+            features_nodes=features_nodes,
+            pooling_op_name=pooling_op_name,
+            all_blocks=True,
+            last_layer=True,
+            aggregation_method_name="innerprod",
+            **kwargs
+        )
 
-        self.n_classes = None
         self.mus = None
-        self.max_trajectory = None
-        self.ref_trajectory = None
-        self.scale = 1.0
-        self.all_train_features = {}
 
-    def start(self, *args, **kwargs):
-        self.all_train_features = {}
-        self.max_trajectory = None
-        self.ref_trajectory = None
-        self.scale = None
+    def end(self, *args, **kwargs):
+        for node_name, v in self.train_features.items():
+            if isinstance(v, list):
+                self.train_features[node_name] = torch.cat(v, dim=0)
+        if isinstance(self.train_targets, list):
+            self.train_targets = torch.cat(self.train_targets, dim=0)
 
-    def update(self, x: Tensor, y: Tensor):
-        self.device = x.device
-        self.feature_extractor = self.feature_extractor.to(x.device)
+        self._fit_params()
 
-        with torch.no_grad():
-            features = self.feature_extractor(x)
+        if self.aggregation_method is not None and hasattr(self.aggregation_method, "fit"):
+            _logger.info("Fitting aggregator %s...", self.aggregation_method_name)
+            self.batch_size = self.train_targets.shape[0]  # type: ignore
+            all_scores = torch.zeros(self.train_targets.shape[0], len(self.train_features))
+            train_probs = torch.softmax(self.train_features[list(self.train_features.keys())[-1]], 1)
+            for i, (k, v) in tqdm(enumerate(self.train_features.items())):
+                idx = 0
+                for idx in range(0, v.shape[0], self.batch_size):
+                    all_scores[:, i] = self._layer_score(
+                        v[idx : idx + self.batch_size], train_probs[idx : idx + self.batch_size], k, i
+                    ).view(-1)
+            self.aggregation_method.fit(all_scores, self.train_targets)
 
-        y = y.cpu()
-        for k in features:
-            features[k] = self.pooling_op(features[k]).cpu()
+        del self.train_features
+        del self.train_targets
 
-            if k not in self.all_train_features:
-                self.all_train_features[k] = features[k]
-            else:
-                self.all_train_features[k] = torch.cat([self.all_train_features[k], features[k]], dim=0)
-
-        if "targets" not in self.all_train_features:
-            self.all_train_features["targets"] = y
-        else:
-            self.all_train_features["targets"] = torch.cat([self.all_train_features["targets"], y], dim=0)
-
-    def end(self):
-        self.mus = defaultdict(list)
-        targets = self.all_train_features.pop("targets")
-        unique_classes = torch.unique(targets).detach().cpu().numpy().tolist()
-        for c in unique_classes:
-            filt = targets == c
-            if filt.sum() == 0:
-                continue
-            for k in self.all_train_features:
-                self.mus[k].append(self.all_train_features[k][filt].to(self.device).mean(0, keepdim=True))
-
-        for k in self.mus:
-            self.mus[k] = torch.cat(self.mus[k], dim=0)
-
-        # build trajectories
-        logits = self.all_train_features[list(self.all_train_features.keys())[-1]]
-        probs = torch.softmax(logits, 1).to(self.device)
-        trajectories = {}
-        for k in self.mus:
-            trajectories[k] = projection_layer_score(self.all_train_features[k].to(self.device), self.mus[k])
-            trajectories[k] = torch.sum(trajectories[k] * probs, 1, keepdim=True)
-
-        trajectories = torch.cat(list(trajectories.values()), dim=-1)
-
-        self.max_trajectory = trajectories.max(dim=0, keepdim=True)[0]
-        self.ref_trajectory = trajectories.mean(dim=0, keepdim=True) / self.max_trajectory
-        self.scale = torch.sum(self.ref_trajectory**2)  # type: ignore
-
-        del self.all_train_features
-
-    def __call__(self, x: Tensor):
-        self.feature_extractor = self.feature_extractor.to(x.device)
-        with torch.no_grad():
-            features = self.feature_extractor(x)
-
+    @torch.no_grad()
+    def __call__(self, x: Tensor) -> Tensor:
+        features = self.feature_extractor(x)
         logits = features[list(features.keys())[-1]]
         probs = torch.softmax(logits, dim=1)
-        scores = {}
-        for k in features:
-            features[k] = self.pooling_op(features[k])
-            scores[k] = projection_layer_score(features[k], self.mus[k].to(features[k].device))  # type: ignore
-            scores[k] = torch.sum(scores[k] * probs, 1, keepdim=True)
+        all_scores = torch.zeros(x.shape[0], len(features), device=x.device)
+        for i, (k, v) in enumerate(features.items()):
+            all_scores[:, i] = self._layer_score(v, probs, k, i).view(-1)
 
-        # combine scores
-        scores = torch.cat(list(scores.values()), dim=-1)
-        scores = scores / self.max_trajectory.to(scores.device)
-        scores = torch.sum(scores * self.ref_trajectory.to(scores.device), dim=-1) / self.scale  # type: ignore
+        all_scores = self.aggregation_method(all_scores)
+        return all_scores.view(-1)
 
+    def _layer_score(self, x: Tensor, probs: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None):
+        scores = projection_layer_score(x, self.mus[layer_name].to(x.device))  # type: ignore
+        scores = torch.sum(scores * probs, 1, keepdim=True)
         return scores
+
+    def _fit_params(self) -> None:
+        self.mus = {}
+        unique_classes = torch.unique(self.train_targets).detach().cpu().numpy().tolist()
+        for layer_name, layer_features in self.train_features.items():
+            self.mus[layer_name] = []
+            for c in unique_classes:
+                filt = self.train_targets == c
+                if filt.sum() == 0:
+                    continue
+                self.mus[layer_name].append(layer_features[filt].mean(0, keepdim=True))
+            self.mus[layer_name] = torch.cat(self.mus[layer_name], dim=0)

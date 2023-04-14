@@ -8,6 +8,8 @@ from sklearn.covariance import EmpiricalCovariance
 from torch import Tensor, nn
 from torchvision.models.feature_extraction import create_feature_extractor
 
+from detectors.methods.utils import get_composed_attr
+
 _logger = logging.getLogger(__name__)
 
 
@@ -42,16 +44,26 @@ class ViM:
 
         # get the model weights of the last layer
         if last_layer_name is None:
-            last_layer_name = list(model._modules.keys())[-1]
-        last_layer = model._modules[last_layer_name]
+            if hasattr(self.model, "default_cfg"):
+                last_layer_name = self.model.default_cfg["classifier"]
+            else:
+                last_layer_name = list(model._modules.keys())[-1]
+            _logger.info("Last layer name: %s", last_layer_name)
+        # last_layer = model._modules[last_layer_name]
+        last_layer = get_composed_attr(model, last_layer_name.split("."))
         assert isinstance(last_layer, nn.Linear), "Last layer must be a linear layer"
 
         self.w = last_layer.weight.data.clone()
         self.b = last_layer.bias.data.clone()
 
+        _logger.debug("w shape: %s", self.w.shape)
+        _logger.debug("b shape: %s", self.b.shape)
+
+        self.head = list(model._modules.values())[-1]
+
         # new origin
         self.u = -torch.matmul(torch.linalg.pinv(self.w), self.b).float()
-        _logger.debug("New origin: %s", self.u)
+        _logger.debug("New origin shape: %s", self.u.shape)
 
         self.principal_subspace = None
         self.train_features = []
@@ -60,7 +72,7 @@ class ViM:
         self.top_k = None
 
     def _get_logits(self, features: Tensor) -> Tensor:
-        logits = torch.matmul(features, self.w.T.to(features.device)) + self.b.to(features.device)
+        logits = self.head(features)
         return logits
 
     def start(self, *args, **kwargs):
@@ -74,17 +86,18 @@ class ViM:
     def update(self, x: torch.Tensor, y: torch.Tensor, *args, **kwargs):
         self.feature_extractor = self.feature_extractor.to(x.device)
         features = self.feature_extractor(x)[self.penultimate_layer_name]
-        if features.ndim == 4:
-            # avg pooling if necessary
-            features = features.mean(dim=[2, 3])
+        # features = torch.flatten(features, start_dim=1)
+        # if features.ndim == 4:
+        #     # avg pooling if necessary
+        #     features = features.mean(dim=[2, 3])
 
         if dist.is_initialized():
             dist.gather(features, dst=0)
 
         if self.train_features is None:
-            self.train_features = features.cpu()
+            self.train_features = torch.flatten(features, start_dim=1).cpu()
         else:
-            self.train_features = torch.cat([self.train_features, features.cpu()])
+            self.train_features = torch.cat([self.train_features, torch.flatten(features, start_dim=1).cpu()], dim=0)
 
         if self.train_logits is None:
             self.train_logits = self._get_logits(features).cpu()
@@ -95,6 +108,7 @@ class ViM:
         self.top_k = 1000 if self.train_features.shape[1] > 1500 else 512
 
         _logger.info("Train features shape: %s", self.train_features.shape)
+        _logger.info("Train logits shape: %s", self.train_logits.shape)
 
         # calculate eigenvectors of the covariance matrix
         ec = EmpiricalCovariance(assume_centered=True)
@@ -117,14 +131,19 @@ class ViM:
         self.alpha = self.train_logits.max(dim=-1)[0].mean() / vlogits.mean()
         _logger.debug("Alpha: %s", self.alpha)
 
+        del self.train_features
+
     @torch.no_grad()
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
         self.feature_extractor = self.feature_extractor.to(x.device)
         features = self.feature_extractor(x)[self.penultimate_layer_name]
+        # features = torch.flatten(features, start_dim=1)
 
         logits = self._get_logits(features)
 
-        x_p_t = torch.norm(torch.matmul(features - self.u.to(x.device), self.principal_subspace.to(x.device)), dim=-1)
+        x_p_t = torch.norm(
+            torch.matmul(torch.flatten(features, 1) - self.u.to(x.device), self.principal_subspace.to(x.device)), dim=-1
+        )
         vlogit = x_p_t * self.alpha
         energy = torch.logsumexp(logits, dim=-1)
         score = -vlogit + energy

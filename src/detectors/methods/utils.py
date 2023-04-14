@@ -1,6 +1,6 @@
 import logging
-from functools import partial
-from typing import Callable, Literal
+from functools import partial, reduce
+from typing import Callable, List, Literal
 
 import numpy as np
 import torch
@@ -139,3 +139,7 @@ def sklearn_cov_matrix_estimarion(
     _logger.debug("Cov mat trace %s", np.trace(cov_mat))
     _logger.debug("Cov mat eigvals %s", np.linalg.eigvalsh(cov_mat))
     return method.location_, method.covariance_, method.precision_
+
+
+def get_composed_attr(model, attrs: List[str]):
+    return reduce(lambda x, y: getattr(x, y), attrs, model)

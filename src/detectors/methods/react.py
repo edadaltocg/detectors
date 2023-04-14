@@ -10,7 +10,7 @@ from torchvision.models.feature_extraction import create_feature_extractor
 
 _logger = logging.getLogger(__name__)
 
-HYPERPARAMETERS = dict(p=dict(low=0.0, high=1.0, type=float, default=0.9, step=0.05))
+HYPERPARAMETERS = dict(p=dict(low=0.1, high=1.0, type=float, default=0.9, step=0.05))
 
 
 def reactify(m: torch.nn.Module, condition_fn: Callable, insert_fn: Callable) -> torch.nn.Module:
@@ -123,6 +123,8 @@ class ReAct:
                 )
 
         _logger.info("ReAct thresholds = %s", dict(zip(self.features_nodes, self.thrs)))
+
+        del self.training_features
 
     @torch.no_grad()
     def __call__(self, x: Tensor) -> Tensor:

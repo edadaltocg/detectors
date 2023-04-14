@@ -188,14 +188,15 @@ class DetectorWithFeatureExtraction(Detector):
         features_nodes: Optional[List[str]] = None,
         all_blocks: bool = False,
         last_layer: bool = False,
-        pooling_op_name: str = "avg",
+        pooling_op_name: str = "avg_or_getitem",
         aggregation_method_name: Optional[str] = "mean",
         **kwargs,
     ):
         self.model = model
+        self.model.eval()
         self.features_nodes = features_nodes
         self.all_blocks = all_blocks
-        self.pooling_op_name = pooling_op_name or "avg"
+        self.pooling_op_name = pooling_op_name
         self.aggregation_method_name = aggregation_method_name or "none"
 
         # feature feature reduction operation
@@ -204,19 +205,22 @@ class DetectorWithFeatureExtraction(Detector):
         if self.features_nodes is not None:
             # if features nodes were explicitly specified, use them
             pass
-        elif hasattr(self.model, "feature_info") and all_blocks:
+        elif hasattr(self.model, "feature_info") and self.all_blocks:
             # if all_blocks is True, use all blocks of the model
             self.features_nodes = [fi["module"] for fi in self.model.feature_info][1:]  # type: ignore
-        elif last_layer:
-            # if last_layer is True, use the last layer of the model
-            last_layer_name = list(self.model._modules.keys())[-1]
-            if self.features_nodes is None:
-                self.features_nodes = [last_layer_name]
-            else:
-                self.features_nodes.append(last_layer_name)
         else:
             # extract from the penultimate layer only
             self.features_nodes = [list(self.model._modules.keys())[-2]]
+
+        if last_layer:
+            # if last_layer is True, use the last layer of the model
+            self.last_layer_name = list(self.model._modules.keys())[-1]
+            if self.features_nodes is None:
+                self.features_nodes = [self.last_layer_name]
+            else:
+                self.features_nodes.append(self.last_layer_name)
+        # remove duplicates
+        self.features_nodes = list(set(self.features_nodes))
         _logger.info("Using features nodes: %s", self.features_nodes)
 
         self.feature_extractor = create_feature_extractor(self.model, self.features_nodes)
@@ -239,6 +243,7 @@ class DetectorWithFeatureExtraction(Detector):
         self.train_targets = []
         self.idx = 0
         if example is not None and fit_length is not None:
+            self.feature_extractor.to(example.device)
             example_output = self.feature_extractor(example)
             for node_name, v in example_output.items():
                 _logger.debug((fit_length,) + v.shape[1:])
@@ -248,6 +253,7 @@ class DetectorWithFeatureExtraction(Detector):
     @torch.no_grad()
     def update(self, x: Tensor, y: Tensor, *args, **kwargs):
         self.batch_size = x.shape[0]
+        self.feature_extractor.to(x.device)
         features: Dict[str, Tensor] = self.feature_extractor(x)
         # TODO: gather x and y?
         if torch.distributed.is_initialized():
@@ -300,11 +306,11 @@ class DetectorWithFeatureExtraction(Detector):
         pass
 
     @abstractmethod
-    def _layer_score(self, x: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None):
+    def _layer_score(self, features: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None, **kwargs):
         """Compute the anomaly score for a single layer.
 
         Args:
-            x (Tensor): input tensor.
+            features (Tensor): features input tensor.
             layer_name (str, optional): name of the layer. Defaults to None.
             index (int, optional): index of the layer in the feature extractor. Defaults to None.
         """
@@ -312,6 +318,7 @@ class DetectorWithFeatureExtraction(Detector):
 
     @torch.no_grad()
     def __call__(self, x: Tensor) -> Tensor:
+        self.feature_extractor.to(x.device)
         features = self.feature_extractor(x)
         all_scores = torch.zeros(x.shape[0], len(features), device=x.device)
         for i, (k, v) in enumerate(features.items()):

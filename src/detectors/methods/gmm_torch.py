@@ -913,3 +913,7 @@ def test():
 
         assert gmm.means_.shape == (c, d)
         assert scores.shape == (100,)
+
+
+if __name__ == "__main__":
+    test()
