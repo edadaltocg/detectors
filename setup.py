@@ -31,12 +31,14 @@ setup(
     url="https://github.com/edadaltocg/detectors",
     package_dir={"": "src"},
     packages=find_packages("src"),
+    include_package_data=True,
     python_requires=">=3.8.0",
     install_requires=install_requires,
     extras_require={
         "dev": [
             "black",
             "isort",
+            "flake8",
             "pytest",
             "pytest-cov",
             "pytest-timeout",
@@ -46,7 +48,6 @@ setup(
             "sphinx_rtd_theme",
             "myst-parser",
             "six",
-            "flake8",
         ]
     },
     classifiers=[
