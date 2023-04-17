@@ -24,6 +24,14 @@ detectors.config module
    :undoc-members:
    :show-inheritance:
 
+detectors.criterions module
+---------------------------
+
+.. automodule:: detectors.criterions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 detectors.eval module
 ---------------------
 

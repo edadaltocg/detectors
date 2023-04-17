@@ -52,6 +52,14 @@ detectors.methods.energy module
    :undoc-members:
    :show-inheritance:
 
+detectors.methods.entropy module
+--------------------------------
+
+.. automodule:: detectors.methods.entropy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 detectors.methods.gmm module
 ----------------------------
 
@@ -232,6 +240,14 @@ detectors.methods.relative\_mahalanobis module
 ----------------------------------------------
 
 .. automodule:: detectors.methods.relative_mahalanobis
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+detectors.methods.ssd module
+----------------------------
+
+.. automodule:: detectors.methods.ssd
    :members:
    :undoc-members:
    :show-inheritance:
