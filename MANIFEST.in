@@ -1,0 +1,3 @@
+include src/detectors/data/OpenImageO/openimage_o_urls.csv
+include LICENSE README.md
+exclude MANIFEST.in
