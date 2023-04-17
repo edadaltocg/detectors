@@ -84,6 +84,10 @@ def get_penultimate_layer_name(model: nn.Module):
     return list(model._modules.keys())[-2]
 
 
+def get_penultimate_layer(model: nn.Module):
+    return list(model._modules.values())[-2]
+
+
 def get_last_layer_name(model: nn.Module):
     return list(model._modules.keys())[-1]
 

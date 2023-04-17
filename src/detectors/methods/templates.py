@@ -231,7 +231,9 @@ class DetectorWithFeatureExtraction(Detector):
             return {k: self.reduction_op(v) for k, v in x.items()}
 
         self.feature_extractor = add_output_op(self.feature_extractor, output_reduce)
-        self.aggregation_method = create_aggregation(self.aggregation_method_name, **kwargs)
+        self.aggregation_method = None
+        if self.aggregation_method_name is not None:
+            self.aggregation_method = create_aggregation(self.aggregation_method_name, **kwargs)
 
         self.train_features = {}
         self.train_targets = []

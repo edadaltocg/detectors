@@ -7,7 +7,8 @@ from enum import Enum
 from functools import partial
 from typing import Any, Dict, List
 
-from detectors.methods.entropy import entropy
+from .entropy import entropy
+from .ssd import SSD
 from detectors.methods.templates import Detector, DetectorWrapper
 
 from .dice import Dice
@@ -34,10 +35,11 @@ from .vim import ViM
 _logger = logging.getLogger(__name__)
 
 detectors_registry = {
+    # naive detectors
     "random": random_score,
     "always_one": always_one,
     "always_zero": always_zero,
-    #
+    # hyperparameter free detectors
     "msp": msp,
     "max_logits": max_logits,
     "kl_matching": KLMatching,
@@ -45,7 +47,7 @@ detectors_registry = {
     "mcdropout": mcdropout,
     "maxcosine": MaxCosineSimilarity,
     "entropy": entropy,
-    #
+    # hyperparameter detectors
     "odin": odin,
     "doctor": doctor,
     "energy": energy,
@@ -54,19 +56,20 @@ detectors_registry = {
     "igeood_logits": IgeoodLogits,
     "gradnorm": gradnorm,
     "knn_euclides": KnnEuclides,
-    #
+    # Features based detectors
     "mahalanobis": Mahalanobis,
     "gmm": GMM,
     "relative_mahalanobis": RelativeMahalanobis,
     "projection": Projection,
     "react_projection": ReActProjection,
-    #
+    # Special training detectors
+    "ssd": SSD,
+    # Not implemented
     "igeood_features": None,
     "bats": None,
     "gram": None,
     "openmax": None,
     "rankfeat": None,
-    #
     "godin": None,
 }
 
@@ -108,7 +111,7 @@ def create_detector(detector_name: str, **kwargs) -> Detector:
                 `random`, `msp`, `odin`, `energy`, `mahalanobis`, `react`, `dice`, `knn_euclides`, `igeood_logits`,
                 `projection`, `react_projection`, `gradnorm`, `maxcosine`, `mcdropout`, `max_logits`, `kl_matching`,
                 `gmm`, `relative_mahalanobis`, `doctor`, `always_one`, `always_zero`, `random_score`, `vim`,
-                `entropy`, .
+                `entropy`, `ssd`
         **kwargs: Additional arguments for the detector.
 
     Returns:
