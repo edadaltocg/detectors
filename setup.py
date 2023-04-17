@@ -5,17 +5,18 @@ install_requires = [
     "numpy",
     "optuna",
     "scikit-learn",
-    "timm>=0.8.11.dev0",
+    "timm>0.6.13",
     "torch>=1.7",
     "torchvision",
     "tqdm",
     "scipy",
     "accelerate",
     "psutil",
-    "jinja2",
     "pandas",
-    "matplotlib",
     "wilds",
+    "faiss-cpu",
+    "faiss-gpu",
+    "matplotlib",
 ]
 
 setup(

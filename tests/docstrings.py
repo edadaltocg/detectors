@@ -17,6 +17,9 @@ def test_create_pipeline_docstring():
     assert all([p in detectors.create_pipeline.__doc__ for p in pipelines])
 
 
-if __name__ == "__main__":
-    test_create_detector_docstring()
-    test_create_pipeline_docstring()
+def test_create_dataset_docstring():
+    datasets = detectors.list_datasets()
+    assert detectors.create_dataset.__doc__ is not None
+    for d in datasets:
+        print(d, d in detectors.create_dataset.__doc__)
+    assert all([d in detectors.create_dataset.__doc__ for d in datasets])
