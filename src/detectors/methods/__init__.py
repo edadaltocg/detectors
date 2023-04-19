@@ -7,13 +7,12 @@ from enum import Enum
 from functools import partial
 from typing import Any, Dict, List
 
-from .entropy import entropy
-from .ssd import SSD
 from detectors.methods.templates import Detector, DetectorWrapper
 
 from .dice import Dice
 from .doctor import doctor
 from .energy import energy
+from .entropy import entropy
 from .gmm import GMM
 from .gradnorm import gradnorm
 from .igeood_logits import IgeoodLogits
@@ -30,6 +29,7 @@ from .projection import Projection
 from .react import ReAct
 from .react_projection import ReActProjection
 from .relative_mahalanobis import RelativeMahalanobis
+from .ssd import SSD
 from .vim import ViM
 
 _logger = logging.getLogger(__name__)

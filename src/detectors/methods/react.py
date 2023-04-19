@@ -76,7 +76,6 @@ class ReAct:
         self.feature_extractor = create_feature_extractor(self.model, self.features_nodes)
 
         self.last_layer = list(self.model._modules.values())[-1]
-        assert isinstance(self.last_layer, torch.nn.Linear)
 
         self.insert_node_fn = insert_node_fn
         self.p = p

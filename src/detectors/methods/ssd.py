@@ -1,10 +1,10 @@
+from typing import Optional
+
 import faiss
 import torch
-from torch import nn
-from torch import Tensor
-from typing import Optional
-from detectors.methods.mahalanobis import mahalanobis_distance_inv
+from torch import Tensor, nn
 
+from detectors.methods.mahalanobis import mahalanobis_distance_inv
 from detectors.methods.templates import DetectorWithFeatureExtraction
 
 
