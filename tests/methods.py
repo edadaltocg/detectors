@@ -4,6 +4,7 @@ import torch
 from detectors import create_detector, create_hyperparameters, create_model
 
 torch.manual_seed(0)
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 TEST_MODEL = create_model("densenet121_cifar10")
@@ -107,3 +108,4 @@ def test_vim():
 
 def test_ssd():
     return
+

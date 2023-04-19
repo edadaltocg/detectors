@@ -11,6 +11,7 @@ _logger = logging.getLogger(__name__)
 HYPERPARAMETERS = dict(k=dict(low=1, high=100, step=1), avg_topk=[True, False])
 
 
+
 class KnnEuclides(DetectorWithFeatureExtraction):
     """K-NN detector based on Euclidean distance.
 

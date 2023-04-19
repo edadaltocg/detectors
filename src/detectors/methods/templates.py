@@ -137,6 +137,7 @@ class DetectorWrapper(Detector):
 
     def __call__(self, x: Tensor) -> Tensor:
         x = x.to(self.device)
+
         return self.detector(x)
 
     def set_hyperparameters(self, **params):
@@ -306,6 +307,7 @@ class DetectorWithFeatureExtraction(Detector):
         pass
 
     @abstractmethod
+
     def _layer_score(self, features: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None, **kwargs):
         """Compute the anomaly score for a single layer.
 

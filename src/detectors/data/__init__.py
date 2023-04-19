@@ -127,6 +127,7 @@ def create_dataset(
                 `imagenet1k_lt`, `cifar10_c`, `cifar100_c`, `imagenet_c`, `imagenet_a`,
                 `imagenet_r`, `imagenet_o`, `openimage_o`, `oxford_pets`, `oxford_flowers`,
                 `cub200`, `imagenet1k_c`,
+
                 `wilds_iwildcam`, `wilds_fmow`, `wilds_camelyon17`, `wilds_rxrx1`,
                 `wilds_poverty`, `wilds_globalwheat`.
         root (string): Root directory of dataset.
@@ -175,6 +176,7 @@ def list_datasets() -> List[str]:
         list: List of available dataset names.
     """
     return sorted(list(k for k in datasets_registry.keys() if datasets_registry[k] is not None))
+
 
 
 DatasetsRegistry = Enum("DatasetsRegistry", dict(zip(list_datasets(), list_datasets())))

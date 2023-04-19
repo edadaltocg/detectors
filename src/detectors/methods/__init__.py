@@ -7,6 +7,9 @@ from enum import Enum
 from functools import partial
 from typing import Any, Dict, List
 
+from typing import Any, Dict, List
+
+
 from detectors.methods.templates import Detector, DetectorWrapper
 
 from .dice import Dice
@@ -112,6 +115,7 @@ def create_detector(detector_name: str, **kwargs) -> Detector:
                 `projection`, `react_projection`, `gradnorm`, `maxcosine`, `mcdropout`, `max_logits`, `kl_matching`,
                 `gmm`, `relative_mahalanobis`, `doctor`, `always_one`, `always_zero`, `random_score`, `vim`,
                 `entropy`, `ssd`
+
         **kwargs: Additional arguments for the detector.
 
     Returns:
@@ -132,6 +136,28 @@ def list_detectors() -> List[str]:
         List[str]: List of available detectors.
     """
     return list(k for k in detectors_registry.keys() if detectors_registry[k] is not None)
+
+
+def create_hyperparameters(detector_name: str) -> Dict[str, Any]:
+    """Create hyperparameters for the detector.
+
+    Args:
+        detector_name (string): Name of the detector.
+
+    Returns:
+        Dict[str, Any]: Hyperparameters for the detector.
+    """
+    import importlib
+
+    try:
+        module = importlib.import_module(f"detectors.methods.{detector_name}")
+        hyperparameters = module.HYPERPARAMETERS
+    except ModuleNotFoundError:
+        raise ValueError(f"Unknown detector: {detector_name}")
+    except AttributeError:
+        hyperparameters = {}
+    return hyperparameters
+
 
 
 def create_hyperparameters(detector_name: str) -> Dict[str, Any]:

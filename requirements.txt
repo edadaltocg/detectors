@@ -18,7 +18,6 @@ contourpy==1.0.7
 coverage==7.2.3
 cryptography==40.0.2
 cycler==0.11.0
-detectors==0.0.0
 docutils==0.18.1
 exceptiongroup==1.1.1
 execnet==1.9.0

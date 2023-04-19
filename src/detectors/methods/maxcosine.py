@@ -21,6 +21,7 @@ def max_cosine_sim_layer_score(x: Tensor, mus: Union[Tensor, List[Tensor]], eps=
 class MaxCosineSimilarity(DetectorWithFeatureExtraction):
     """MaxCosineSimilarity detector.
 
+
     Args:
         model (nn.Module): Model to be used to extract features
         features_nodes (Optional[List[str]]): List of strings that represent the feature nodes.

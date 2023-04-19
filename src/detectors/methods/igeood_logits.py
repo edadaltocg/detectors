@@ -1,4 +1,5 @@
 import logging
+
 from functools import partial
 from typing import Optional
 
@@ -10,6 +11,7 @@ from detectors.methods.utils import input_pre_processing
 from detectors.utils import sync_tensor_across_gpus
 
 _logger = logging.getLogger(__name__)
+
 
 HYPERPARAMETERS = dict(temperature=dict(low=0.1, high=1000, step=0.1), eps=dict(low=0.0, high=0.005, step=0.0001))
 
@@ -57,6 +59,7 @@ class IgeoodLogits:
             self.train_features = torch.zeros((fit_length,) + logits.shape[1:], dtype=logits.dtype)
             self.train_targets = torch.ones((fit_length,), dtype=torch.long) * -1
 
+
     @torch.no_grad()
     def update(self, x: Tensor, y: Tensor, *args, **kwargs):
         self.batch_size = x.shape[0]
@@ -67,7 +70,6 @@ class IgeoodLogits:
         else:
             self.train_features[self.idx : self.idx + logits.shape[0]] = logits
 
-        # y = sync_tensor_across_gpus(y).cpu()
         if isinstance(self.train_targets, list):
             self.train_targets.append(y)
         else:
@@ -85,6 +87,7 @@ class IgeoodLogits:
         else:
             self.train_targets = self.train_targets[: self.idx]
         assert torch.all(self.train_targets > -1), "Not all targets were updated"
+
         self._fit_params()
 
         del self.train_features
@@ -106,5 +109,6 @@ class IgeoodLogits:
             x = input_pre_processing(
                 partial(_score_fn, model=self.model, temperature=self.temperature, centroids=self.mus), x, self.eps
             )
+
         with torch.no_grad():
             return _score_fn(x, self.model, self.mus, temperature=self.temperature)
