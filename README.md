@@ -40,10 +40,9 @@ pip install --upgrade pip setuptools wheel
 pip install -e .
 ```
 
-Also you have easy access to the Python scripts from the tutorials and examples:
+Also, you have easy access to the Python scripts from the examples:
 
 ```bash
-cd docs/tutorials
 cd examples
 ```
 
@@ -57,13 +56,16 @@ The following example shows how to run a benchmark.
 
 ```python
 import detectors
+import torch
 
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = detectors.create_model("resnet18_cifar10", pretrained=True)
+model = model.to(device)
 test_transform = detectors.create_transform(model)
 
 pipeline = detectors.create_pipeline("ood_benchmark_cifar10", transform=test_transform)
-method = detectors.create_detector("awesome_detector", model=model)
+method = detectors.create_detector("msp", model=model)
 
 pipeline_results = pipeline.run(method)
 print(pipeline.report(pipeline_results["results"]))

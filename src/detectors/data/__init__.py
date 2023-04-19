@@ -1,5 +1,5 @@
 """
-Data module.
+Datasets module.
 """
 import logging
 from enum import Enum
@@ -37,8 +37,8 @@ datasets_registry = {
     "svhn": SVHN,
     "mnist": MNISTWrapped,
     "fashion_mnist": FashionMNISTWrapped,
-    "kmnist": ...,
-    "emnist": ...,
+    "kmnist": None,
+    "emnist": None,
     "mnist_c": MNISTC,
     "english_chars": EnglishChars,
     "isun": iSUN,
@@ -48,7 +48,7 @@ datasets_registry = {
     "tiny_imagenet_r": TinyImageNetResized,
     "tiny_imagenet": TinyImageNet,
     "textures": Textures,
-    "textures_curated": ...,
+    "textures_curated": None,
     "gaussian": Gaussian,
     "uniform": Uniform,
     "places365": Places365,
@@ -56,17 +56,14 @@ datasets_registry = {
     "mos_inaturalist": MOSiNaturalist,
     "mos_places365": MOSPlaces365,
     "mos_sun": MOSSUN,
-    "cifar10lt": ...,
-    "cifar100lt": ...,
-    "imagenet1klt": ...,
-    "cifar10c": CIFAR10_C,
-    "cifar100c": CIFAR100_C,
+    "cifar10_lt": None,
+    "cifar100_lt": None,
+    "imagenet1k_lt": None,
     "cifar10_c": CIFAR10_C,
     "cifar100_c": CIFAR100_C,
     "imagenet": ImageNet,
     "imagenet1k": ImageNet,
     "ilsvrc2012": ImageNet,
-    "imagenetc": ImageNetC,
     "imagenet_c": ImageNetC,
     "imagenet1k_c": ImageNetC,
     "imagenet_a": ImageNetA,
@@ -74,8 +71,8 @@ datasets_registry = {
     "imagenet_o": ImageNetO,
     "openimage_o": OpenImageO,
     "oxford_pets": OxfordIIITPet,
-    "oxford_flowers": ...,
-    "cub200": ...,
+    "oxford_flowers": None,
+    "cub200": None,
     "wilds_iwildcam": partial(make_wilds_dataset, dataset_name="iwildcam"),
     "wilds_fmow": partial(make_wilds_dataset, dataset_name="fmow"),
     "wilds_camelyon17": partial(make_wilds_dataset, dataset_name="camelyon17"),
@@ -126,18 +123,20 @@ def create_dataset(
                 `kmnist`, `emnist`, `mnist_c`, `english_chars`, `isun`, `lsun_c`, `lsun_r`,
                 `tiny_imagenet_c`, `tiny_imagenet_r`, `tiny_imagenet`, `textures`, `gaussian`,
                 `uniform`, `places365`, `stanford_cars`, `imagenet`, `imagenet1k`, `ilsvrc2012`,
-                `mos_inaturalist`, `mos_places365`, `mos_sun`, `cifar10lt`, `cifar100lt`,
-                imagenet1klt`, `cifar10c`, `cifar100c`, `imagenet_c`, `imagenet_a`,
-                `imagenet_r`, `imagenet_o`, `oxford_pets`, `oxford_flowers`, `cub200`,
+                `mos_inaturalist`, `mos_places365`, `mos_sun`, `cifar10_lt`, `cifar100_lt`,
+                `imagenet1k_lt`, `cifar10_c`, `cifar100_c`, `imagenet_c`, `imagenet_a`,
+                `imagenet_r`, `imagenet_o`, `openimage_o`, `oxford_pets`, `oxford_flowers`,
+                `cub200`, `imagenet1k_c`,
                 `wilds_iwildcam`, `wilds_fmow`, `wilds_camelyon17`, `wilds_rxrx1`,
                 `wilds_poverty`, `wilds_globalwheat`.
         root (string): Root directory of dataset.
         split (string, optional): Depends on the selected dataset.
         transform (callable, optional): A function/transform that  takes in an PIL image
-            and returns a transformed version. E.g, `transforms.RandomCrop``
+            and returns a transformed version. E.g, `transforms.RandomCrop`
         download (bool, optional): If true, downloads the dataset from the internet and
             puts it in root directory. If dataset is already downloaded, it is not
             downloaded again.
+        **kwargs: Additional arguments for dataset.
 
     Raises:
         ValueError: If dataset name is not specified.
@@ -175,7 +174,7 @@ def list_datasets() -> List[str]:
     Returns:
         list: List of available dataset names.
     """
-    return sorted(list(datasets_registry.keys()))
+    return sorted(list(k for k in datasets_registry.keys() if datasets_registry[k] is not None))
 
 
 DatasetsRegistry = Enum("DatasetsRegistry", dict(zip(list_datasets(), list_datasets())))

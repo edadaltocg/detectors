@@ -13,6 +13,7 @@ from tqdm import tqdm
 
 from detectors.aggregations import create_aggregation
 from detectors.utils import sync_tensor_across_gpus
+
 from .utils import add_output_op, create_reduction
 
 _logger = logging.getLogger(__name__)

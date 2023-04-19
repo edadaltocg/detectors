@@ -15,7 +15,6 @@ import torch.utils.data
 import torchvision
 from optuna.trial import TrialState
 from torch import Tensor
-import torch.distributed as dist
 from tqdm import tqdm
 
 from detectors.data import create_dataset

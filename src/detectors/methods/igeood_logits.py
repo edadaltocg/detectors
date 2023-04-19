@@ -1,10 +1,11 @@
+import logging
 from functools import partial
 from typing import Optional
 
 import torch
 import torch.nn.functional as F
 from torch import Tensor
-import logging
+
 from detectors.methods.utils import input_pre_processing
 from detectors.utils import sync_tensor_across_gpus
 
