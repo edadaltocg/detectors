@@ -15,6 +15,7 @@ import torch.utils.data
 import torchvision
 from optuna.trial import TrialState
 from torch import Tensor
+import torch.distributed as dist
 from tqdm import tqdm
 
 from detectors.data import create_dataset
@@ -22,7 +23,7 @@ from detectors.eval import get_ood_results
 from detectors.methods import DetectorWrapper
 from detectors.pipelines import register_pipeline
 from detectors.pipelines.base import Pipeline
-from detectors.utils import ConcatDatasetsDim1
+from detectors.utils import ConcatDatasetsDim1, sync_tensor_across_gpus
 
 _logger = logging.getLogger(__name__)
 
@@ -47,9 +48,13 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         out_datasets_names_splits (Dict[str, Any]): Dictionary mapping out-distribution dataset names to their splits.
         transform (Callable): Transform to apply to the datasets.
         batch_size (int): Batch size.
+        num_workers (int, optional): Number of workers. Defaults to 4.
+        pin_memory (bool, optional): Pin memory. Defaults to True.
+        prefetch_factor (int, optional): Prefetch factor. Defaults to 2.
         limit_fit (float, optional): Fraction of the training set to use for fitting. Defaults to 1.0.
         limit_run (float, optional): Fraction of the testing set to use for running. Defaults to 1.0.
         seed (int, optional): Random seed. Defaults to 42.
+        accelerator (Any, optional): Accelerator. Defaults to None.
     """
 
     def __init__(
@@ -58,9 +63,13 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         out_datasets_names_splits: Dict[str, Any],
         transform: Callable,
         batch_size: int,
+        num_workers: int = 4,
+        pin_memory: bool = True,
+        prefetch_factor: int = 2,
         limit_fit: float = 1.0,
         limit_run: float = 1.0,
         seed: int = 42,
+        accelerator=None,
     ) -> None:
         self.in_dataset_name = in_dataset_name
         self.out_datasets_names_splits = out_datasets_names_splits
@@ -69,19 +78,17 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         self.limit_run = limit_run
         self.transform = transform
         self.batch_size = batch_size
+        self.num_workers = num_workers
+        self.pin_memory = pin_memory
+        self.prefetch_factor = prefetch_factor
         self.seed = seed
+        self.accelerator = accelerator
 
         self.fit_dataset = None
         self.in_dataset = None
         self.out_dataset = None
         self.out_datasets = None
-        self.val_dataset = None
-        self.fit_dataloader = None
-        self.val_dataloader = None
-        self.test_dataloader = None
-        self.method = None
 
-        self.accelerator = accelerate.Accelerator()
         accelerate.utils.set_seed(seed)
         self.setup()
 
@@ -91,7 +98,7 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         ...
 
     def _setup_dataloaders(self):
-        if self.fit_dataset is None or self.in_dataset is None or self.out_datasets is None:
+        if self.fit_dataset is None or self.in_dataset is None or self.out_datasets is None or self.out_dataset is None:
             raise ValueError("Datasets are not set.")
 
         if self.limit_fit is None:
@@ -102,7 +109,12 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         subset = np.random.choice(np.arange(len(self.fit_dataset)), self.limit_fit, replace=False).tolist()
         self.fit_dataset = torch.utils.data.Subset(self.fit_dataset, subset)
         self.fit_dataloader = torch.utils.data.DataLoader(
-            self.fit_dataset, batch_size=self.batch_size, shuffle=True, num_workers=4, pin_memory=True
+            self.fit_dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            prefetch_factor=self.prefetch_factor,
         )
 
         self.test_dataset = torch.utils.data.ConcatDataset([self.in_dataset, self.out_dataset])
@@ -120,11 +132,17 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         ).tolist()
         self.test_dataset = torch.utils.data.Subset(self.test_dataset, subset)
         self.test_dataloader = torch.utils.data.DataLoader(
-            self.test_dataset, batch_size=self.batch_size, shuffle=False, num_workers=4, pin_memory=True
+            self.test_dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            prefetch_factor=self.prefetch_factor,
         )
 
-        self.fit_dataloader = self.accelerator.prepare(self.fit_dataloader)
-        self.test_dataloader = self.accelerator.prepare(self.test_dataloader)
+        if self.accelerator is not None:
+            self.fit_dataloader = self.accelerator.prepare(self.fit_dataloader)
+            self.test_dataloader = self.accelerator.prepare(self.test_dataloader)
 
         _logger.info(f"Using {len(self.fit_dataset)} samples for fitting.")
         _logger.info(f"Using {len(self.test_dataset)} samples for testing.")
@@ -134,11 +152,6 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         self._setup_dataloaders()
 
     def preprocess(self, method: DetectorWrapper) -> DetectorWrapper:
-        if method.model is not None:
-            _logger.info("Preparing model...")
-            method.model.eval()
-            method.model = self.accelerator.prepare(method.model)
-
         if self.fit_dataset is None:
             _logger.warning("Fit dataset is not set or not supported. Returning.")
             return method
@@ -147,9 +160,11 @@ class OODBenchmarkPipeline(Pipeline, ABC):
             _logger.warning("Detector does not support fitting. Returning.")
             return method
 
-        progress_bar = tqdm(
-            range(len(self.fit_dataloader)), desc="Fitting", disable=not self.accelerator.is_local_main_process
-        )
+        disable = False
+        if self.accelerator is not None:
+            disable = not self.accelerator.is_main_process
+        progress_bar = tqdm(range(len(self.fit_dataloader)), desc="Fitting", disable=disable)
+
         fit_length = len(self.fit_dataloader.dataset)
         example = next(iter(self.fit_dataloader))[0]
         method.start(example=example, fit_length=fit_length)
@@ -157,7 +172,6 @@ class OODBenchmarkPipeline(Pipeline, ABC):
             method.update(x, y)
             progress_bar.update(1)
         progress_bar.close()
-        self.accelerator.wait_for_everyone()
         method.end()
         return method
 
@@ -165,35 +179,42 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         self.method = method
 
         _logger.info("Running pipeline...")
-        self.preprocess(self.method)
+        self.method = self.preprocess(self.method)
 
         # initialize based on dataset size
-        self.infer_times = torch.empty(len(self.test_dataloader.dataset), dtype=torch.float32)
-        test_labels = torch.empty(len(self.test_dataloader.dataset), dtype=torch.int64)
-        test_scores = torch.empty(len(self.test_dataloader.dataset), dtype=torch.float32)
+        dataset_size = len(self.test_dataloader.dataset)
+        test_labels = torch.empty(dataset_size, dtype=torch.int64)
+        test_scores = torch.empty(dataset_size, dtype=torch.float32)
+        _logger.debug("test_labels shape: %s", test_labels.shape)
+        _logger.debug("test_scores shape: %s", test_scores.shape)
+
         self.infer_times = []
         idx = 0
-        progress_bar = tqdm(
-            range(len(self.test_dataloader)), desc="Inference", disable=not self.accelerator.is_local_main_process
-        )
+        disable = False
+        if self.accelerator is not None:
+            disable = not self.accelerator.is_main_process
+        progress_bar = tqdm(range(len(self.test_dataloader)), desc="Inference", disable=disable)
         for x, y, labels in self.test_dataloader:
             t1 = time.time()
             score = self.method(x)
             t2 = time.time()
 
-            labels, score = self.accelerator.gather_for_metrics((labels, score))
+            if self.accelerator is not None:
+                score = self.accelerator.gather_for_metrics(score)
+                labels = self.accelerator.gather_for_metrics(labels)
+            # score = sync_tensor_across_gpus(score.detach())
+            # labels = sync_tensor_across_gpus(labels.to(score.device))
 
             self.infer_times.append(t2 - t1)
-            test_labels[idx : idx + x.shape[0]] = labels.cpu()
-            test_scores[idx : idx + x.shape[0]] = score.detach().cpu()
+            test_labels[idx : idx + labels.shape[0]] = labels.cpu()
+            test_scores[idx : idx + score.shape[0]] = score.cpu()
 
-            idx += x.shape[0]
+            idx += labels.shape[0]
             progress_bar.update(1)
         progress_bar.close()
-
-        self.accelerator.wait_for_everyone()
         self.infer_times = np.mean(self.infer_times)
-
+        test_scores = test_scores[:idx]
+        test_labels = test_labels[:idx]
         res_obj = self.postprocess(test_scores, test_labels)
 
         return {"results": res_obj, "scores": test_scores, "labels": test_labels}
@@ -227,6 +248,14 @@ class OODBenchmarkPipeline(Pipeline, ABC):
             df = pd.concat([df, pd.DataFrame(res, index=[ood_dataset])])
         df.columns = [METRICS_NAMES_PRETTY[k] for k in df.columns]
         return df.to_string(index=True, float_format="{:.4f}".format)
+
+    def save_results(self):
+        # TODO
+        return
+
+    def save_scores(self):
+        # TODO
+        return
 
 
 @register_pipeline("ood_benchmark_cifar10")

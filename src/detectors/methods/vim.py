@@ -9,6 +9,7 @@ from torch import Tensor, nn
 from torchvision.models.feature_extraction import create_feature_extractor
 
 from detectors.methods.utils import get_composed_attr
+from detectors.utils import sync_tensor_across_gpus
 
 _logger = logging.getLogger(__name__)
 
@@ -84,13 +85,8 @@ class ViM:
 
     @torch.no_grad()
     def update(self, x: torch.Tensor, y: torch.Tensor, *args, **kwargs):
-        self.feature_extractor = self.feature_extractor.to(x.device)
         features = self.feature_extractor(x)[self.penultimate_layer_name]
-        # features = torch.flatten(features, start_dim=1)
-        # if features.ndim == 4:
-        #     # avg pooling if necessary
-        #     features = features.mean(dim=[2, 3])
-
+        features = sync_tensor_across_gpus(features)
         if dist.is_initialized():
             dist.gather(features, dst=0)
 
@@ -137,7 +133,6 @@ class ViM:
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
         self.feature_extractor = self.feature_extractor.to(x.device)
         features = self.feature_extractor(x)[self.penultimate_layer_name]
-        # features = torch.flatten(features, start_dim=1)
 
         logits = self._get_logits(features)
 

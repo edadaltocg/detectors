@@ -1,6 +1,8 @@
 import torch
 from torch import Tensor, nn
 
+from detectors.utils import sync_tensor_across_gpus
+
 
 def kl_divergence(p: Tensor, q: Tensor, eps=1e-6):
     return (p * torch.log(p / (q + eps))).sum(1)
@@ -37,6 +39,7 @@ class KLMatching:
     @torch.no_grad()
     def update(self, x: Tensor, *args, **kwargs):
         logits = self.model(x)
+        logits = sync_tensor_across_gpus(logits).cpu()
         y_hat = torch.argmax(logits, dim=1).cpu()
         probs = torch.softmax(logits, dim=1).cpu()
 

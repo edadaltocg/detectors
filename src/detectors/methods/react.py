@@ -87,8 +87,6 @@ class ReAct:
         self.training_features = {}
 
     def update(self, x: Tensor, y: Tensor) -> None:
-        self.device = x.device
-        self.feature_extractor = self.feature_extractor.to(x.device)
         if len(self.training_features.keys()) > 0:
             k = list(self.training_features.keys())[0]
             if self.training_features[k].view(-1).shape[0] > self.LIMIT:
@@ -128,10 +126,8 @@ class ReAct:
     @torch.no_grad()
     def __call__(self, x: Tensor) -> Tensor:
         if self.graph_nodes_names is not None:
-            self.model = self.model.to(x.device)
             logits = self.model(x)
         else:
-            self.feature_extractor = self.feature_extractor.to(x.device)
             features = torch.clip(list(self.feature_extractor(x).values())[-1], max=self.thrs[-1])
             logits = self.last_layer(features)  # type: ignore
         return torch.logsumexp(logits, dim=-1)

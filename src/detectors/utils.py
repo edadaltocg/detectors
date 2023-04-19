@@ -47,7 +47,7 @@ class ConcatDatasetsDim1(Dataset):
         return len(self.datasets[0])
 
 
-def sync_tensor_across_gpus(t: torch.Tensor, size_limit=None) -> torch.Tensor:
+def sync_tensor_across_gpus(t: torch.Tensor) -> torch.Tensor:
     """Gather tensor from all gpus and return a tensor with dim 0 equal to the number of gpus.
 
     Args:
@@ -59,8 +59,12 @@ def sync_tensor_across_gpus(t: torch.Tensor, size_limit=None) -> torch.Tensor:
     References:
         https://discuss.pytorch.org/t/ddp-evaluation-gather-output-loss-and-stuff-how-to/130593/2
     """
+    if not dist.is_initialized():
+        return t
     group = dist.group.WORLD
     group_size = dist.get_world_size(group)
+    if group_size == 1:
+        return t
     gather_t_tensor = [torch.zeros_like(t) for _ in range(group_size)]
     dist.all_gather(gather_t_tensor, t)  # this works with nccl backend when tensors need to be on gpu.
     # for gloo and mpi backends, tensors need to be on cpu. also this works single machine with
@@ -70,8 +74,7 @@ def sync_tensor_across_gpus(t: torch.Tensor, size_limit=None) -> torch.Tensor:
     # multi-nodes. still dont see the benefit of all_gather_multigpu. the provided working case in
     # the doc is  vague...
     # move tensors to cpu
-    gather_t_tensor = [t.cpu() for t in gather_t_tensor]
+    # gather_t_tensor = [t.cpu() for t in gather_t_tensor]
     gather_t_tensor = torch.cat(gather_t_tensor, dim=0)
-    if size_limit is None:
-        size_limit = len(gather_t_tensor)
-    return gather_t_tensor[:size_limit]
+
+    return gather_t_tensor

@@ -3,7 +3,7 @@ Generalized detection methods templates.
 """
 import logging
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, List, Literal, Optional
+from typing import Dict, List, Optional
 
 import torch
 import torch.distributed
@@ -12,24 +12,10 @@ from torchvision.models.feature_extraction import create_feature_extractor
 from tqdm import tqdm
 
 from detectors.aggregations import create_aggregation
-
-from .utils import create_reduction
+from detectors.utils import sync_tensor_across_gpus
+from .utils import add_output_op, create_reduction
 
 _logger = logging.getLogger(__name__)
-
-
-def add_output_op(feature_extractor, output_op: Callable) -> nn.Module:
-    last_node = [n for n in feature_extractor.graph.nodes if n.op == "output"][0]
-    last_node_args = last_node.args
-    feature_extractor.graph.erase_node(last_node)
-    nodes = [n for n in feature_extractor.graph.nodes]
-    with feature_extractor.graph.inserting_after(nodes[-1]):
-        new_node = feature_extractor.graph.call_function(output_op, args=last_node_args)
-    nodes = [n for n in feature_extractor.graph.nodes]
-    with feature_extractor.graph.inserting_after(nodes[-1]):
-        feature_extractor.graph.output(new_node)
-    feature_extractor.recompile()
-    return feature_extractor
 
 
 class Detector(ABC):
@@ -104,22 +90,31 @@ class DetectorWrapper(Detector):
         self.detector = detector
         if hasattr(self.detector, "model"):
             self.model = self.detector.model
+            self.detector.model.eval()
         elif hasattr(self.detector, "keywords") and "model" in self.detector.keywords:
             self.model = self.detector.keywords["model"]
         else:
             self.model = None
         self.keywords = kwargs
+        if self.model is not None:
+            self.device = next(self.model.parameters()).device
+        else:
+            self.device = torch.device("cpu")
 
     def start(self, example: Optional[Tensor] = None, fit_length: Optional[int] = None, *args, **kwargs):
         if not hasattr(self.detector, "start"):
             _logger.warning("Detector does not have a start method.")
             return
+        if example is not None:
+            example = example.to(self.device)
         self.detector.start(example, fit_length, *args, **kwargs)
 
     def update(self, x: Tensor, y: Tensor, *args, **kwargs):
         if not hasattr(self.detector, "update"):
             _logger.warning("Detector does not have an update method.")
             return
+        x = x.to(self.device)
+        y = y.to(self.device)
         self.detector.update(x, y, *args, **kwargs)
 
     def end(self, *args, **kwargs):
@@ -140,6 +135,7 @@ class DetectorWrapper(Detector):
         return self
 
     def __call__(self, x: Tensor) -> Tensor:
+        x = x.to(self.device)
         return self.detector(x)
 
     def set_hyperparameters(self, **params):
@@ -255,14 +251,11 @@ class DetectorWithFeatureExtraction(Detector):
     @torch.no_grad()
     def update(self, x: Tensor, y: Tensor, *args, **kwargs):
         self.batch_size = x.shape[0]
-        self.feature_extractor.to(x.device)
+        # self.feature_extractor.to(x.device)
         features: Dict[str, Tensor] = self.feature_extractor(x)
-        # TODO: gather x and y?
-        if torch.distributed.is_initialized():
-            torch.distributed.barrier()
 
         for node_name, v in features.items():
-            v = v.cpu()
+            v = sync_tensor_across_gpus(v).cpu()
             if node_name not in self.train_features:
                 self.train_features[node_name] = [v]
             elif isinstance(self.train_features[node_name], list):
@@ -270,20 +263,24 @@ class DetectorWithFeatureExtraction(Detector):
             else:
                 self.train_features[node_name][self.idx : self.idx + v.shape[0]] = v
 
-        y = y.cpu()
+        y = sync_tensor_across_gpus(y).cpu()
         if isinstance(self.train_targets, list):
             self.train_targets.append(y)
         else:
             self.train_targets[self.idx : self.idx + y.shape[0]] = y
 
-        self.idx += x.shape[0]
+        self.idx += y.shape[0]
 
     def end(self, *args, **kwargs):
         for node_name, v in self.train_features.items():
             if isinstance(v, list):
                 self.train_features[node_name] = torch.cat(v, dim=0)
+            else:
+                self.train_features[node_name] = v[: self.idx]
         if isinstance(self.train_targets, list):
             self.train_targets = torch.cat(self.train_targets, dim=0)
+        else:
+            self.train_targets = self.train_targets[: self.idx]
 
         self._fit_params()
 
@@ -320,7 +317,7 @@ class DetectorWithFeatureExtraction(Detector):
 
     @torch.no_grad()
     def __call__(self, x: Tensor) -> Tensor:
-        self.feature_extractor.to(x.device)
+        # self.feature_extractor.to(x.device)
         features = self.feature_extractor(x)
         all_scores = torch.zeros(x.shape[0], len(features), device=x.device)
         for i, (k, v) in enumerate(features.items()):

@@ -147,3 +147,17 @@ def sklearn_cov_matrix_estimarion(
 
 def get_composed_attr(model, attrs: List[str]):
     return reduce(lambda x, y: getattr(x, y), attrs, model)
+
+
+def add_output_op(feature_extractor, output_op: Callable) -> nn.Module:
+    last_node = [n for n in feature_extractor.graph.nodes if n.op == "output"][0]
+    last_node_args = last_node.args
+    feature_extractor.graph.erase_node(last_node)
+    nodes = [n for n in feature_extractor.graph.nodes]
+    with feature_extractor.graph.inserting_after(nodes[-1]):
+        new_node = feature_extractor.graph.call_function(output_op, args=last_node_args)
+    nodes = [n for n in feature_extractor.graph.nodes]
+    with feature_extractor.graph.inserting_after(nodes[-1]):
+        feature_extractor.graph.output(new_node)
+    feature_extractor.recompile()
+    return feature_extractor
