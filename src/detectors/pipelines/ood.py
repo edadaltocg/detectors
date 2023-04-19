@@ -248,14 +248,6 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         df.columns = [METRICS_NAMES_PRETTY[k] for k in df.columns]
         return df.to_string(index=True, float_format="{:.4f}".format)
 
-    def save_results(self):
-        # TODO
-        return
-
-    def save_scores(self):
-        # TODO
-        return
-
 
 @register_pipeline("ood_benchmark_cifar10")
 class OODCifar10BenchmarkPipeline(OODBenchmarkPipeline):

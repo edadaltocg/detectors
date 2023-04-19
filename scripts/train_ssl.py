@@ -1,14 +1,15 @@
-import sys
 import argparse
 import json
 import logging
 import os
+import sys
 
 import accelerate
 import numpy as np
 import timm
 import timm.data
 import torch
+import torch.distributed
 import torch.nn.functional as F
 import torch.utils.data
 from sklearn.model_selection import cross_val_score
@@ -16,7 +17,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from torch import nn
 from torchvision import transforms
 from tqdm import tqdm
-import torch.distributed
 
 import detectors
 import detectors.utils
@@ -75,13 +75,13 @@ def knn_ssl_eval(model, val_loader, size_limit=None):
         # compute output
         with torch.no_grad():
             output = F.normalize(model(images), dim=-1)
-        output = detectors.utils.sync_tensor_across_gpus(output, size_limit)
-        target = detectors.utils.sync_tensor_across_gpus(target, size_limit)
+        output = detectors.utils.sync_tensor_across_gpus(output)
+        target = detectors.utils.sync_tensor_across_gpus(target)
         features.append(output.cpu())
         labels.append(target.cpu())
 
-    features = torch.cat(features).numpy()
-    labels = torch.cat(labels).numpy()
+    features = torch.cat(features).numpy()[:size_limit]
+    labels = torch.cat(labels).numpy()[:size_limit]
     # remove extra samples
     features = features[: len(labels)]
     cls = KNeighborsClassifier(20, metric="cosine").fit(features, labels)

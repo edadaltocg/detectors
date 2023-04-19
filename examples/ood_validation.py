@@ -3,6 +3,7 @@ import json
 import logging
 import os
 
+import torch
 
 import detectors
 from detectors.config import RESULTS_DIR
@@ -13,8 +14,10 @@ _logger = logging.getLogger(__name__)
 
 def main(args):
     print(f"Running {args.pipeline} pipeline on {args.model} model")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     in_dataset = args.pipeline.split("_")[-1]
     model = detectors.create_model(args.model, pretrained=True)
+    model.to(device)
     test_transform = detectors.create_transform(model)
     method_kwargs = args.method_kwargs or {}
     method = detectors.create_detector(args.method, model=model, **method_kwargs)
@@ -40,6 +43,9 @@ def main(args):
         print(pipeline.report(pipeline_results))
         best_kwargs = pipeline_results["best_params"]
 
+    method_kwargs.update(best_kwargs)
+    method = detectors.create_detector(args.method, model=model, **method_kwargs)
+
     test_pipeline = detectors.create_pipeline(
         f"ood_benchmark_{in_dataset}",
         batch_size=args.batch_size,
@@ -48,8 +54,6 @@ def main(args):
         limit_fit=args.limit_fit,
         limit_run=1,
     )
-    method_kwargs.update(best_kwargs)
-    method = detectors.create_detector(args.method, model=model, **method_kwargs)
     pipeline_results = test_pipeline.run(method)
     print(test_pipeline.report(pipeline_results))
     results = {
@@ -68,6 +72,22 @@ def main(args):
     detectors.utils.append_results_to_csv_file(results, filename)
     print("Results saved to {}".format(filename))
 
+    scores = pipeline_results["scores"]
+    labels = pipeline_results["labels"]
+
+    results = {
+        "model": args.model,
+        "in_dataset_name": test_pipeline.in_dataset_name,
+        "out_datasets_names": test_pipeline.out_datasets_names,
+        "method": args.method,
+        "method_kwargs": method_kwargs,
+        "scores": scores.numpy().tolist(),
+        "labels": labels.numpy().tolist(),
+    }
+    filename = os.path.join(RESULTS_DIR, args.pipeline, "scores.csv")
+    detectors.utils.append_results_to_csv_file(results, filename)
+    print("Scores saved to {}".format(filename))
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -75,7 +95,7 @@ if __name__ == "__main__":
     parser.add_argument("--method_kwargs", type=str_to_dict, default="{}", help="")
     parser.add_argument("--pipeline", type=str, default="ood_validation_cifar10")
     parser.add_argument("--model", type=str, default="resnet18_cifar10")
-    parser.add_argument("--batch_size", type=int, default=256)
+    parser.add_argument("--batch_size", type=int, default=64)
     parser.add_argument("--limit_fit", type=float, default=1)
     parser.add_argument("--limit_run", type=float, default=0.1)
     parser.add_argument("--objective", type=str, default="auroc")
