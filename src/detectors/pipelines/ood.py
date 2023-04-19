@@ -1,3 +1,6 @@
+"""
+OOD Pipelines.
+"""
 import logging
 import time
 from abc import ABC, abstractmethod
@@ -111,15 +114,13 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         )
 
         self.test_dataset = ConcatDatasetsDim1([self.test_dataset, test_labels])
+        # shuffle and subsample test_dataset
         subset = np.random.choice(
             np.arange(len(self.test_dataset)), int(self.limit_run * len(self.test_dataset)), replace=False
         ).tolist()
         self.test_dataset = torch.utils.data.Subset(self.test_dataset, subset)
-        # shuffle and subsample test_dataset
-        # test_dataset = torch.utils.data.Subset(test_dataset, np.random.permutation(len(test_dataset)).tolist())
-        # test_dataset = torch.utils.data.Subset(test_dataset, np.arange(10_000).tolist())
         self.test_dataloader = torch.utils.data.DataLoader(
-            self.test_dataset, batch_size=self.batch_size, shuffle=True, num_workers=4, pin_memory=True
+            self.test_dataset, batch_size=self.batch_size, shuffle=False, num_workers=4, pin_memory=True
         )
 
         self.fit_dataloader = self.accelerator.prepare(self.fit_dataloader)
@@ -423,11 +424,14 @@ class OODValidationPipeline(OODBenchmarkPipeline, ABC):
             if isinstance(self.hyperparameters[k], (list, tuple)):
                 new_params[k] = trial.suggest_categorical(k, self.hyperparameters[k])
             elif isinstance(self.hyperparameters[k], dict):
-                param_type = type(self.hyperparameters[k]["step"])
+                step = self.hyperparameters[k]["step"]
+                low = self.hyperparameters[k]["low"]
+                high = self.hyperparameters[k]["high"]
+                param_type = type(step)
                 if param_type == float:
-                    new_params[k] = trial.suggest_float(k, **self.hyperparameters[k])
+                    new_params[k] = trial.suggest_float(k, low=low, high=high, step=step)
                 elif param_type == int:
-                    new_params[k] = trial.suggest_int(k, **self.hyperparameters[k])
+                    new_params[k] = trial.suggest_int(k, low=low, high=high, step=step)
 
         self.method.set_hyperparameters(**new_params)
         # print methods params

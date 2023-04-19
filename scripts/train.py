@@ -10,7 +10,7 @@ import torch.utils.data
 
 import detectors
 from detectors.data import create_dataset
-from detectors.trainer import get_criterion_cls, get_optimizer_cls, get_scheduler_cls, trainer_classification
+from detectors.trainer import get_criterion_cls, get_optimizer_cls, get_scheduler_cls, trainer_supervised_classification
 from detectors.utils import str_to_dict
 
 _logger = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ def main(args: argparse.Namespace):
     scheduler = get_scheduler_cls(args.scheduler)(optimizer, **args.scheduler_kwargs)
 
     # train
-    trainer_classification(
+    trainer_supervised_classification(
         model,
         optimizer,
         scheduler,
@@ -83,6 +83,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--criterion", type=str, default="CrossEntropyLoss")
     parser.add_argument("--criterion_kwargs", type=str_to_dict, default={})
+    parser.add_argument("--warmup_epochs", type=int, default=0)
 
     parser.add_argument("--optimizer", type=str, default="SGD")
     parser.add_argument("--lr", type=float, default=0.1)

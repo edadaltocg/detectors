@@ -129,21 +129,3 @@ def densenet121_svhn(pretrained=False, **kwargs):
 @timm_register_model
 def densenet121_camelyon17(pretrained=False, **kwargs):
     return _create_densenet_pretrained("densenet121_camelyon17", pretrained=pretrained, **kwargs)
-
-
-if __name__ == "__main__":
-    import timm.data
-
-    # model
-    model = timm.create_model("densenet121_cifar10", pretrained=False)
-    # get transform
-    print(model.default_cfg)
-    print(model.pretrained_cfg)
-    data_config = timm.data.resolve_data_config(model.default_cfg)
-    print(data_config)
-    test_transform = timm.data.create_transform(**data_config)
-    data_config["is_training"] = True
-    train_transform = timm.data.create_transform(**data_config, color_jitter=None)
-
-    print(test_transform)
-    print(train_transform)

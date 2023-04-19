@@ -81,5 +81,3 @@ from .covariate_drift import *
 from .ood import *
 
 PipelinesRegistry = Enum("PipelinesRegistry", dict(zip(list_pipelines(), list_pipelines())))
-if __name__ == "__main__":
-    print(list_pipeline_args("ood_benchmark_cifar10"))
