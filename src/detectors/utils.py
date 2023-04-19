@@ -1,11 +1,9 @@
-import itertools
+import torch
+import torch.distributed as dist
 import json
 import logging
-import multiprocessing as mp
 import os
-import time
-from functools import wraps
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import pandas as pd
 from torch.utils.data import Dataset
@@ -49,25 +47,31 @@ class ConcatDatasetsDim1(Dataset):
         return len(self.datasets[0])
 
 
-def timeit(func):
-    # time in seconds
-    @wraps(func)
-    def _time_it(*args, **kwargs):
-        start = time.perf_counter()
-        outputs = func(*args, **kwargs)
-        end = time.perf_counter()
-        _logger.info("Function %s took %.4f s" % (func.__name__, end - start))
-        return outputs
+def sync_tensor_across_gpus(t: torch.Tensor, size_limit=None) -> torch.Tensor:
+    """Gather tensor from all gpus and return a tensor with dim 0 equal to the number of gpus.
 
-    return _time_it
+    Args:
+        t (torch.Tensor): _description_
 
+    Returns:
+        torch.Tensor: _description_
 
-def run_parallel(input_space, wrapper_fn):
-    p = mp.Pool()
-    input = itertools.product(*input_space)
-    _logger.info(f"Input space of size {len(list(itertools.product(*input_space)))}")
-
-    results = p.map(wrapper_fn, input)
-    p.close()
-    p.join()
-    return results
+    References:
+        https://discuss.pytorch.org/t/ddp-evaluation-gather-output-loss-and-stuff-how-to/130593/2
+    """
+    group = dist.group.WORLD
+    group_size = dist.get_world_size(group)
+    gather_t_tensor = [torch.zeros_like(t) for _ in range(group_size)]
+    dist.all_gather(gather_t_tensor, t)  # this works with nccl backend when tensors need to be on gpu.
+    # for gloo and mpi backends, tensors need to be on cpu. also this works single machine with
+    # multiple   gpus. for multiple nodes, you should use dist.all_gather_multigpu. both have the
+    # same definition... see [here](https://pytorch.org/docs/stable/distributed.html).
+    #  somewhere in the same page, it was mentioned that dist.all_gather_multigpu is more for
+    # multi-nodes. still dont see the benefit of all_gather_multigpu. the provided working case in
+    # the doc is  vague...
+    # move tensors to cpu
+    gather_t_tensor = [t.cpu() for t in gather_t_tensor]
+    gather_t_tensor = torch.cat(gather_t_tensor, dim=0)
+    if size_limit is None:
+        size_limit = len(gather_t_tensor)
+    return gather_t_tensor[:size_limit]

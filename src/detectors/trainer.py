@@ -62,7 +62,7 @@ def save_model(model: nn.Module, accelerator: Accelerator, filename: str):
     accelerator.save(unwrapped_model.state_dict(), filename)
 
 
-def trainer_classification(
+def trainer_supervised_classification(
     model: torch.nn.Module,
     optimizer: torch.optim.Optimizer,
     scheduler: torch.optim.lr_scheduler._LRScheduler,
