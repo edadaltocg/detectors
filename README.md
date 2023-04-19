@@ -40,6 +40,13 @@ pip install --upgrade pip setuptools wheel
 pip install -e .
 ```
 
+Also you have easy access to the Python scripts from the tutorials and examples:
+
+```bash
+cd docs/tutorials
+cd examples
+```
+
 ## Examples
 
 The following examples show how to use the library and how it can be integrated into your research. For more examples, please check the [documentation](https://detectors.readthedocs.io/en/latest/use_cases/).
