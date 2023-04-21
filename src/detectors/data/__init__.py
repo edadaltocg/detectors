@@ -9,25 +9,24 @@ from typing import Callable, List, Optional, Type
 from torch.utils.data import Dataset
 from torchvision.datasets import STL10, SVHN, ImageNet, OxfordIIITPet, StanfordCars
 
-from detectors.data.cifar_wrapper import CIFAR10Wrapped, CIFAR100Wrapped
-from detectors.data.cifarc import CIFAR10_C, CIFAR100_C
-from detectors.data.imagenet import ImageNetA, ImageNetC, ImageNetO, ImageNetR
-from detectors.data.mnist_wrapped import FashionMNISTWrapped, MNISTWrapped
-from detectors.data.mnistc import MNISTC
-from detectors.data.mos import MOSSUN, MOSiNaturalist, MOSPlaces365
-from detectors.data.openimage_o import OpenImageO
-from detectors.data.places365 import Places365
-from detectors.data.wilds_ds import make_wilds_dataset
-
 from ..config import DATA_DIR, IMAGENET_ROOT
+from .cifar_wrapper import CIFAR10Wrapped, CIFAR100Wrapped
+from .cifarc import CIFAR10_C, CIFAR100_C
 from .constants import *
 from .english_chars import EnglishChars
+from .imagenet import ImageNetA, ImageNetC, ImageNetO, ImageNetR
 from .isun import iSUN
 from .lsun_r_c import LSUNCroped, LSUNResized
-from .noise import Gaussian, Uniform
+from .mnist_wrapped import FashionMNISTWrapped, MNISTWrapped
+from .mnistc import MNISTC
+from .mos import MOSSUN, MOSiNaturalist, MOSPlaces365
+from .noise import Blobs, Gaussian, Uniform
+from .openimage_o import OpenImageO
+from .places365 import Places365
 from .textures import Textures
 from .tiny_imagenet import TinyImageNet
 from .tiny_imagenet_r_c import TinyImageNetCroped, TinyImageNetResized
+from .wilds_ds import make_wilds_dataset
 
 _logger = logging.getLogger(__name__)
 datasets_registry = {
@@ -51,6 +50,7 @@ datasets_registry = {
     "textures_curated": None,
     "gaussian": Gaussian,
     "uniform": Uniform,
+    "blobs": Blobs,
     "places365": Places365,
     "stanford_cars": StanfordCars,
     "mos_inaturalist": MOSiNaturalist,
@@ -126,8 +126,7 @@ def create_dataset(
                 `mos_inaturalist`, `mos_places365`, `mos_sun`, `cifar10_lt`, `cifar100_lt`,
                 `imagenet1k_lt`, `cifar10_c`, `cifar100_c`, `imagenet_c`, `imagenet_a`,
                 `imagenet_r`, `imagenet_o`, `openimage_o`, `oxford_pets`, `oxford_flowers`,
-                `cub200`, `imagenet1k_c`,
-
+                `cub200`, `imagenet1k_c`, `blobs`.
                 `wilds_iwildcam`, `wilds_fmow`, `wilds_camelyon17`, `wilds_rxrx1`,
                 `wilds_poverty`, `wilds_globalwheat`.
         root (string): Root directory of dataset.
@@ -176,7 +175,6 @@ def list_datasets() -> List[str]:
         list: List of available dataset names.
     """
     return sorted(list(k for k in datasets_registry.keys() if datasets_registry[k] is not None))
-
 
 
 DatasetsRegistry = Enum("DatasetsRegistry", dict(zip(list_datasets(), list_datasets())))
