@@ -1,5 +1,4 @@
 import logging
-
 from functools import partial
 from typing import Optional
 
@@ -58,7 +57,6 @@ class IgeoodLogits:
             logits = self.model(example)
             self.train_features = torch.zeros((fit_length,) + logits.shape[1:], dtype=logits.dtype)
             self.train_targets = torch.ones((fit_length,), dtype=torch.long) * -1
-
 
     @torch.no_grad()
     def update(self, x: Tensor, y: Tensor, *args, **kwargs):

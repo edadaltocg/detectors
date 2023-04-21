@@ -39,10 +39,18 @@ default_cfgs = {
     "resnet18_cifar10": _cfg(url=hf_hub_url_template("resnet18_cifar10"), architecture="resnet18"),
     "resnet34_cifar10": _cfg(url=hf_hub_url_template("resnet34_cifar10"), architecture="resnet34"),
     "resnet50_cifar10": _cfg(url=hf_hub_url_template("resnet50_cifar10"), architecture="resnet50"),
-    "resnet34_simclr_cifar10": _cfg(url=hf_hub_url_template("resnet34_simclr_cifar10"), architecture="resnet34"),
-    "resnet50_simclr_cifar10": _cfg(url=hf_hub_url_template("resnet50_simclr_cifar10"), architecture="resnet50"),
-    "resnet34_supcon_cifar10": _cfg(url=hf_hub_url_template("resnet34_supcon_cifar10"), architecture="resnet34"),
-    "resnet50_supcon_cifar10": _cfg(url=hf_hub_url_template("resnet50_supcon_cifar10"), architecture="resnet50"),
+    "resnet34_simclr_cifar10": _cfg(
+        url=hf_hub_url_template("resnet34_simclr_cifar10"), architecture="resnet34", num_classes=512
+    ),
+    "resnet50_simclr_cifar10": _cfg(
+        url=hf_hub_url_template("resnet50_simclr_cifar10"), architecture="resnet50", num_classes=2048
+    ),
+    "resnet34_supcon_cifar10": _cfg(
+        url=hf_hub_url_template("resnet34_supcon_cifar10"), architecture="resnet34", num_classes=512
+    ),
+    "resnet50_supcon_cifar10": _cfg(
+        url=hf_hub_url_template("resnet50_supcon_cifar10"), architecture="resnet50", num_classes=2048
+    ),
     # CIFAR-100
     "resnet18_cifar100": _cfg(
         url=hf_hub_url_template("resnet18_cifar100"),
@@ -70,24 +78,28 @@ default_cfgs = {
         architecture="resnet34",
         mean=CIFAR100_DEFAULT_MEAN,
         std=CIFAR100_DEFAULT_STD,
+        num_classes=512,
     ),
     "resnet50_simclr_cifar100": _cfg(
         url=hf_hub_url_template("resnet50_simclr_cifar100"),
         architecture="resnet50",
         mean=CIFAR100_DEFAULT_MEAN,
         std=CIFAR100_DEFAULT_STD,
+        num_classes=2048,
     ),
     "resnet34_supcon_cifar100": _cfg(
         url=hf_hub_url_template("resnet34_supcon_cifar100"),
         architecture="resnet34",
         mean=CIFAR100_DEFAULT_MEAN,
         std=CIFAR100_DEFAULT_STD,
+        num_classes=512,
     ),
     "resnet50_supcon_cifar100": _cfg(
         url=hf_hub_url_template("resnet50_supcon_cifar100"),
         architecture="resnet50",
         mean=CIFAR100_DEFAULT_MEAN,
         std=CIFAR100_DEFAULT_STD,
+        num_classes=2048,
     ),
     # SVHN
     "resnet18_svhn": _cfg(

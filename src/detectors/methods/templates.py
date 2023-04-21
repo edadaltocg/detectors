@@ -229,9 +229,7 @@ class DetectorWithFeatureExtraction(Detector):
             return {k: self.reduction_op(v) for k, v in x.items()}
 
         self.feature_extractor = add_output_op(self.feature_extractor, output_reduce)
-        self.aggregation_method = None
-        if self.aggregation_method_name is not None:
-            self.aggregation_method = create_aggregation(self.aggregation_method_name, **kwargs)
+        self.aggregation_method = create_aggregation(self.aggregation_method_name, **kwargs)
 
         self.train_features = {}
         self.train_targets = []
@@ -286,15 +284,14 @@ class DetectorWithFeatureExtraction(Detector):
 
         self._fit_params()
 
-        if self.aggregation_method is not None and hasattr(self.aggregation_method, "fit"):
-            _logger.info("Fitting aggregator %s...", self.aggregation_method_name)
-            self.batch_size = self.train_targets.shape[0]  # type: ignore
-            all_scores = torch.zeros(self.train_targets.shape[0], len(self.train_features))
-            for i, (k, v) in tqdm(enumerate(self.train_features.items())):
-                idx = 0
-                for idx in range(0, v.shape[0], self.batch_size):
-                    all_scores[:, i] = self._layer_score(v[idx : idx + self.batch_size], k, i).view(-1)
-            self.aggregation_method.fit(all_scores, self.train_targets)
+        _logger.debug("Fitting aggregator %s...", self.aggregation_method_name)
+        self.batch_size = self.train_targets.shape[0]  # type: ignore
+        all_scores = torch.zeros(self.train_targets.shape[0], len(self.train_features))
+        for i, (k, v) in tqdm(enumerate(self.train_features.items())):
+            idx = 0
+            for idx in range(0, v.shape[0], self.batch_size):
+                all_scores[:, i] = self._layer_score(v[idx : idx + self.batch_size], k, i).view(-1)
+        self.aggregation_method.fit(all_scores, self.train_targets)
 
         # TODO: compile graph with _layer_score
 
@@ -307,7 +304,6 @@ class DetectorWithFeatureExtraction(Detector):
         pass
 
     @abstractmethod
-
     def _layer_score(self, features: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None, **kwargs):
         """Compute the anomaly score for a single layer.
 

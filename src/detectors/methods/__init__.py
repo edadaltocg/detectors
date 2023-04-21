@@ -7,11 +7,9 @@ from enum import Enum
 from functools import partial
 from typing import Any, Dict, List
 
-from typing import Any, Dict, List
-
-
 from detectors.methods.templates import Detector, DetectorWrapper
 
+from .csi import CSI
 from .dice import Dice
 from .doctor import doctor
 from .energy import energy
@@ -20,7 +18,9 @@ from .gmm import GMM
 from .gradnorm import gradnorm
 from .igeood_logits import IgeoodLogits
 from .kl_matching import KLMatching
+from .knn_cosine import KnnCosine
 from .knn_euclides import KnnEuclides
+from .knn_projection import KnnProjection
 from .mahalanobis import Mahalanobis
 from .max_logits import max_logits
 from .maxcosine import MaxCosineSimilarity
@@ -59,6 +59,8 @@ detectors_registry = {
     "igeood_logits": IgeoodLogits,
     "gradnorm": gradnorm,
     "knn_euclides": KnnEuclides,
+    "knn_cosine": KnnCosine,
+    "knn_projection": KnnProjection,
     # Features based detectors
     "mahalanobis": Mahalanobis,
     "gmm": GMM,
@@ -67,6 +69,7 @@ detectors_registry = {
     "react_projection": ReActProjection,
     # Special training detectors
     "ssd": SSD,
+    "csi": CSI,
     # Not implemented
     "igeood_features": None,
     "bats": None,
@@ -114,7 +117,7 @@ def create_detector(detector_name: str, **kwargs) -> Detector:
                 `random`, `msp`, `odin`, `energy`, `mahalanobis`, `react`, `dice`, `knn_euclides`, `igeood_logits`,
                 `projection`, `react_projection`, `gradnorm`, `maxcosine`, `mcdropout`, `max_logits`, `kl_matching`,
                 `gmm`, `relative_mahalanobis`, `doctor`, `always_one`, `always_zero`, `random_score`, `vim`,
-                `entropy`, `ssd`
+                `entropy`, `ssd`, `csi`, `knn_cosine`, `knn_projection`.
 
         **kwargs: Additional arguments for the detector.
 
@@ -157,7 +160,6 @@ def create_hyperparameters(detector_name: str) -> Dict[str, Any]:
     except AttributeError:
         hyperparameters = {}
     return hyperparameters
-
 
 
 def create_hyperparameters(detector_name: str) -> Dict[str, Any]:

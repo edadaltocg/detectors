@@ -15,7 +15,6 @@ def _score_fn(x: Tensor, model: nn.Module, temperature: float = 1000, **kwargs) 
     return -(1 - torch.softmax(outputs / temperature, dim=1).square().sum(dim=1))
 
 
-
 def doctor(x: Tensor, model: nn.Module, temperature: float = 1, eps: float = 0.0, **kwargs) -> Tensor:
     """Doctor detector.
 

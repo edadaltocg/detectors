@@ -3,14 +3,14 @@ import torch.nn as nn
 
 
 class SupConLoss(nn.Module):
-    """Supervised Contrastive Learning: https://arxiv.org/pdf/2004.11362.pdf.
+    """Supervised Contrastive Learning.
     It also supports the unsupervised contrastive loss in
     SimCLR: A Simple Framework for Contrastive Learning of Visual Representations
 
     References:
-        https://github.com/HobbitLong/SupContrast
-        Author: Yonglong Tian (yonglong@mit.edu)
-        Date: May 07, 2020
+        [1] https://github.com/HobbitLong/SupContrast
+        [2] https://arxiv.org/pdf/2004.11362.pdf
+        [3] https://arxiv.org/abs/2002.05709
     """
 
     def __init__(self, temperature=0.07, contrast_mode="all", base_temperature=0.07):
@@ -21,8 +21,7 @@ class SupConLoss(nn.Module):
 
     def forward(self, features, labels=None, mask=None):
         """Compute loss for model. If both `labels` and `mask` are None,
-        it degenerates to SimCLR unsupervised loss:
-        https://arxiv.org/pdf/2002.05709.pdf
+        it degenerates to SimCLR unsupervised loss.
 
         Args:
             features: hidden vector of shape [bsz, n_views, ...].
@@ -89,3 +88,55 @@ class SupConLoss(nn.Module):
         loss = loss.view(anchor_count, batch_size).mean()
 
         return loss
+
+
+def NT_xent(sim_matrix, temperature=0.5, chunk=2, eps=1e-8):
+    """
+    Compute NT_xent loss
+    - sim_matrix: (B', B') tensor for B' = B * chunk (first 2B are pos samples)
+    """
+
+    device = sim_matrix.device
+
+    B = sim_matrix.size(0) // chunk  # B = B' / chunk
+
+    eye = torch.eye(B * chunk).to(device)  # (B', B')
+    sim_matrix = torch.exp(sim_matrix / temperature) * (1 - eye)  # remove diagonal
+
+    denom = torch.sum(sim_matrix, dim=1, keepdim=True)
+    sim_matrix = -torch.log(sim_matrix / (denom + eps) + eps)  # loss matrix
+
+    loss = torch.sum(sim_matrix[:B, B:].diag() + sim_matrix[B:, :B].diag()) / (2 * B)
+
+    return loss
+
+
+def Supervised_NT_xent(sim_matrix, labels, temperature=0.5, chunk=2, eps=1e-8, multi_gpu=False):
+    """
+    Compute NT_xent loss
+    - sim_matrix: (B', B') tensor for B' = B * chunk (first 2B are pos samples)
+    """
+
+    device = sim_matrix.device
+
+    labels = labels.repeat(2)
+
+    logits_max, _ = torch.max(sim_matrix, dim=1, keepdim=True)
+    sim_matrix = sim_matrix - logits_max.detach()
+
+    B = sim_matrix.size(0) // chunk  # B = B' / chunk
+
+    eye = torch.eye(B * chunk).to(device)  # (B', B')
+    sim_matrix = torch.exp(sim_matrix / temperature) * (1 - eye)  # remove diagonal
+
+    denom = torch.sum(sim_matrix, dim=1, keepdim=True)
+    sim_matrix = -torch.log(sim_matrix / (denom + eps) + eps)  # loss matrix
+
+    labels = labels.contiguous().view(-1, 1)
+    Mask = torch.eq(labels, labels.t()).float().to(device)
+    # Mask = eye * torch.stack([labels == labels[i] for i in range(labels.size(0))]).float().to(device)
+    Mask = Mask / (Mask.sum(dim=1, keepdim=True) + eps)
+
+    loss = torch.sum(Mask * sim_matrix) / (2 * B)
+
+    return loss

@@ -5,6 +5,9 @@ def hf_hub_url_template(model_name: str):
     return f"https://huggingface.co/edadaltocg/{model_name}/resolve/main/pytorch_model.bin"
 
 
+# https://huggingface.co/edadaltocg/resnet34_supcon_cifar10/resolve/main/pytorch_model.bin
+
+
 class ModelDefaultConfig(dict):
     """
     Default configuration for models from `timm` library.

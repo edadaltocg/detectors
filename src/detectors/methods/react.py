@@ -13,7 +13,6 @@ _logger = logging.getLogger(__name__)
 HYPERPARAMETERS = dict(p=dict(low=0.1, high=1.0, type=float, default=0.9, step=0.05))
 
 
-
 def reactify(m: torch.nn.Module, condition_fn: Callable, insert_fn: Callable) -> torch.nn.Module:
     graph: fx.Graph = fx.Tracer().trace(m)
     # Transformation logic here

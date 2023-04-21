@@ -5,6 +5,7 @@ install_requires = [
     "numpy",
     "optuna",
     "scikit-learn",
+    "scikit-image",
     "timm==0.8.19.dev0",
     "torch>=1.7",
     "torchvision",

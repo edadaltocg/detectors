@@ -13,7 +13,7 @@ TEST_MODEL.eval()
 
 N = 128
 X = torch.randn(N, 3, 32, 32)
-Y = torch.randint(0, 2, (N,))
+Y = torch.randint(0, 10, (N,))
 X = X.to(device)
 
 
@@ -40,6 +40,8 @@ def test_naive_detectors(method_name):
         "igeood_logits",
         "gradnorm",
         "knn_euclides",
+        "knn_cosine",
+        "knn_projection",
         "mahalanobis",
         "gmm",
     ],
@@ -107,5 +109,24 @@ def test_vim():
 
 
 def test_ssd():
-    return
+    model = create_model("resnet34_simclr_cifar10")
+    detector = create_detector("ssd", model=model, nclusters=2)
+    detector.start()
+    detector.update(X, Y)
+    detector.end()
+    scores = detector(X)
+    scores_std = scores.std()
+    assert scores_std > 0.0
+    assert scores.shape == (N,)
 
+
+def test_csi():
+    model = create_model("resnet34_simclr_cifar10")
+    detector = create_detector("csi", model=model)
+    detector.start()
+    detector.update(X, Y)
+    detector.end()
+    scores = detector(X)
+    scores_std = scores.std()
+    assert scores_std > 0.0
+    assert scores.shape == (N,)
