@@ -45,7 +45,7 @@ def main(args):
         **pipeline_results["results"],
         "method_kwargs": args.methods_kwargs,
     }
-    filename = os.path.join(RESULTS_DIR, args.pipeline, "results_accelerate.csv")
+    filename = os.path.join(RESULTS_DIR, args.pipeline, "results.csv")
     detectors.utils.append_results_to_csv_file(results, filename)
 
     scores = pipeline_results["scores"]
@@ -60,7 +60,7 @@ def main(args):
         "scores": scores.numpy().tolist(),
         "labels": labels.numpy().tolist(),
     }
-    filename = os.path.join(RESULTS_DIR, args.pipeline, "scores_accelerate.csv")
+    filename = os.path.join(RESULTS_DIR, args.pipeline, "scores.csv")
     detectors.utils.append_results_to_csv_file(results, filename)
 
 
