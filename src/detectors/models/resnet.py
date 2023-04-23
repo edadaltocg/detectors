@@ -5,7 +5,6 @@ import timm
 import timm.models
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from timm.models import register_model as timm_register_model
 
 from detectors.data import CIFAR10_DEFAULT_MEAN, CIFAR10_DEFAULT_STD

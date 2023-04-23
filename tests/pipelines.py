@@ -37,9 +37,9 @@ def test_osr_pipeline(pipeline_name):
 @pytest.mark.parametrize(
     "pipeline_name",
     [
-        "one_corruption_covariate_drift_cifar10",
-        "one_corruption_covariate_drift_cifar100",
-        "one_corruption_covariate_drift_imagenet",
+        "covariate_drift_cifar10",
+        "covariate_drift_cifar100",
+        "covariate_drift_imagenet",
     ],
 )
 def test_covariate_drift_pipeline(pipeline_name):

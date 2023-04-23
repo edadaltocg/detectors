@@ -34,6 +34,7 @@ def create_pipeline(name: str, **kwargs) -> Pipeline:
                 `ood_benchmark_cifar10`, `ood_benchmark_cifar100`, `ood_benchmark_imagenet`, `ood_mnist_benchmark`,
                 `ood_validation_cifar10`, `ood_validation_cifar100`, `ood_validation_imagenet`, `ood_validation_mnist`,
                 `ood_validation_noise_cifar10`, `ood_validation_noise_cifar100`, `ood_validation_noise_imagenet`,
+                `covariate_drift_cifar10`, `covariate_drift_cifar100`, `covariate_drift_imagenet`.
 
         **kwargs:
             Additional arguments to pass to the pipeline.

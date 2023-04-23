@@ -322,19 +322,19 @@ class CovariateDriftPipeline(Pipeline):
         )
 
 
-@register_pipeline("one_corruption_covariate_drift_cifar10")
+@register_pipeline("covariate_drift_cifar10")
 class OneCorruptionCovariateDriftCifar10Pipeline(CovariateDriftPipeline):
     def __init__(self, transform, corruption: str, intensities: List[int], batch_size: int = 128, **kwargs) -> None:
         super().__init__("cifar10", ["train", "test"], transform, [corruption], intensities, batch_size, **kwargs)
 
 
-@register_pipeline("one_corruption_covariate_drift_cifar100")
+@register_pipeline("covariate_drift_cifar100")
 class OneCorruptionCovariateDriftCifar100Pipeline(CovariateDriftPipeline):
     def __init__(self, transform, corruption: str, intensities: List[int], batch_size: int = 128, **kwargs) -> None:
         super().__init__("cifar100", ["train", "test"], transform, [corruption], intensities, batch_size, **kwargs)
 
 
-@register_pipeline("one_corruption_covariate_drift_imagenet")
+@register_pipeline("covariate_drift_imagenet")
 class OneCorruptionCovariateDriftImagenetPipeline(CovariateDriftPipeline):
     def __init__(self, transform, corruption: str, intensities: List[int], batch_size: int = 128, **kwargs) -> None:
         super().__init__("imagenet", ["train", "val"], transform, [corruption], intensities, batch_size, **kwargs)
