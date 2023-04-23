@@ -37,9 +37,9 @@ def test_osr_pipeline(pipeline_name):
 @pytest.mark.parametrize(
     "pipeline_name",
     [
-        "one_corruption_covariate_drift_cifar10",
-        "one_corruption_covariate_drift_cifar100",
-        "one_corruption_covariate_drift_imagenet",
+        "covariate_drift_cifar10",
+        "covariate_drift_cifar100",
+        "covariate_drift_imagenet",
     ],
 )
 def test_covariate_drift_pipeline(pipeline_name):
@@ -76,8 +76,8 @@ def test_ood_pipeline_noise_validation(pipeline_name):
     ],
 )
 def test_ood_validation_pipeline(pipeline_name):
-    method_name = "odin"
-    model = detectors.create_model("resnet18_cifar10", pretrained=True)
+    method_name = "mahalanobis"
+    model = detectors.create_model("densenet121_cifar10", pretrained=True)
     transform = detectors.create_transform(model)
     method = detectors.create_detector(method_name, model=model)
     pipeline = detectors.create_pipeline(pipeline_name, transform=transform, batch_size=512, limit_run=0.01)

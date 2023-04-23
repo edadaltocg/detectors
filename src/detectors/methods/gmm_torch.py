@@ -202,7 +202,7 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
     reg_covar : float
         The regularization added to the diagonal of the covariance matrices.
 
-    covariance_type : {'full', 'tied', 'diag', 'spherical'}
+    covariance_type : {'full', 'tied', 'diag'}
         The type of precision matrices.
 
     Returns
@@ -223,7 +223,7 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
         "full": _estimate_gaussian_covariances_full,
         "tied": _estimate_gaussian_covariances_tied,
         "diag": _estimate_gaussian_covariances_diag,
-        "spherical": _estimate_gaussian_covariances_spherical,
+        # "spherical": _estimate_gaussian_covariances_spherical,
     }[covariance_type](resp, X, nk, means, reg_covar)
     return nk, means, covariances
 
@@ -237,7 +237,7 @@ def _compute_precision_cholesky(covariances, covariance_type, device="cpu"):
         The covariance matrix of the current components.
         The shape depends of the covariance_type.
 
-    covariance_type : {'full', 'tied', 'diag', 'spherical'}
+    covariance_type : {'full', 'tied', 'diag'}
         The type of precision matrices.
 
     Returns
@@ -280,9 +280,8 @@ def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
         'full' : shape of (n_components, n_features, n_features)
         'tied' : shape of (n_features, n_features)
         'diag' : shape of (n_components, n_features)
-        'spherical' : shape of (n_components,)
 
-    covariance_type : {'full', 'tied', 'diag', 'spherical'}
+    covariance_type : {'full', 'tied', 'diag'}
 
     n_features : int
         Number of features.
@@ -322,9 +321,8 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
         'full' : shape of (n_components, n_features, n_features)
         'tied' : shape of (n_features, n_features)
         'diag' : shape of (n_components, n_features)
-        'spherical' : shape of (n_components,)
 
-    covariance_type : {'full', 'tied', 'diag', 'spherical'}
+    covariance_type : {'full', 'tied', 'diag'}
 
     Returns
     -------
@@ -915,3 +913,7 @@ def test():
 
         assert gmm.means_.shape == (c, d)
         assert scores.shape == (100,)
+
+
+if __name__ == "__main__":
+    test()

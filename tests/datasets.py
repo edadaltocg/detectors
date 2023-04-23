@@ -217,6 +217,17 @@ def test_uniform():
     assert len(dataset) == 10000
 
 
+def test_blobs():
+    transform = transforms.Compose([transforms.Resize(32), transforms.CenterCrop(32), transforms.ToTensor()])
+
+    dataset = create_dataset("blobs", root=DATA_DIR, split=None, transform=transform, nb_samples=10000)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    img, label = next(iter(dataloader))
+
+    assert type(img) == torch.Tensor
+    assert len(dataset) == 10000
+
+
 def test_places365():
     transform = transforms.ToTensor()
 

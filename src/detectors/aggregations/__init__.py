@@ -4,8 +4,8 @@ from functools import partial
 
 from torch import Tensor
 
-from detectors.aggregations.anomaly import IFAggregation, LOFAggregation
-from detectors.aggregations.basics import (
+from .anomaly import IFAggregation, LOFAggregation
+from .basics import (
     avg_topk_aggregation,
     depth_weighted_sum,
     layer_idx,
@@ -16,10 +16,10 @@ from detectors.aggregations.basics import (
     none_aggregation,
     topk_aggregation,
 )
-from detectors.aggregations.cosine import CosineAggregation
-from detectors.aggregations.innerprod import InnerProductAggregation
-from detectors.aggregations.mahalanobis import MahalanobisAggregation
-from detectors.aggregations.quantile import QuantileAggregation
+from .cosine import CosineAggregation
+from .innerprod import InnerProductAggregation
+from .mahalanobis import MahalanobisAggregation
+from .quantile import QuantileAggregation
 
 _logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ class Aggregation:
 
     def fit(self, stack: Tensor, *args, **kwargs):
         if not hasattr(self.aggregation_method, "fit"):
-            _logger.warning("Aggregation method does not have a `fit` method.")
+            _logger.debug("Aggregation method does not have a `fit` method.")
             return
         self.aggregation_method.fit(stack)
 

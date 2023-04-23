@@ -9,6 +9,8 @@ from detectors.methods.templates import DetectorWithFeatureExtraction
 
 _logger = logging.getLogger(__name__)
 
+HYPERPARAMETERS = dict(covariance_type=["full", "tied", "diag"], n_components=[None, 16, 128, 256])
+
 
 class GMM(DetectorWithFeatureExtraction):
     def __init__(
@@ -17,7 +19,7 @@ class GMM(DetectorWithFeatureExtraction):
         features_nodes: Optional[List[str]] = None,
         all_blocks: bool = False,
         last_layer: bool = False,
-        pooling_op_name: str = "avg",
+        pooling_op_name: str = "avg_or_getitem",
         aggregation_method_name: str = "mean",
         n_components: Optional[int] = None,
         covariance_type: Literal["full", "tied", "diag"] = "full",

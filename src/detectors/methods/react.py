@@ -10,7 +10,7 @@ from torchvision.models.feature_extraction import create_feature_extractor
 
 _logger = logging.getLogger(__name__)
 
-HYPERPARAMETERS = dict(p=dict(low=0.0, high=1.0, type=float, default=0.9, step=0.1))
+HYPERPARAMETERS = dict(p=dict(low=0.1, high=1.0, type=float, default=0.9, step=0.05))
 
 
 def reactify(m: torch.nn.Module, condition_fn: Callable, insert_fn: Callable) -> torch.nn.Module:
@@ -76,7 +76,6 @@ class ReAct:
         self.feature_extractor = create_feature_extractor(self.model, self.features_nodes)
 
         self.last_layer = list(self.model._modules.values())[-1]
-        assert isinstance(self.last_layer, torch.nn.Linear)
 
         self.insert_node_fn = insert_node_fn
         self.p = p
@@ -88,8 +87,6 @@ class ReAct:
         self.training_features = {}
 
     def update(self, x: Tensor, y: Tensor) -> None:
-        self.device = x.device
-        self.feature_extractor = self.feature_extractor.to(x.device)
         if len(self.training_features.keys()) > 0:
             k = list(self.training_features.keys())[0]
             if self.training_features[k].view(-1).shape[0] > self.LIMIT:
@@ -124,13 +121,13 @@ class ReAct:
 
         _logger.info("ReAct thresholds = %s", dict(zip(self.features_nodes, self.thrs)))
 
+        del self.training_features
+
     @torch.no_grad()
     def __call__(self, x: Tensor) -> Tensor:
         if self.graph_nodes_names is not None:
-            self.model = self.model.to(x.device)
             logits = self.model(x)
         else:
-            self.feature_extractor = self.feature_extractor.to(x.device)
             features = torch.clip(list(self.feature_extractor(x).values())[-1], max=self.thrs[-1])
             logits = self.last_layer(features)  # type: ignore
         return torch.logsumexp(logits, dim=-1)

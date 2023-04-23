@@ -8,7 +8,7 @@ from torch import Tensor
 
 _logger = logging.getLogger(__name__)
 
-HYPERPARAMETERS = dict(p=dict(low=0.0, high=1.0, step=0.05))
+HYPERPARAMETERS = dict(p=dict(low=0.5, high=0.95, step=0.05))
 
 
 def get_composed_attr(model, attrs: List[str]):
@@ -35,7 +35,10 @@ class Dice:
 
         self.last_layer_name = last_layer_name
         if self.last_layer_name is None:
-            self.last_layer_name = list(model._modules.keys())[-1]
+            if hasattr(self.model, "default_cfg"):
+                self.last_layer_name = self.model.default_cfg["classifier"]
+            else:
+                self.last_layer_name = list(model._modules.keys())[-1]
 
         self._weight_backup = get_composed_attr(self.model, self.last_layer_name.split(".")).weight.clone()
         self._bias_backup = get_composed_attr(self.model, self.last_layer_name.split(".")).bias.clone()
@@ -56,10 +59,10 @@ class Dice:
         _logger.info(
             (get_composed_attr(self.model, self.last_layer_nodes).weight.data - self._weight_backup.data).sum().item()
         )
-        assert not torch.allclose(
-            get_composed_attr(self.model, self.last_layer_nodes).weight.data, self._weight_backup.data
-        )
-        assert torch.allclose(get_composed_attr(self.model, self.last_layer_nodes).bias.data, self._bias_backup.data)
+        # assert not torch.allclose(
+        #     get_composed_attr(self.model, self.last_layer_nodes).weight.data, self._weight_backup.data
+        # )
+        # assert torch.allclose(get_composed_attr(self.model, self.last_layer_nodes).bias.data, self._bias_backup.data)
 
     @torch.no_grad()
     def __call__(self, x: Tensor) -> Tensor:

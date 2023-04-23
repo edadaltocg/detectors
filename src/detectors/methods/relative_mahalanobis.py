@@ -21,6 +21,18 @@ def relative_mahalanobis_inv_layer_score(
     return -torch.nan_to_num(stack.min(1, keepdim=True)[0], nan=1e6)
 
 
+HYPERPARAMETERS = dict(
+    cov_mat_method=[
+        "EmpiricalCovariance",
+        "GraphicalLasso",
+        "GraphicalLassoCV",
+        "LedoitWolf",
+        "ShrunkCovariance",
+        "OAS",
+    ]
+)
+
+
 class RelativeMahalanobis(Mahalanobis):
     """RelativeMahalanobis detector.
 

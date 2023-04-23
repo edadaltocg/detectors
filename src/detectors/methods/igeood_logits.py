@@ -1,3 +1,4 @@
+import logging
 from functools import partial
 from typing import Optional
 
@@ -6,6 +7,10 @@ import torch.nn.functional as F
 from torch import Tensor
 
 from detectors.methods.utils import input_pre_processing
+from detectors.utils import sync_tensor_across_gpus
+
+_logger = logging.getLogger(__name__)
+
 
 HYPERPARAMETERS = dict(temperature=dict(low=0.1, high=1000, step=0.1), eps=dict(low=0.0, high=0.005, step=0.0001))
 
@@ -50,33 +55,36 @@ class IgeoodLogits:
         self.idx = 0
         if example is not None and fit_length is not None:
             logits = self.model(example)
-            self.train_features = torch.empty((fit_length,) + logits.shape[1:], dtype=logits.dtype)
-            self.train_targets = torch.empty((fit_length,), dtype=torch.long)
+            self.train_features = torch.zeros((fit_length,) + logits.shape[1:], dtype=logits.dtype)
+            self.train_targets = torch.ones((fit_length,), dtype=torch.long) * -1
 
     @torch.no_grad()
     def update(self, x: Tensor, y: Tensor, *args, **kwargs):
         self.batch_size = x.shape[0]
         logits = self.model(x)
 
-        logits = logits.cpu()
         if isinstance(self.train_features, list):
             self.train_features.append(logits)
         else:
             self.train_features[self.idx : self.idx + logits.shape[0]] = logits
 
-        y = y.cpu()
         if isinstance(self.train_targets, list):
             self.train_targets.append(y)
         else:
             self.train_targets[self.idx : self.idx + y.shape[0]] = y
 
-        self.idx += x.shape[0]
+        self.idx += y.shape[0]
 
     def end(self, *args, **kwargs):
         if isinstance(self.train_features, list):
             self.train_features = torch.cat(self.train_features, dim=0)
+        else:
+            self.train_features = self.train_features[: self.idx]
         if isinstance(self.train_targets, list):
             self.train_targets = torch.cat(self.train_targets, dim=0)
+        else:
+            self.train_targets = self.train_targets[: self.idx]
+        assert torch.all(self.train_targets > -1), "Not all targets were updated"
 
         self._fit_params()
 
@@ -94,7 +102,11 @@ class IgeoodLogits:
         self.mus = torch.cat(self.mus, dim=0)
 
     def __call__(self, x: Tensor) -> Tensor:
+        self.mus = self.mus.to(x.device)
         if self.eps > 0:
-            x = input_pre_processing(partial(_score_fn, temperature=self.temperature, centroids=self.mus), x, self.eps)
+            x = input_pre_processing(
+                partial(_score_fn, model=self.model, temperature=self.temperature, centroids=self.mus), x, self.eps
+            )
+
         with torch.no_grad():
             return _score_fn(x, self.model, self.mus, temperature=self.temperature)

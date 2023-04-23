@@ -12,7 +12,7 @@ Constants:
 """
 import os
 
-HOME = os.path.dirname(__file__)
+HOME = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 DATA_DIR = os.environ.get("DATA_DIR", os.path.join(HOME, "data/"))
 IMAGENET_ROOT = os.environ.get("IMAGENET_ROOT", DATA_DIR)
 CHECKPOINTS_DIR = os.environ.get("CHECKPOINTS_DIR", os.path.join(HOME, "checkpoints/"))

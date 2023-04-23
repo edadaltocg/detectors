@@ -19,7 +19,8 @@ def max_cosine_sim_layer_score(x: Tensor, mus: Union[Tensor, List[Tensor]], eps=
 
 
 class MaxCosineSimilarity(DetectorWithFeatureExtraction):
-    """MaxCosineSimilarity  detector.
+    """MaxCosineSimilarity detector.
+
 
     Args:
         model (nn.Module): Model to be used to extract features
@@ -28,7 +29,9 @@ class MaxCosineSimilarity(DetectorWithFeatureExtraction):
         all_blocks (bool, optional): If True, use all blocks of the model. Defaults to False.
         last_layer (bool, optional): If True, use also the last layer of the model. Defaults to False.
         pooling_op_name (str, optional): Pooling operation to be applied to the features.
-            Can be one of ["max", "avg", "flatten", "getitem", "none"]. Defaults to "avg".
+            Can be one of:
+                `max`, `avg`, `none`, `flatten`, `getitem`, `avg_or_getitem`, `max_or_getitem`.
+            Defaults to "avg".
         aggregation_method_name (str, optional): Aggregation method to be applied to the features. Defaults to None.
 
     References:

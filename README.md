@@ -36,12 +36,42 @@ To install the latest version from the source:
 ```bash
 git clone https://github.com/edadaltocg/detectors.git
 cd detectors
+pip install --upgrade pip setuptools wheel
 pip install -e .
+```
+
+Also, you have easy access to the Python scripts from the examples:
+
+```bash
+cd examples
 ```
 
 ## Examples
 
 The following examples show how to use the library and how it can be integrated into your research. For more examples, please check the [documentation](https://detectors.readthedocs.io/en/latest/use_cases/).
+
+### Running a benchmark
+
+The following example shows how to run a benchmark.
+
+```python
+import detectors
+import torch
+
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = detectors.create_model("resnet18_cifar10", pretrained=True)
+model = model.to(device)
+test_transform = detectors.create_transform(model)
+
+pipeline = detectors.create_pipeline("ood_benchmark_cifar10", transform=test_transform)
+method = detectors.create_detector("msp", model=model)
+
+pipeline_results = pipeline.run(method)
+print(pipeline.report(pipeline_results["results"]))
+```
+
+We recommend running benchmarks on machines equipped with large RAM and GPUs with 16GB of memory or larger to leverage large batch sizes and faster inference.
 
 ### Creating a detector
 
@@ -82,24 +112,6 @@ method = detectors.create_detector("awesome_detector", model=model)
 ```
 
 Check the [documentation](https://detectors.readthedocs.io/en/latest/use_cases/) for more information.
-
-### Running a benchmark
-
-The following example shows how to run a benchmark.
-
-```python
-import detectors
-
-
-model = detectors.create_model("resnet18_cifar10", pretrained=True)
-test_transform = detectors.create_transform(model)
-
-pipeline = detectors.create_pipeline("ood_benchmark_cifar10", transform=test_transform)
-method = detectors.create_detector("awesome_detector", model=model)
-
-pipeline_results = pipeline.run(method)
-print(pipeline.report(pipeline_results["results"]))
-```
 
 ### Listing available resources
 

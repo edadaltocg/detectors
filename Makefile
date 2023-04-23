@@ -3,16 +3,15 @@ package:
 	pip install build
 	python -m build
 
-test:
-	pytest -vv tests/models.py tests/methods.py -s --cov \
-		--cov-config=.coveragerc \
-		--cov-report xml \
-		--cov-report term-missing:skip-covered
-
 doc:
 	pip install -r docs/requirements.txt
 	cd docs && sphinx-apidoc -o ./source -f ../src/detectors -d 4 && make clean && make html
 
+test:
+	pytest -vv tests/models.py tests/methods.py tests/docstrings.py -s --cov \
+		--cov-config=.coveragerc \
+		--cov-report xml \
+		--cov-report term-missing:skip-covered
 
 format:
 	black --config pyproject.toml .

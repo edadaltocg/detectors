@@ -1,4 +1,6 @@
-"""Detectors package."""
+"""
+Detectors package.
+"""
 
 from detectors.eval import get_ood_results
 

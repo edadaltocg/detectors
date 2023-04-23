@@ -1,6 +1,6 @@
 import logging
-from functools import partial
-from typing import Callable, Literal
+from functools import partial, reduce
+from typing import Callable, List, Literal
 
 import numpy as np
 import torch
@@ -45,6 +45,22 @@ def getitem(data: Tensor, **kwargs):
     return data
 
 
+def avg_or_getitem(data: Tensor, **kwargs):
+    if data.dim() == 3:
+        return data[:, 0].clone().contiguous()
+    elif data.dim() > 3:
+        return torch.flatten(nn.AdaptiveAvgPool2d((1, 1))(data), 1)
+    return data
+
+
+def max_or_getitem(data: Tensor, **kwargs):
+    if data.dim() == 3:
+        return data[:, 0].clone().contiguous()
+    elif data.dim() > 3:
+        return torch.flatten(nn.AdaptiveMaxPool2d((1, 1))(data), 1)
+    return data
+
+
 def none_reduction(data: Tensor, **kwargs):
     return data
 
@@ -54,6 +70,8 @@ reductions_registry = {
     "avg": adaptive_avg_pool2d,
     "max": adaptive_max_pool2d,
     "getitem": getitem,
+    "avg_or_getitem": avg_or_getitem,
+    "max_or_getitem": max_or_getitem,
     "none": none_reduction,
 }
 
@@ -64,6 +82,10 @@ def create_reduction(reduction: str, **kwargs):
 
 def get_penultimate_layer_name(model: nn.Module):
     return list(model._modules.keys())[-2]
+
+
+def get_penultimate_layer(model: nn.Module):
+    return list(model._modules.values())[-2]
 
 
 def get_last_layer_name(model: nn.Module):
@@ -121,3 +143,21 @@ def sklearn_cov_matrix_estimarion(
     _logger.debug("Cov mat trace %s", np.trace(cov_mat))
     _logger.debug("Cov mat eigvals %s", np.linalg.eigvalsh(cov_mat))
     return method.location_, method.covariance_, method.precision_
+
+
+def get_composed_attr(model, attrs: List[str]):
+    return reduce(lambda x, y: getattr(x, y), attrs, model)
+
+
+def add_output_op(feature_extractor, output_op: Callable) -> nn.Module:
+    last_node = [n for n in feature_extractor.graph.nodes if n.op == "output"][0]
+    last_node_args = last_node.args
+    feature_extractor.graph.erase_node(last_node)
+    nodes = [n for n in feature_extractor.graph.nodes]
+    with feature_extractor.graph.inserting_after(nodes[-1]):
+        new_node = feature_extractor.graph.call_function(output_op, args=last_node_args)
+    nodes = [n for n in feature_extractor.graph.nodes]
+    with feature_extractor.graph.inserting_after(nodes[-1]):
+        feature_extractor.graph.output(new_node)
+    feature_extractor.recompile()
+    return feature_extractor

@@ -5,7 +5,7 @@ from torch import Tensor, nn
 
 from detectors.methods.utils import input_pre_processing
 
-HYPERPARAMETERS = dict(temperature=dict(low=1, high=1000, step=1.0))
+HYPERPARAMETERS = dict(temperature=dict(low=1, high=1000, step=1.0), eps=dict(low=0, high=0.01, step=0.001))
 
 
 def _score_fn(x: Tensor, model: nn.Module, temperature: float = 1.0, **kwargs) -> Tensor:

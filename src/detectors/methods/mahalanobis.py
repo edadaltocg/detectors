@@ -84,6 +84,18 @@ def class_cond_mus_cov_inv_matrix(
     return mus, cov_mat, inv_mat
 
 
+HYPERPARAMETERS = dict(
+    cov_mat_method=[
+        "EmpiricalCovariance",
+        "GraphicalLasso",
+        "GraphicalLassoCV",
+        "LedoitWolf",
+        "ShrunkCovariance",
+        "OAS",
+    ]
+)
+
+
 class Mahalanobis(DetectorWithFeatureExtraction):
     """Mahalanobis OOD detector.
 
@@ -94,11 +106,11 @@ class Mahalanobis(DetectorWithFeatureExtraction):
         all_blocks (bool, optional): If True, use all blocks of the model. Defaults to False.
         last_layer (bool, optional): If True, use also the last layer of the model. Defaults to False.
         pooling_op_name (str, optional): Pooling operation to be applied to the features.
-            Can be one of ["max", "avg", "flatten", "getitem", "none"]. Defaults to "avg".
+            Can be one of `max`, `avg`, `flatten`, `getitem`, `avg_or_getitem`, `max_or_getitem`, `none`. Defaults to `avg`.
         aggregation_method_name (str, optional): Aggregation method to be applied to the features. Defaults to None.
-        cov_mat_method (str, optional): Covariance matrix estimation method. Can be one of
-            ["EmpiricalCovariance", "GraphicalLasso", "GraphicalLassoCV", "LedoitWolf", "MinCovDet", "ShrunkCovariance", "OAS"].
-            Defaults to "EmpiricalCovariance".
+        cov_mat_method (str, optional): Covariance matrix estimation method. Can be one of:
+            `EmpiricalCovariance`, `GraphicalLasso`, `GraphicalLassoCV`, `LedoitWolf`, `MinCovDet`, `ShrunkCovariance`, `OAS`.
+            Defaults to `EmpiricalCovariance`.
         mu_cov_inv_est_fn (function, optional): Function to be used to estimate the means, covariance and inverse matrix.
             Defaults to `class_cond_mus_cov_inv_matrix`.
         cov_reg (float, optional): Covariance regularization. Defaults to 1e-6.
@@ -113,7 +125,7 @@ class Mahalanobis(DetectorWithFeatureExtraction):
         features_nodes: Optional[List[str]] = None,
         all_blocks: bool = False,
         last_layer: bool = False,
-        pooling_op_name: Literal["max", "avg", "flatten", "getitem", "none"] = "avg",
+        pooling_op_name: str = "avg_or_getitem",
         aggregation_method_name: Optional[str] = "mean",
         cov_mat_method: Literal[
             "EmpiricalCovariance",

@@ -42,4 +42,4 @@ def gradnorm(x: Tensor, model: nn.Module, last_layer_name: Optional[str] = None,
         loss.backward()
         layer_grad_norm = torch.sum(torch.abs(last_layer.weight.grad.data))
         scores[i] = layer_grad_norm
-    return -scores
+    return scores
