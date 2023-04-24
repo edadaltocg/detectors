@@ -38,30 +38,32 @@ def main(args):
     pipeline_results = pipeline.run(method)
     # print results
     print(pipeline.report(pipeline_results["results"]))
-    # save results to file
-    results = {
-        "model": args.model,
-        "method": args.method,
-        **pipeline_results["results"],
-        "method_kwargs": args.methods_kwargs,
-    }
-    filename = os.path.join(RESULTS_DIR, args.pipeline, "results.csv")
-    detectors.utils.append_results_to_csv_file(results, filename)
 
-    scores = pipeline_results["scores"]
-    labels = pipeline_results["labels"]
+    if not args.debug:
+        # save results to file
+        results = {
+            "model": args.model,
+            "method": args.method,
+            **pipeline_results["results"],
+            "method_kwargs": args.methods_kwargs,
+        }
+        filename = os.path.join(RESULTS_DIR, args.pipeline, "results.csv")
+        detectors.utils.append_results_to_csv_file(results, filename)
 
-    results = {
-        "model": args.model,
-        "in_dataset_name": pipeline.in_dataset_name,
-        "out_datasets_names": pipeline.out_datasets_names,
-        "method": args.method,
-        "method_kwargs": args.methods_kwargs,
-        "scores": scores.numpy().tolist(),
-        "labels": labels.numpy().tolist(),
-    }
-    filename = os.path.join(RESULTS_DIR, args.pipeline, "scores.csv")
-    detectors.utils.append_results_to_csv_file(results, filename)
+        scores = pipeline_results["scores"]
+        labels = pipeline_results["labels"]
+
+        results = {
+            "model": args.model,
+            "in_dataset_name": pipeline.in_dataset_name,
+            "out_datasets_names": pipeline.out_datasets_names,
+            "method": args.method,
+            "method_kwargs": args.methods_kwargs,
+            "scores": scores.numpy().tolist(),
+            "labels": labels.numpy().tolist(),
+        }
+        filename = os.path.join(RESULTS_DIR, args.pipeline, "scores.csv")
+        detectors.utils.append_results_to_csv_file(results, filename)
 
 
 if __name__ == "__main__":

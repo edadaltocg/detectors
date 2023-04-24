@@ -324,3 +324,43 @@ class DetectorWithFeatureExtraction(Detector):
 
         all_scores = self.aggregation_method(all_scores)
         return all_scores.view(-1)
+
+
+class SimpleFeatureExtractor:
+    def __init__(self, model):
+        self.model = model
+
+    def __call__(self, x):
+        return {"features": self.model(x)}
+
+
+class DetectorWithSimpleFE(DetectorWithFeatureExtraction, ABC):
+    """Detector that uses the forward pass of the model."""
+
+    def __init__(self, model: nn.Module, pooling_op_name: str = "avg_or_getitem", **kwargs):
+        self.model = model
+        self.feature_extractor = SimpleFeatureExtractor(self.model)
+        self.pooling_op_name = pooling_op_name
+
+        self.reduction_op = create_reduction(self.pooling_op_name)
+        self.aggregation_method = create_aggregation("none")
+
+        self.train_features = {}
+        self.train_targets = []
+        self.idx = 0
+
+    @abstractmethod
+    def _fit_params(self) -> None:
+        """Fit the data to the parameters of the detector."""
+        pass
+
+    @abstractmethod
+    def _layer_score(self, features: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None, **kwargs):
+        """Compute the anomaly score for a single layer.
+
+        Args:
+            features (Tensor): features input tensor.
+            layer_name (str, optional): name of the layer. Defaults to None.
+            index (int, optional): index of the layer in the feature extractor. Defaults to None.
+        """
+        raise NotImplementedError

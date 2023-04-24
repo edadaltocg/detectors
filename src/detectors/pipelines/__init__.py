@@ -2,14 +2,14 @@
 Pipeline module.
 """
 from enum import Enum
-from typing import Any, List, Tuple
+from typing import Any, List, Optional, Tuple
 
 from detectors.pipelines.base import Pipeline
 
 pipeline_registry = {}
 
 
-def register_pipeline(name: str):
+def register_pipeline(name: str, dataset_name: Optional[str] = None):
     """
     Decorator to register a new pipeline in the registry.
 
@@ -18,19 +18,24 @@ def register_pipeline(name: str):
     """
 
     def decorator(f):
-        pipeline_registry[name] = f
+        if dataset_name is None:
+            pipeline_registry[name] = f
+        else:
+            pipeline_registry[name + "_" + dataset_name] = f
         return f
 
     return decorator
 
 
-def create_pipeline(name: str, **kwargs) -> Pipeline:
+def create_pipeline(name: str, dataset_name: Optional[str] = None, **kwargs) -> Pipeline:
     """
     Utility factory method to build a Pipeline.
 
     Args:
         name (str, optional):
             The name defining which pipeline will be returned. Currently accepted pipeline names are:
+                `ood_benchmark`, `ood_validation`, `ood_validation_noise`, `covariate_drift`, `osr`
+            Complete list:
                 `ood_benchmark_cifar10`, `ood_benchmark_cifar100`, `ood_benchmark_imagenet`, `ood_mnist_benchmark`,
                 `ood_validation_cifar10`, `ood_validation_cifar100`, `ood_validation_imagenet`, `ood_validation_mnist`,
                 `ood_validation_noise_cifar10`, `ood_validation_noise_cifar100`, `ood_validation_noise_imagenet`,
@@ -45,11 +50,12 @@ def create_pipeline(name: str, **kwargs) -> Pipeline:
     Example::
 
         >>> import detectors
-        >>> pipe = detectors.create_pipeline("ood_benchmark_cifar10")
+        >>> pipe = detectors.create_pipeline("ood_benchmark", "cifar10")
         >>> pipe.run(detector)
     """
-
-    return pipeline_registry[name](**kwargs)
+    if dataset_name is None:
+        return pipeline_registry[name](**kwargs)
+    return pipeline_registry[name + "_" + dataset_name](**kwargs)
 
 
 def list_pipelines() -> List[str]:

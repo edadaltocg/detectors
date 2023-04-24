@@ -333,7 +333,7 @@ def test_imagenet():
 def test_cifar10c():
     transform = transforms.ToTensor()
 
-    cifar10c_class = get_dataset_cls("cifar10c")
+    cifar10c_class = get_dataset_cls("cifar10_c")
 
     for intensity in [1, 2]:
         dataset = create_dataset(
@@ -350,7 +350,7 @@ def test_cifar10c():
 def test_cifar100c():
     transform = transforms.ToTensor()
 
-    cifar10c_class = get_dataset_cls("cifar100c")
+    cifar10c_class = get_dataset_cls("cifar100_c")
 
     for intensity in [1, 2]:
         dataset = create_dataset(
@@ -395,12 +395,12 @@ def test_imagenet_r():
 def test_imagenet_c():
     transform = transforms.ToTensor()
 
-    imagenet_c_class = get_dataset_cls("imagenetc")
+    imagenet_c_class = get_dataset_cls("imagenet_c")
 
     for split in imagenet_c_class.corruptions:
         for intensity in [1]:
             dataset = create_dataset(
-                "imagenetc", root=DATA_DIR, split=split, intensity=intensity, transform=transform, download=True
+                "imagenet_c", root=DATA_DIR, split=split, intensity=intensity, transform=transform, download=True
             )
             dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
             img, label = next(iter(dataloader))
@@ -427,7 +427,7 @@ def test_openimage_o():
 def test_iwildcam():
     transform = transforms.ToTensor()
 
-    dataset = create_dataset("iwildcam", root=DATA_DIR, split="val", transform=transform, download=True)
+    dataset = create_dataset("wilds_iwildcam", root=DATA_DIR, split="val", transform=transform, download=True)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
     x = next(iter(dataloader))
     img = x[0]
@@ -440,7 +440,7 @@ def test_iwildcam():
 def test_camelyon17():
     transform = transforms.ToTensor()
 
-    dataset = create_dataset("camelyon17", root=DATA_DIR, split="val", transform=transform, download=True)
+    dataset = create_dataset("wilds_camelyon17", root=DATA_DIR, split="val", transform=transform, download=True)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
     img = next(iter(dataloader))[0]
 
