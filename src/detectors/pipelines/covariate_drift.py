@@ -76,7 +76,7 @@ class CovariateDriftPipeline(Pipeline):
                 _indices = indices[torch.arange(self.splits[i + j + 1].item(), self.splits[i + j + 2].item())]
                 out_datasets[corruption].append(
                     torch.utils.data.Subset(
-                        create_dataset(dataset_name + "c", split=corruption, intensity=intensity, transform=transform),
+                        create_dataset(dataset_name + "_c", split=corruption, intensity=intensity, transform=transform),
                         _indices,
                     )
                 )
@@ -188,10 +188,10 @@ class CovariateDriftPipeline(Pipeline):
 
         return {
             "method": method,
-            "test_scores": test_scores,
-            "test_preds": test_preds,
-            "test_targets": test_targets,
-            "test_labels": test_labels,
+            "scores": test_scores,
+            "preds": test_preds,
+            "targets": test_targets,
+            "labels": test_labels,
             **metrics,
         }
 
@@ -281,7 +281,7 @@ class CovariateDriftPipeline(Pipeline):
         fig, ax1 = plt.subplots(1, 1, figsize=(9, 4))
         ax2 = ax1.twinx()
         # subsample values
-        test_scores = results["test_scores"][::subsample]
+        test_scores = results["scores"][::subsample]
         moving_average = results["moving_average"][::subsample]
         ema = results["ema"][::subsample]
         # test_labels = results["test_labels"][::subsample]

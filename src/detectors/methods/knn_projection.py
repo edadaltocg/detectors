@@ -30,8 +30,8 @@ class KnnProjection(KnnEuclides):
 
     def _layer_score(self, x: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None):
         pairwise = x @ self.ref[layer_name].to(x.device).T
-        topk, _ = torch.topk(pairwise, k=self.k, dim=-1, largest=False)
+        topk, _ = torch.topk(pairwise, k=self.k, dim=-1)
         if self.mean_op:
-            return -topk.mean(dim=-1)
+            return topk.mean(dim=-1)
         else:
-            return -topk[:, -1]
+            return topk[:, -1]

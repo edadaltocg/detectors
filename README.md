@@ -1,6 +1,8 @@
 # 🧐 Detectors
 
-Package to accelerate research on out-of-distribution (OOD) detection.
+Package to accelerate research on generalized out-of-distribution (OOD) detection.
+
+Under development. Please report any issues or bugs [here](https://github.com/edadaltocg/detectors/issues).
 
 ## Stats
 
@@ -26,6 +28,8 @@ This library is aimed at assisting researchers in the field of generalized OOD d
 - Pipelines for open set recognition and covariate drift detection.
 
 ## Installation
+
+Please follow the instructions [here](https://pytorch.org/get-started/locally/) to install PyTorch. Installing PyTorch with CUDA support is strongly recommended.
 
 ```bash
 pip install detectors
@@ -133,41 +137,6 @@ print(detectors.list_detectors())
 print(detectors.list_pipelines())
 ```
 
-### Optional: Pipeline acceleration
-
-This package is compatible with the `accelerate` package to allow for parallel computing.
-
-In order to use it, you need to install it:
-
-```bash
-pip install accelerate
-```
-
-Then, you can configure it:
-
-```bash
-accelerate config
-```
-
-And finally, you can run the benchmark with the `accelerate` command:
-
-```bash
-accelerate launch demo/ood_benchmark.py
-```
-
-#### Configuration example
-
-```text
-In which compute environment are you running? ([0] This machine, [1] AWS (Amazon SageMaker)): 0
-Which type of machine are you using? ([0] No distributed training, [1] multi-CPU, [2] multi-GPU, [3] TPU [4] MPS): 2
-How many different machines will you use (use more than 1 for multi-node training)? [1]: 1
-Do you want to use DeepSpeed? [yes/NO]: NO
-Do you want to use FullyShardedDataParallel? [yes/NO]: NO
-How many GPU(s) should be used for distributed training? [1]:2
-What GPU(s) (by id) should be used for training on this machine as a comma-seperated list? [all]:all
-Do you wish to use FP16 or BF16 (mixed precision)? [NO/fp16/bf16]: NO
-```
-
 ## FAQ over specific documents
 
 **Methods**
@@ -182,7 +151,7 @@ Do you wish to use FP16 or BF16 (mixed precision)? [NO/fp16/bf16]: NO
 
 As an open source project in a rapidly developing field, we are extremely open to contributions, whether it be in the form of a new feature, improved infra, or better documentation.
 
-See the [contributing guidelines](https://github.com/edadaltocg/detectors/blob/master/CONTRIBUTING.md) for instructions on how to make your first contribution to `detectors`
+See the [contributing guidelines](https://github.com/edadaltocg/detectors/blob/master/CONTRIBUTING.md) for instructions on how to make your first contribution to `detectors`.
 
 ### Thanks to all our contributors
 

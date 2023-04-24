@@ -89,6 +89,7 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         self.out_datasets = None
 
         accelerate.utils.set_seed(seed)
+        print("Setting up datasets...")
         self.setup()
 
     @abstractmethod
@@ -406,6 +407,8 @@ class OODValidationPipeline(OODBenchmarkPipeline, ABC):
         objective_metric (Literal["fpr_at_0.95_tpr", "auroc"], optional): The metric to optimize. Defaults to "auroc".
         n_trials (int, optional): The number of trials to run. Defaults to 20.
     """
+
+    # TODO: include prevent refit flag.
 
     def run(
         self,

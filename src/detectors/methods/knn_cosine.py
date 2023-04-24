@@ -31,8 +31,9 @@ class KnnCosine(KnnEuclides):
     def _layer_score(self, x: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None):
         x = x / torch.norm(x, p=2, dim=-1, keepdim=True)  # type: ignore
         pairwise = x @ self.ref[layer_name].to(x.device).T
-        topk, _ = torch.topk(pairwise, k=self.k, dim=-1, largest=False)
+        _logger.debug("Pairwise shape: %s", pairwise.shape)
+        topk, _ = torch.topk(pairwise, k=self.k, dim=-1)
         if self.mean_op:
-            return -topk.mean(dim=-1)
+            return topk.mean(dim=-1)
         else:
-            return -topk[:, -1]
+            return topk[:, -1]

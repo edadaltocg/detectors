@@ -16,7 +16,6 @@ install_requires = [
     "pandas",
     "wilds",
     "faiss-cpu",
-    "faiss-gpu",
     "matplotlib",
 ]
 

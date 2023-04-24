@@ -162,25 +162,4 @@ def create_hyperparameters(detector_name: str) -> Dict[str, Any]:
     return hyperparameters
 
 
-def create_hyperparameters(detector_name: str) -> Dict[str, Any]:
-    """Create hyperparameters for the detector.
-
-    Args:
-        detector_name (string): Name of the detector.
-
-    Returns:
-        Dict[str, Any]: Hyperparameters for the detector.
-    """
-    import importlib
-
-    try:
-        module = importlib.import_module(f"detectors.methods.{detector_name}")
-        hyperparameters = module.HYPERPARAMETERS
-    except ModuleNotFoundError:
-        raise ValueError(f"Unknown detector: {detector_name}")
-    except AttributeError:
-        hyperparameters = {}
-    return hyperparameters
-
-
 MethodsRegistry = Enum("MethodsRegistry", dict(zip(list_detectors(), list_detectors())))
