@@ -251,6 +251,7 @@ class DetectorWithFeatureExtraction(Detector):
     @torch.no_grad()
     def update(self, x: Tensor, y: Tensor, *args, **kwargs):
         self.batch_size = x.shape[0]
+        # self.feature_extractor.to(x.device)
         features: Dict[str, Tensor] = self.feature_extractor(x)
 
         for node_name, v in features.items():
@@ -315,6 +316,7 @@ class DetectorWithFeatureExtraction(Detector):
 
     @torch.no_grad()
     def __call__(self, x: Tensor) -> Tensor:
+        # self.feature_extractor.to(x.device)
         features = self.feature_extractor(x)
         all_scores = torch.zeros(x.shape[0], len(features), device=x.device)
         for i, (k, v) in enumerate(features.items()):

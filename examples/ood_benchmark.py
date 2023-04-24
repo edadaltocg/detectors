@@ -3,6 +3,7 @@ import json
 import logging
 import os
 
+import accelerate
 import timm
 import timm.data
 import torch

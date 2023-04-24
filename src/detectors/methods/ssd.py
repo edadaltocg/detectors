@@ -7,6 +7,7 @@ from torch import Tensor, nn
 from detectors.methods.mahalanobis import mahalanobis_distance_inv
 from detectors.methods.templates import DetectorWithFeatureExtraction
 
+
 HYPERPARAMETERS = dict(nclusters=dict(low=1, high=2048, step=1))
 
 
