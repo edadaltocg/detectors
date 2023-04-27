@@ -2,16 +2,16 @@ import logging
 import types
 from functools import partial
 
-from torch import Tensor
 from sklearn.preprocessing import (
-    MinMaxScaler,
-    PowerTransformer,
-    StandardScaler,
-    RobustScaler,
     MaxAbsScaler,
-    QuantileTransformer,
+    MinMaxScaler,
     Normalizer,
+    PowerTransformer,
+    QuantileTransformer,
+    RobustScaler,
+    StandardScaler,
 )
+from torch import Tensor
 
 from .basics import none_preprocessing
 

@@ -8,7 +8,7 @@ from detectors.methods.templates import DetectorWithFeatureExtraction
 
 _logger = logging.getLogger(__name__)
 
-HYPERPARAMETERS = dict(k=dict(low=1, high=100, step=1), avg_topk=[True, False])
+HYPERPARAMETERS = dict(k=dict(low=1, high=100, step=5), avg_topk=[True, False])
 
 
 class KnnEuclides(DetectorWithFeatureExtraction):
