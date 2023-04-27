@@ -14,13 +14,13 @@ from .cifar_wrapper import CIFAR10Wrapped, CIFAR100Wrapped
 from .cifarc import CIFAR10_C, CIFAR100_C
 from .constants import *
 from .english_chars import EnglishChars
-from .imagenet import ImageNetA, ImageNetC, ImageNetO, ImageNetR
+from .imagenet import ImageNetA, ImageNetC, ImageNetCnpz, ImageNetO, ImageNetR
 from .isun import iSUN
 from .lsun_r_c import LSUNCroped, LSUNResized
 from .mnist_wrapped import FashionMNISTWrapped, MNISTWrapped
 from .mnistc import MNISTC
 from .mos import MOSSUN, MOSiNaturalist, MOSPlaces365
-from .noise import Blobs, Gaussian, Uniform
+from .noise import Blobs, Gaussian, Rademacher, Uniform
 from .openimage_o import OpenImageO
 from .places365 import Places365
 from .textures import Textures
@@ -51,6 +51,7 @@ datasets_registry = {
     "gaussian": Gaussian,
     "uniform": Uniform,
     "blobs": Blobs,
+    "rademacher": Rademacher,
     "places365": Places365,
     "stanford_cars": StanfordCars,
     "mos_inaturalist": MOSiNaturalist,
@@ -64,7 +65,8 @@ datasets_registry = {
     "imagenet": ImageNet,
     "imagenet1k": ImageNet,
     "ilsvrc2012": ImageNet,
-    "imagenet_c": ImageNetC,
+    "imagenet_c": ImageNetCnpz,
+    "imagenet_c_npz": ImageNetCnpz,
     "imagenet1k_c": ImageNetC,
     "imagenet_a": ImageNetA,
     "imagenet_r": ImageNetR,
@@ -124,9 +126,9 @@ def create_dataset(
                 `tiny_imagenet_c`, `tiny_imagenet_r`, `tiny_imagenet`, `textures`, `gaussian`,
                 `uniform`, `places365`, `stanford_cars`, `imagenet`, `imagenet1k`, `ilsvrc2012`,
                 `mos_inaturalist`, `mos_places365`, `mos_sun`, `cifar10_lt`, `cifar100_lt`,
-                `imagenet1k_lt`, `cifar10_c`, `cifar100_c`, `imagenet_c`, `imagenet_a`,
-                `imagenet_r`, `imagenet_o`, `openimage_o`, `oxford_pets`, `oxford_flowers`,
-                `cub200`, `imagenet1k_c`, `blobs`.
+                `imagenet1k_lt`, `cifar10_c`, `cifar100_c`, `imagenet_c`, `imagenet_c_npz`,
+                `imagenet_a`, `imagenet_r`, `imagenet_o`, `openimage_o`, `oxford_pets`,
+                `oxford_flowers`, `cub200`, `imagenet1k_c`, `blobs`, `rademacher`,
                 `wilds_iwildcam`, `wilds_fmow`, `wilds_camelyon17`, `wilds_rxrx1`,
                 `wilds_poverty`, `wilds_globalwheat`.
         root (string): Root directory of dataset.

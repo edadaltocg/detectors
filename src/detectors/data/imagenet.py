@@ -2,8 +2,12 @@ import logging
 import os
 from typing import Callable, Optional
 
+import numpy as np
+from PIL import Image
+from torch.utils.data.dataset import Dataset
 from torchvision.datasets import ImageFolder
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive, verify_str_arg
+from tqdm import tqdm
 
 _logger = logging.getLogger(__name__)
 
@@ -135,17 +139,7 @@ class ImageNetC(ImageNetA):
     ) -> None:
         self.root = os.path.expanduser(root)
         self.corruption = verify_str_arg(split, "split", self.corruptions)
-        split_group = ""
-        if self.corruption in ["defocus_blur", "glass_blur", "motion_blur", "zoom_blur"]:
-            split_group = "blur"
-        elif self.corruption in ["contrast", "elastic_transform", "pixelate", "jpeg_compression"]:
-            split_group = "digital"
-        elif self.corruption in ["speckle_noise", "spatter", "gaussian_blur", "saturate"]:
-            split_group = "extra"
-        elif self.corruption in ["gaussian_noise", "shot_noise", "impulse_noise"]:
-            split_group = "noise"
-        elif self.corruption in ["frost", "snow", "fog", "brightness"]:
-            split_group = "weather"
+        split_group = self._get_corruption_group(self.corruption)
 
         self._base_folder = os.path.join(root, self.base_folder_name, split_group)
         self.filename = split_group + ".tar"
@@ -163,3 +157,86 @@ class ImageNetC(ImageNetA):
         download_and_extract_archive(
             self.url, self.root, extract_root=self._base_folder, filename=self.filename, md5=self.tgz_md5
         )
+
+    @staticmethod
+    def _get_corruption_group(corruption: str):
+        split_group = ""
+        if corruption in ["defocus_blur", "glass_blur", "motion_blur", "zoom_blur"]:
+            split_group = "blur"
+        elif corruption in ["contrast", "elastic_transform", "pixelate", "jpeg_compression"]:
+            split_group = "digital"
+        elif corruption in ["speckle_noise", "spatter", "gaussian_blur", "saturate"]:
+            split_group = "extra"
+        elif corruption in ["gaussian_noise", "shot_noise", "impulse_noise"]:
+            split_group = "noise"
+        elif corruption in ["frost", "snow", "fog", "brightness"]:
+            split_group = "weather"
+        return split_group
+
+
+def _imagenet_c_to_npz(root: str, split: str, intensity: int, dest_folder: str = "ImageNetCnpz") -> None:
+
+    dataset = ImageNetC(root, split, intensity, download=True)
+    assert len(dataset) == 50_000, "ImageNetC should have 50,000 images. Please check the dataset."
+    image_example = dataset[0][0]
+    width, height = image_example.size
+    _logger.info("Image size: %d x %d", width, height)
+    x = np.ndarray(shape=(len(dataset), height, width, 3), dtype=np.uint8)
+    y = np.ndarray(shape=(len(dataset)), dtype=np.int32)
+    for i in tqdm(range(len(dataset))):
+        image, label = dataset[i]
+        x[i] = image
+        y[i] = label
+
+    os.makedirs(os.path.join(root, dest_folder), exist_ok=True)
+    np.savez(os.path.join(root, dest_folder, f"{split}-{intensity}.npz"), x=x, y=y)
+
+
+class ImageNetCnpz(Dataset):
+    """Corrupted version of the ImageNet-1k dataset saved in npz format."""
+
+    corruptions = CORRUPTIONS
+    base_folder_name = "ImageNetCnpz"
+
+    def __init__(
+        self,
+        root: str,
+        split: str,
+        intensity: int,
+        transform: Optional[Callable] = None,
+        download: bool = False,
+        **kwargs,
+    ) -> None:
+        super().__init__()
+        self.root = os.path.expanduser(root)
+        self.corruption = verify_str_arg(split, "split", self.corruptions)
+        self.intensity = int(intensity)
+        self.path = os.path.join(self.root, self.base_folder_name, f"{split}-{intensity}.npz")
+        self.transform = transform
+        if download:
+            self.download()
+
+        data = np.load(self.path, mmap_mode="r")
+        self.images = data["x"]
+        self.labels = data["y"]
+
+    def __getitem__(self, index):
+        x = self.images[index]
+        x = Image.fromarray(x)
+
+        if self.transform:
+            x = self.transform(x)
+
+        y = self.labels[index]
+        return x, y
+
+    def __len__(self):
+        return len(self.images)
+
+    def _check_exists(self) -> bool:
+        return os.path.exists(self.path)
+
+    def download(self) -> None:
+        if self._check_exists():
+            return
+        _imagenet_c_to_npz(self.root, self.corruption, self.intensity, self.base_folder_name)
