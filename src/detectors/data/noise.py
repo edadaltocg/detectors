@@ -129,3 +129,39 @@ class Blobs(CustomTensorDataset):
         imgs = np.array(imgs * 255, dtype=np.uint8)
         labels = np.array([-1] * nb_samples)
         super().__init__(imgs, labels, transform=transform)
+
+
+class Rademacher(CustomTensorDataset):
+    def __init__(
+        self,
+        root: Optional[str] = None,
+        split: Optional[str] = None,
+        transform: Optional[Callable] = None,
+        download: bool = False,
+        nb_samples=10000,
+        shape: Tuple[int, int, int] = (224, 224, 3),
+        seed=1,
+        **kwargs,
+    ):
+        """
+        Blobs: amorphous shapes with definite edges.
+
+        Args:
+            root (str): root directory.
+            split (str, optional): not used.
+            transform (callable, optional): transform to apply.
+            download (bool, optional): not used.
+            nb_samples (int): number of samples.
+            shape (tuple[int, int, int]): shape of the samples.
+            seed (int): seed for the random number generator.
+
+        Reference:
+            [1] https://github.com/hendrycks/outlier-exposure
+        """
+
+        imgs = np.float32(np.random.binomial(n=1, p=0.5, size=(nb_samples, *shape)))
+
+        # transform imgs in integers
+        imgs = np.array(imgs * 255, dtype=np.uint8)
+        labels = np.array([-1] * nb_samples)
+        super().__init__(imgs, labels, transform=transform)
