@@ -1,10 +1,10 @@
 import logging
 from typing import List, Optional
 
+import faiss
+import numpy as np
 import torch
 from torch import Tensor, nn
-import numpy as np
-import faiss
 
 from detectors.methods.templates import DetectorWithFeatureExtraction
 

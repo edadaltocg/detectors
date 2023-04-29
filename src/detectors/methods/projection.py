@@ -1,5 +1,4 @@
 import logging
-from collections import defaultdict
 from typing import List, Optional, Union
 
 import torch

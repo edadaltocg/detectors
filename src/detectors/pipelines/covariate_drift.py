@@ -142,13 +142,7 @@ class CovariateDriftPipeline(Pipeline):
         return method
 
     def run(self, method, model, **kwargs):
-        model = self.accelerator.prepare(model)
-        model.eval()
-
         method = method
-        if method.model is not None:
-            _logger.info("Preparing model...")
-            method.model = self.accelerator.prepare(method.model)
 
         test_labels = torch.empty(len(self.test_dataset), dtype=torch.long)
         test_targets = torch.empty(len(self.test_dataset), dtype=torch.long)

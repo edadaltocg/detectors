@@ -7,7 +7,6 @@ import torch.nn.functional as F
 from torch import Tensor
 
 from detectors.methods.utils import input_pre_processing
-from detectors.utils import sync_tensor_across_gpus
 
 _logger = logging.getLogger(__name__)
 
