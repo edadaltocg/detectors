@@ -2,16 +2,17 @@ import logging
 import types
 from functools import partial
 
-from torch import Tensor
+
 from sklearn.preprocessing import (
-    MinMaxScaler,
-    PowerTransformer,
-    StandardScaler,
-    RobustScaler,
     MaxAbsScaler,
-    QuantileTransformer,
+    MinMaxScaler,
     Normalizer,
+    PowerTransformer,
+    QuantileTransformer,
+    RobustScaler,
+    StandardScaler,
 )
+from torch import Tensor
 
 from .basics import none_preprocessing
 
@@ -46,7 +47,7 @@ class Preprocessing:
         x = x.detach().cpu().numpy()
         try:
             return self.method.transform(x, *args, **kwargs)
-        except:
+        except Exception as e:
             return self.method(x, *args, **kwargs)
 
     def __call__(self, x: Tensor, *args, **kwargs):

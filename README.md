@@ -10,20 +10,18 @@ Under development. Please report any issues or bugs [here](https://github.com/ed
 [![build](https://github.com/edadaltocg/detectors/actions/workflows/build.yml/badge.svg)](https://github.com/edadaltocg/detectors/actions/workflows/build.yml)
 [![Documentation Status](https://readthedocs.org/projects/detectors/badge/?version=latest)](http://detectors.readthedocs.io/?badge=latest)
 [![PyPI download month](https://img.shields.io/pypi/dm/detectors.svg)](https://pypi.python.org/pypi/detectors/)
-[![DOI:](https://zenodo.org/badge/DOI/.svg)](https://doi.org/)
 ![AUR license](https://img.shields.io/aur/license/detectors)
+[![DOI:](https://zenodo.org/badge/DOI/.svg)](https://doi.org/)
 
 ## What is it?
 
-This library is aimed at assisting researchers in the field of generalized OOD detection. It is inspired by [HF's Transformers](https://https://github.com/huggingface/transformers) and provides a set of tools to run benchmarks, evaluate detectors, and compare them. It includes:
+This library is aimed at assisting researchers in the field of generalized OOD detection. It is inspired by [HF's Transformers](https://https://github.com/huggingface/transformers) and features implementations of baselines, metrics, and data sets that allow researchers to perform meaningful benchmarking and development of ood detection methods. It features:
 
-- More than 15 detection methods implemented.
-- Pipelines for evaluating OOD detectors on MNIST, CIFAR, and ImageNet benchmarks.
-- Automatic OOD datasets download with md5 checksums.
-- Support models implemented at [`timm`](https://github.com/huggingface/pytorch-image-models).
-- Models on CIFAR integrated at `timm`.
-- Random seed support for reproducible simulations.
-- Implementation of fast OOD evaluation metrics.
+- `methods`: more than 20 detection methods implemented.
+- `pipelines`: evaluating OOD detectors on popular benchmarks, such as MNIST, CIFAR, and ImageNet benchmarks with random seed support for reproducibility.
+- `datasets`: OOD datasets implemented with md5 checksums and without the need to download them manually.
+- `models`: model architectures totally integrated with [`timm`](https://github.com/huggingface/pytorch-image-models).
+- `eval`: implementation of fast OOD evaluation metrics.
 - Several aggregation methods for multi-layer OOD detection.
 - Pipelines for open set recognition and covariate drift detection.
 
@@ -33,6 +31,7 @@ Please follow the instructions [here](https://pytorch.org/get-started/locally/) 
 
 ```bash
 pip install detectors
+pip install -q git+https://github.com/edadaltocg/detectors.git
 ```
 
 To install the latest version from the source:
@@ -149,7 +148,7 @@ print(detectors.list_pipelines())
 
 ## Contributing
 
-As an open source project in a rapidly developing field, we are extremely open to contributions, whether it be in the form of a new feature, improved infra, or better documentation.
+As an open-source project in a rapidly developing field, we are open to contributions, whether in the form of a new feature, improved infra, or better documentation.
 
 See the [contributing guidelines](https://github.com/edadaltocg/detectors/blob/master/CONTRIBUTING.md) for instructions on how to make your first contribution to `detectors`.
 
@@ -176,14 +175,16 @@ Concerning this package, its use, and bugs, use the [issue page](https://github.
 
 ## Citing detectors
 
-If you use this library, please cite it as below:
+The detection of Out-of-Distribution (OOD) has created a new way of securing machine intelligence, but despite its many successes, it can be difficult to understand due to the various methods available and their intricate implementations. The fast pace of research and the wide range of OOD methods makes it challenging to navigate the field, which can be a problem for those who have recently joined the field or want to deploy OOD detection. The library we have created aims to lower these barriers by providing a resource for researchers of any background to understand the methods available, how they work, and how to be successful with OOD detection.
+
+If you find this repository useful, please consider giving it a star 🌟 and citing it as below:
 
 ```bibtex
 @software{detectors,
-author = {Dadalto, Eduardo and Colombo, Pierre and Darrin, Maxime and Staerman, Guillaume and and Alberge, Florence and Duhamel, Pierre and Piantanida, Pablo},
-title = {Detectors: generalized out-of-distribution detection library},
+author = {},
+title = {Detectors: Generalized Out-Of-Distribution Detection Library},
 url = {https://github.com/edadaltocg/detectors},
-month = {3},
+month = {5},
 year = {2023}
 }
 ```

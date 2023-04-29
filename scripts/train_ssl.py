@@ -83,7 +83,6 @@ def knn_ssl_eval(model, val_loader, size_limit=None):
     features = torch.cat(features).numpy()[:size_limit]
     labels = torch.cat(labels).numpy()[:size_limit]
     # remove extra samples
-    features = features[: len(labels)]
     cls = KNeighborsClassifier(20, metric="cosine").fit(features, labels)
     acc = np.mean(cross_val_score(cls, features, labels))
 
@@ -229,6 +228,8 @@ def main(args):
     # training iterations
     val_acc = 0
     best_acc = 0
+    train_loss = 1e10
+    epoch = 0
     progress_bar = tqdm(
         range(args.epochs), desc="Train", disable=not accelerator.is_local_main_process, dynamic_ncols=True
     )
@@ -239,14 +240,15 @@ def main(args):
         if epoch % args.validation_frequency == 0:
             eval_results = knn_ssl_eval(model, val_dataloader, val_dataset_size)
             val_acc = eval_results["acc"]
-            if val_acc > best_acc and accelerator.is_main_process:
-                _logger.debug("Saving best model with acc: %s", val_acc)
+            if val_acc > best_acc:
                 best_acc = val_acc
-                filename = os.path.join(save_root, "best.pth")
-                # accelerator.wait_for_everyone()
-                unwrapped_model = accelerator.unwrap_model(model)
-                accelerator.save(unwrapped_model.state_dict(), filename)
-                _logger.debug("Saved best model on %s", filename)
+                if accelerator.is_main_process:
+                    _logger.debug("Saving best model with acc: %s", val_acc)
+                    filename = os.path.join(save_root, "best.pth")
+                    # accelerator.wait_for_everyone()
+                    unwrapped_model = accelerator.unwrap_model(model)
+                    accelerator.save(unwrapped_model.state_dict(), filename)
+                    _logger.debug("Saved best model on %s", filename)
 
         # accelerator.log({"val/acc": val_acc, "train/loss": train_loss}, step=epoch)
         progress_bar.set_postfix({"train/loss": train_loss, "val/acc": val_acc, "best/acc": best_acc})
@@ -291,7 +293,7 @@ if __name__ == "__main__":
     parser.add_argument("--config", type=str, default=None)
 
     parser.add_argument("--model", type=str, default="resnet34_simclr_cifar10")
-    parser.add_argument("--training_mode", type=str, default="simclr", choices=["simclr", "supcon"])
+    # parser.add_argument("--training_mode", type=str, default="simclr", choices=["simclr", "supcon"])
 
     parser.add_argument("--batch_size", type=int, default=512)
     parser.add_argument("--epochs", type=int, default=501)

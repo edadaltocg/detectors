@@ -79,6 +79,7 @@ def main(
     model_card = ModelCard.from_template(
         card_data,
         template_path="templates/MODEL_CARD_TEMPLATE.md",
+        model_id=repo_id,
         model_summary=f"This model is a small {model_config['architecture']} trained on {dataset_name}.",
         license="MIT",
         training_data=f"Training data is {dataset_name}.",

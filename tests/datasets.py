@@ -2,6 +2,7 @@ import torch
 import torch.utils.data
 import torchvision
 import torchvision.transforms as transforms
+from tqdm import tqdm
 
 from detectors import create_dataset, get_dataset_cls
 from detectors.config import DATA_DIR, IMAGENET_ROOT
@@ -228,6 +229,16 @@ def test_blobs():
     assert len(dataset) == 10000
 
 
+def test_rademacher():
+    transform = transforms.Compose([transforms.Resize(32), transforms.CenterCrop(32), transforms.ToTensor()])
+
+    dataset = create_dataset("rademacher", root=DATA_DIR, split=None, transform=transform, nb_samples=10000)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    img, label = next(iter(dataloader))
+    assert type(img) == torch.Tensor
+    assert len(dataset) == 10000
+
+
 def test_places365():
     transform = transforms.ToTensor()
 
@@ -337,7 +348,7 @@ def test_cifar10c():
 
     for intensity in [1, 2]:
         dataset = create_dataset(
-            "cifar10c", root=DATA_DIR, split="gaussian_blur", intensity=intensity, transform=transform
+            "cifar10_c", root=DATA_DIR, split="gaussian_blur", intensity=intensity, transform=transform
         )
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
         img, label = next(iter(dataloader))
@@ -350,18 +361,19 @@ def test_cifar10c():
 def test_cifar100c():
     transform = transforms.ToTensor()
 
-    cifar10c_class = get_dataset_cls("cifar100_c")
+
+    cifar100c_class = get_dataset_cls("cifar100_c")
 
     for intensity in [1, 2]:
         dataset = create_dataset(
-            "cifar100c", root=DATA_DIR, split="gaussian_blur", intensity=intensity, transform=transform
+            "cifar100_c", root=DATA_DIR, split="gaussian_blur", intensity=intensity, transform=transform
         )
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
         img, label = next(iter(dataloader))
 
         assert type(img) == torch.Tensor
         assert len(dataset) == 10000
-        assert issubclass(cifar10c_class, torch.utils.data.Dataset)
+        assert issubclass(cifar100c_class, torch.utils.data.Dataset)
 
 
 def test_imagenet_a():
@@ -408,6 +420,22 @@ def test_imagenet_c():
             assert type(img) == torch.Tensor
 
     assert issubclass(imagenet_c_class, torchvision.datasets.DatasetFolder)
+
+
+def test_imagenet_c_npz():
+    transform = transforms.ToTensor()
+
+    imagenet_c_npz_class = get_dataset_cls("imagenet_c_npz")
+
+    for split in tqdm(imagenet_c_npz_class.corruptions):
+        for intensity in [1, 2, 3, 4, 5]:
+            dataset = create_dataset(
+                "imagenet_c_npz", root=DATA_DIR, split=split, intensity=intensity, transform=transform, download=True
+            )
+            dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+            img, label = next(iter(dataloader))
+            assert len(dataset) == 50000
+            assert type(img) == torch.Tensor
 
 
 def test_openimage_o():

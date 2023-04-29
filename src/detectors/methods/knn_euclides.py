@@ -1,6 +1,8 @@
 import logging
 from typing import List, Optional
 
+import faiss
+import numpy as np
 import torch
 from torch import Tensor, nn
 
@@ -8,7 +10,7 @@ from detectors.methods.templates import DetectorWithFeatureExtraction
 
 _logger = logging.getLogger(__name__)
 
-HYPERPARAMETERS = dict(k=dict(low=1, high=100, step=1), avg_topk=[True, False])
+HYPERPARAMETERS = dict(k=dict(low=1, high=100, step=5), avg_topk=[True, False])
 
 
 class KnnEuclides(DetectorWithFeatureExtraction):
@@ -60,8 +62,10 @@ class KnnEuclides(DetectorWithFeatureExtraction):
 
     def _layer_score(self, x: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None):
         x = x / torch.norm(x, p=2, dim=-1, keepdim=True)  # type: ignore
-        pairwise = torch.cdist(x, self.ref[layer_name].to(x.device), p=2)
-        topk, _ = torch.topk(pairwise, k=self.k, dim=-1, largest=False)
+        topk, _ = self.index[layer_name].search(x.cpu().numpy().astype(np.float32), k=self.k)
+        topk = torch.from_numpy(topk).to(x.device)
+        # pairwise = torch.cdist(x, self.ref[layer_name].to(x.device), p=2)
+        # topk, _ = torch.topk(pairwise, k=self.k, dim=-1, largest=False)
         if self.mean_op:
             return -topk.mean(dim=-1)
         else:
@@ -69,6 +73,7 @@ class KnnEuclides(DetectorWithFeatureExtraction):
 
     def _fit_params(self) -> None:
         self.ref = {}
+        self.index = {}
         for layer_name, layer_features in self.train_features.items():
             self.ref[layer_name] = layer_features[
                 torch.randperm(layer_features.shape[0])[: int(self.alpha * layer_features.shape[0])]
@@ -77,3 +82,5 @@ class KnnEuclides(DetectorWithFeatureExtraction):
             self.ref[layer_name] = self.ref[layer_name] / torch.norm(
                 self.ref[layer_name], p="fro", dim=-1, keepdim=True
             )
+            self.index[layer_name] = faiss.IndexFlatL2(self.ref[layer_name].shape[1])
+            self.index[layer_name].add(self.ref[layer_name].cpu().numpy().astype(np.float32))
