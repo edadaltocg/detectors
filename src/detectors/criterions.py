@@ -90,53 +90,20 @@ class SupConLoss(nn.Module):
         return loss
 
 
-def NT_xent(sim_matrix, temperature=0.5, chunk=2, eps=1e-8):
-    """
-    Compute NT_xent loss
-    - sim_matrix: (B', B') tensor for B' = B * chunk (first 2B are pos samples)
-    """
+class CSILoss(SupConLoss):
+    """Contrasting shifted instances (con-SI) loss.
 
-    device = sim_matrix.device
-
-    B = sim_matrix.size(0) // chunk  # B = B' / chunk
-
-    eye = torch.eye(B * chunk).to(device)  # (B', B')
-    sim_matrix = torch.exp(sim_matrix / temperature) * (1 - eye)  # remove diagonal
-
-    denom = torch.sum(sim_matrix, dim=1, keepdim=True)
-    sim_matrix = -torch.log(sim_matrix / (denom + eps) + eps)  # loss matrix
-
-    loss = torch.sum(sim_matrix[:B, B:].diag() + sim_matrix[B:, :B].diag()) / (2 * B)
-
-    return loss
-
-
-def Supervised_NT_xent(sim_matrix, labels, temperature=0.5, chunk=2, eps=1e-8, multi_gpu=False):
-    """
-    Compute NT_xent loss
-    - sim_matrix: (B', B') tensor for B' = B * chunk (first 2B are pos samples)
+    References:
+        [1] https://arxiv.org/abs/2007.08176
     """
 
-    device = sim_matrix.device
+    def __init__(self, temperature=0.07, contrast_mode="all", base_temperature=0.07, lbd=1):
+        super().__init__(temperature=temperature, contrast_mode=contrast_mode, base_temperature=base_temperature)
 
-    labels = labels.repeat(2)
+        self.lbd = lbd
+        self.shift_criterion = nn.CrossEntropyLoss()
 
-    logits_max, _ = torch.max(sim_matrix, dim=1, keepdim=True)
-    sim_matrix = sim_matrix - logits_max.detach()
-
-    B = sim_matrix.size(0) // chunk  # B = B' / chunk
-
-    eye = torch.eye(B * chunk).to(device)  # (B', B')
-    sim_matrix = torch.exp(sim_matrix / temperature) * (1 - eye)  # remove diagonal
-
-    denom = torch.sum(sim_matrix, dim=1, keepdim=True)
-    sim_matrix = -torch.log(sim_matrix / (denom + eps) + eps)  # loss matrix
-
-    labels = labels.contiguous().view(-1, 1)
-    Mask = torch.eq(labels, labels.t()).float().to(device)
-    # Mask = eye * torch.stack([labels == labels[i] for i in range(labels.size(0))]).float().to(device)
-    Mask = Mask / (Mask.sum(dim=1, keepdim=True) + eps)
-
-    loss = torch.sum(Mask * sim_matrix) / (2 * B)
-
-    return loss
+    def forward(self, features, shift_labels, labels=None, mask=None):
+        loss_sim = super().forward(features, labels, mask)
+        loss_shift = self.shift_criterion(features, shift_labels)
+        return loss_sim + self.lbd * loss_shift
