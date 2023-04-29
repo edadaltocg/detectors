@@ -2,6 +2,7 @@ import logging
 import types
 from functools import partial
 
+
 from sklearn.preprocessing import (
     MaxAbsScaler,
     MinMaxScaler,
