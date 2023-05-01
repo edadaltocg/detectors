@@ -7,7 +7,7 @@ install_requires = [
     "scikit-learn",
     "scikit-image",
     "timm==0.8.19.dev0",
-    "torch>=1.7",
+    "torch>=1.13.1",
     "torchvision",
     "tqdm",
     "scipy",

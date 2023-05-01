@@ -22,7 +22,6 @@ docutils==0.18.1
 exceptiongroup==1.1.1
 execnet==1.9.0
 faiss-cpu==1.7.3
-faiss-gpu==1.7.2
 filelock==3.11.0
 flake8==6.0.0
 fonttools==4.39.3
@@ -133,7 +132,7 @@ threadpoolctl==3.1.0
 tifffile==2023.4.12
 timm==0.8.19.dev0
 tomli==2.0.1
-torch==1.12.1
+torch>=1.13.1
 torchvision==0.13.1
 tqdm==4.65.0
 triton==2.0.0
