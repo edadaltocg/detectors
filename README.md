@@ -10,7 +10,7 @@ Under development. Please report any issues or bugs [here](https://github.com/ed
 [![build](https://github.com/edadaltocg/detectors/actions/workflows/build.yml/badge.svg)](https://github.com/edadaltocg/detectors/actions/workflows/build.yml)
 [![Documentation Status](https://readthedocs.org/projects/detectors/badge/?version=latest)](http://detectors.readthedocs.io/?badge=latest)
 ![AUR license](https://img.shields.io/aur/license/detectors)
-[![DOI:](https://zenodo.org/badge/DOI/.svg)](https://doi.org/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.7883080.svg)](https://doi.org/10.5281/zenodo.7883080)
 
 ## What is it?
 
