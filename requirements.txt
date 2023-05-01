@@ -133,7 +133,7 @@ tifffile==2023.4.12
 timm==0.8.19.dev0
 tomli==2.0.1
 torch>=1.13.1
-torchvision==0.13.1
+torchvision
 tqdm==4.65.0
 triton==2.0.0
 twine==4.0.2
