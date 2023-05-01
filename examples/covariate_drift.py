@@ -54,16 +54,6 @@ def main(
     if not debug:
         pipeline.report(results, subsample=subsample)
 
-        # path = os.path.join(
-        #     "images",
-        #     pipeline_name,
-        #     model_name,
-        #     method_name,
-        #     f"{corruption}_{method_kwargs}_{seed}.png",
-        # )
-        # os.makedirs(os.path.dirname(path), exist_ok=True)
-        # plt.savefig(path, bbox_inches="tight", dpi=300)
-
         # save results to csv file
         path = os.path.join(RESULTS_DIR, pipeline_name, "results.csv")
         save_results = {

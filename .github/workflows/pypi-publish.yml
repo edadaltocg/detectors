@@ -31,9 +31,6 @@ jobs:
       - name: Update version in setup.py
         run: >-
           sed -i "s/{{VERSION_PLACEHOLDER}}/${{ steps.tag.outputs.TAG_NAME }}/g" setup.py
-      - name: Build package
-        run: |
-          python -m build
       - name: Build a binary wheel
         run: >-
           python setup.py sdist bdist_wheel
