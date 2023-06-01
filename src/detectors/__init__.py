@@ -2,10 +2,8 @@
 Detectors package.
 """
 
-from detectors.eval import get_ood_results
-
 from . import config, data, eval, methods, models, utils
-from .aggregations import create_aggregation, list_aggregations, register_aggregation
+from .eval import get_ood_results
 from .data import create_dataset, get_dataset_cls, list_datasets, register_dataset
 from .methods import Detector, create_detector, create_hyperparameters, list_detectors, register_detector
 from .methods.utils import create_reduction

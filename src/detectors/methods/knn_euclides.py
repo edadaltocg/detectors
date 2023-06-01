@@ -60,17 +60,7 @@ class KnnEuclides(DetectorWithFeatureExtraction):
 
         assert 0 < self.alpha <= 1, "alpha must be in the interval (0, 1]"
 
-    def _layer_score(self, x: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None):
-        x = x / torch.norm(x, p=2, dim=-1, keepdim=True)  # type: ignore
-        topk, _ = self.index[layer_name].search(x.cpu().numpy().astype(np.float32), k=self.k)
-        topk = torch.from_numpy(topk).to(x.device)
-        # pairwise = torch.cdist(x, self.ref[layer_name].to(x.device), p=2)
-        # topk, _ = torch.topk(pairwise, k=self.k, dim=-1, largest=False)
-        if self.mean_op:
-            return -topk.mean(dim=-1)
-        else:
-            return -topk[:, -1]
-
+    @torch.no_grad()
     def _fit_params(self) -> None:
         self.ref = {}
         self.index = {}
@@ -84,3 +74,15 @@ class KnnEuclides(DetectorWithFeatureExtraction):
             )
             self.index[layer_name] = faiss.IndexFlatL2(self.ref[layer_name].shape[1])
             self.index[layer_name].add(self.ref[layer_name].cpu().numpy().astype(np.float32))
+
+    @torch.no_grad()
+    def _layer_score(self, x: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None):
+        x = x / torch.norm(x, p=2, dim=-1, keepdim=True)  # type: ignore
+        topk, _ = self.index[layer_name].search(x.cpu().numpy().astype(np.float32), k=self.k)
+        topk = torch.from_numpy(topk).to(x.device)
+        # pairwise = torch.cdist(x, self.ref[layer_name].to(x.device), p=2)
+        # topk, _ = torch.topk(pairwise, k=self.k, dim=-1, largest=False)
+        if self.mean_op:
+            return -topk.mean(dim=-1)
+        else:
+            return -topk[:, -1]

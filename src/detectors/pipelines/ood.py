@@ -20,6 +20,7 @@ from tqdm import tqdm
 from detectors.data import create_dataset
 from detectors.eval import get_ood_results
 from detectors.methods import DetectorWrapper
+from detectors.methods.templates import Detector
 from detectors.pipelines import register_pipeline
 from detectors.pipelines.base import Pipeline
 from detectors.utils import ConcatDatasetsDim1, sync_tensor_across_gpus
@@ -151,7 +152,7 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         self._setup_datasets()
         self._setup_dataloaders()
 
-    def preprocess(self, method: DetectorWrapper) -> DetectorWrapper:
+    def preprocess(self, method: Union[DetectorWrapper, Detector]) -> Union[DetectorWrapper, Detector]:
         if self.fit_dataset is None:
             _logger.warning("Fit dataset is not set or not supported. Returning.")
             return method
@@ -175,7 +176,7 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         method.end()
         return method
 
-    def run(self, method: DetectorWrapper) -> Dict[str, Any]:
+    def run(self, method: Union[DetectorWrapper, Detector]) -> Dict[str, Any]:
         self.method = method
 
         _logger.info("Running pipeline...")

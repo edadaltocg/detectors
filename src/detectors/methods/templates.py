@@ -217,8 +217,8 @@ class DetectorWithFeatureExtraction(Detector):
                 self.features_nodes = [self.last_layer_name]
             else:
                 self.features_nodes.append(self.last_layer_name)
-        # remove duplicates
-        self.features_nodes = list(set(self.features_nodes))
+        # remove duplicates maintaining order
+        self.features_nodes = list(dict.fromkeys(self.features_nodes))
         _logger.info("Using features nodes: %s", self.features_nodes)
 
         self.feature_extractor = create_feature_extractor(self.model, self.features_nodes)
