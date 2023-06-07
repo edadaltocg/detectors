@@ -30,6 +30,27 @@ def fpr_at_fixed_tpr(fprs: np.ndarray, tprs: np.ndarray, thresholds: np.ndarray,
     return float(fprs[idx]), float(tprs[idx]), float(thresholds[idx])
 
 
+def fnr_at_fixed_tnr(fprs: np.ndarray, tprs: np.ndarray, thresholds: np.ndarray, tnr_level: float = 0.95):
+    """Return the FNR at a fixed TNR level.
+
+    Args:
+        fprs (np.ndarray): False positive rates.
+        tprs (np.ndarray): True positive rates.
+        thresholds (np.ndarray): Thresholds.
+        tnr_level (float, optional): TNR level. Defaults to 0.95.
+
+    Returns:
+        Tuple[float, float, float]: FNR, TNR, threshold."""
+    tnrs = 1 - fprs
+    fnrs = 1 - tprs
+
+    if all(tnrs < tnr_level):
+        raise ValueError(f"No threshold allows for TNR at least {tnr_level}.")
+    idxs = [i for i, x in enumerate(tnrs) if x >= tnr_level]
+    idx = min(idxs)
+    return float(fnrs[idx]), float(tnrs[idx]), float(thresholds[idx])
+
+
 def compute_detection_error(fpr: float, tpr: float, pos_ratio: float):
     """Compute the detection error.
 
@@ -65,6 +86,29 @@ def minimum_detection_error(fprs: np.ndarray, tprs: np.ndarray, pos_ratio: float
     return detection_errors[idx]
 
 
+def aufnr_aufpr_autc(fprs: np.ndarray, tprs: np.ndarray, thresholds: np.ndarray):
+    """Compute the AUFNR, AUFPR, and AUTC metrics.
+
+    Args:
+        fprs (np.ndarray): False positive rates.
+        tprs (np.ndarray): True positive rates.
+        thresholds (np.ndarray): Thresholds.
+
+
+    Returns:
+        Tuple[float, float, float]: AUFNR, AUFPR, AUTC.
+
+    References:
+        [1] Humblot-Renaux et. al. Beyond AUROC \& Co. for Evaluating Out-of-Distribution Detection Performance. 2023.
+    """
+    fnrs = 1 - tprs
+    sorted_idx = np.argsort(thresholds)
+    aufnr = sklearn.metrics.auc(thresholds[sorted_idx], fnrs[sorted_idx])
+    aufpr = sklearn.metrics.auc(thresholds[sorted_idx], fprs[sorted_idx])
+    autc = (aufnr + aufpr) / 2
+    return float(aufnr), float(aufpr), float(autc)
+
+
 def get_ood_results(in_scores: Tensor, ood_scores: Tensor) -> Dict[str, float]:
     """Compute OOD detection metrics.
 
@@ -97,6 +141,8 @@ def get_ood_results(in_scores: Tensor, ood_scores: Tensor) -> Dict[str, float]:
     pos_ratio = np.mean(_test_labels == 1)
     detection_error = minimum_detection_error(fprs, tprs, pos_ratio)
 
+    aufnr, aufpr, autc = aufnr_aufpr_autc(fprs, tprs, thrs)
+
     results = {
         "fpr_at_0.95_tpr": fpr,
         "tnr_at_0.95_tpr": 1 - fpr,
@@ -104,6 +150,9 @@ def get_ood_results(in_scores: Tensor, ood_scores: Tensor) -> Dict[str, float]:
         "auroc": auroc,
         "aupr_in": aupr_in,
         "aupr_out": aupr_out,
+        "aufnr": aufnr,
+        "aufpr": aufpr,
+        "autc": autc,
         "thr": thr,
     }
     return results
