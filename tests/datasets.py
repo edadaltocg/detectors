@@ -361,7 +361,6 @@ def test_cifar10c():
 def test_cifar100c():
     transform = transforms.ToTensor()
 
-
     cifar100c_class = get_dataset_cls("cifar100_c")
 
     for intensity in [1, 2]:

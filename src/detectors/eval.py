@@ -26,7 +26,10 @@ def fpr_at_fixed_tpr(fprs: np.ndarray, tprs: np.ndarray, thresholds: np.ndarray,
     if all(tprs < tpr_level):
         raise ValueError(f"No threshold allows for TPR at least {tpr_level}.")
     idxs = [i for i, x in enumerate(tprs) if x >= tpr_level]
-    idx = min(idxs)
+    if len(idxs) == 0:
+        idx = 0
+    else:
+        idx = min(idxs)
     return float(fprs[idx]), float(tprs[idx]), float(thresholds[idx])
 
 
