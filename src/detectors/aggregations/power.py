@@ -1,12 +1,12 @@
 import torch
-from sklearn.preprocessing import QuantileTransformer
+from sklearn.preprocessing import PowerTransformer
 from torch import Tensor
 
 
-class QuantileAggregation:
+class PowerAggregation:
     def fit(self, stack: Tensor, *args, **kwargs):
         stack = stack.detach().cpu().numpy()
-        self.method = QuantileTransformer(n_quantiles=1000, output_distribution="normal")
+        self.method = PowerTransformer()
         self.method.fit(stack)
 
     def __call__(self, scores: Tensor, *args, **kwargs):

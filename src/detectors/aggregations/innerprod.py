@@ -15,7 +15,7 @@ class InnerProductAggregation:
     def fit(self, stack: Tensor, *args, **kwargs):
         self.max_trajectory = stack.max(dim=0, keepdim=True)[0]
         self.ref_trajectory = stack.mean(dim=0, keepdim=True) / self.max_trajectory
-        self.scale = torch.sum(self.ref_trajectory**2)
+        self.scale = torch.sum(self.ref_trajectory ** 2)
 
         _logger.debug("InnerProductAggregation parameters")
         _logger.debug(f"max_trajectory: {self.max_trajectory}")
