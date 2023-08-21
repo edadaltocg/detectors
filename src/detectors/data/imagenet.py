@@ -24,7 +24,6 @@ class ImageNetA(ImageFolder):
     tgz_md5 = "c3e55429088dc681f30d81f4726b6595"
 
     def __init__(self, root: str, split=None, transform: Optional[Callable] = None, download: bool = False, **kwargs):
-
         self.root = root
 
         if download:
@@ -175,7 +174,6 @@ class ImageNetC(ImageNetA):
 
 
 def _imagenet_c_to_npz(root: str, split: str, intensity: int, dest_folder: str = "ImageNetCnpz") -> None:
-
     dataset = ImageNetC(root, split, intensity, download=True)
     assert len(dataset) == 50_000, "ImageNetC should have 50,000 images. Please check the dataset."
     image_example = dataset[0][0]

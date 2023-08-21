@@ -2,12 +2,15 @@
 Datasets module.
 """
 import logging
+import os
 from enum import Enum
 from functools import partial
 from typing import Callable, List, Optional, Type
 
 from torch.utils.data import Dataset
 from torchvision.datasets import STL10, SVHN, ImageNet, OxfordIIITPet, StanfordCars
+
+from .ninco_ssb_clean import NINCO, NINCOFull, SSBEasy, SSBHard, TexturesClean
 
 from ..config import DATA_DIR, IMAGENET_ROOT
 from .cifar_wrapper import CIFAR10Wrapped, CIFAR100Wrapped
@@ -57,6 +60,11 @@ datasets_registry = {
     "mos_inaturalist": MOSiNaturalist,
     "mos_places365": MOSPlaces365,
     "mos_sun": MOSSUN,
+    "ninco_full": NINCOFull,
+    "ninco": NINCO,
+    "ssb_hard": SSBHard,
+    "ssb_easy": SSBEasy,
+    "textures_clean": TexturesClean,
     "cifar10_lt": None,
     "cifar100_lt": None,
     "imagenet1k_lt": None,
@@ -130,7 +138,7 @@ def create_dataset(
                 `imagenet_a`, `imagenet_r`, `imagenet_o`, `openimage_o`, `oxford_pets`,
                 `oxford_flowers`, `cub200`, `imagenet1k_c`, `blobs`, `rademacher`,
                 `wilds_iwildcam`, `wilds_fmow`, `wilds_camelyon17`, `wilds_rxrx1`,
-                `wilds_poverty`, `wilds_globalwheat`.
+                `wilds_poverty`, `wilds_globalwheat`, `ninco`.
         root (string): Root directory of dataset.
         split (string, optional): Depends on the selected dataset.
         transform (callable, optional): A function/transform that  takes in an PIL image
@@ -153,6 +161,23 @@ def create_dataset(
     except KeyError as e:
         _logger.error(e)
         raise ValueError("Dataset name is not specified")
+
+
+def delete_dataset(dataset_name: str, root: str = DATA_DIR):
+    dataset_cls = datasets_registry[dataset_name]
+    try:
+        os.remove(os.path.join(root, dataset_cls.filename))
+    except FileNotFoundError:
+        print(f"File {dataset_cls.filename} not found")
+    except Exception as e:
+        print(e)
+
+    try:
+        os.remove(os.path.join(root, dataset_cls.base_folder))
+    except FileNotFoundError:
+        print(f"Folder {dataset_cls.base_folder} not found")
+    except Exception as e:
+        print(e)
 
 
 def get_dataset_cls(dataset_name: str) -> Type[Dataset]:
