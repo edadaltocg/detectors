@@ -1,7 +1,7 @@
 """
 Module containing evaluation metrics.
 """
-from typing import Dict
+from typing import Dict, Union
 
 import numpy as np
 import sklearn
@@ -112,7 +112,7 @@ def aufnr_aufpr_autc(fprs: np.ndarray, tprs: np.ndarray, thresholds: np.ndarray)
     return float(aufnr), float(aufpr), float(autc)
 
 
-def get_ood_results(in_scores: Tensor, ood_scores: Tensor) -> Dict[str, float]:
+def get_ood_results(in_scores: Union[Tensor, np.ndarray], ood_scores: Union[Tensor, np.ndarray]) -> Dict[str, float]:
     """Compute OOD detection metrics.
 
     Args:
@@ -134,28 +134,47 @@ def get_ood_results(in_scores: Tensor, ood_scores: Tensor) -> Dict[str, float]:
     _test_labels = torch.cat([in_labels, ood_labels]).cpu().numpy()
 
     fprs, tprs, thrs = sklearn.metrics.roc_curve(_test_labels, _test_scores)
-    precision, recall, _ = sklearn.metrics.precision_recall_curve(_test_labels, _test_scores, pos_label=1)
-    precision_out, recall_out, _ = sklearn.metrics.precision_recall_curve(_test_labels, _test_scores, pos_label=0)
     fpr, tpr, thr = fpr_at_fixed_tpr(fprs, tprs, thrs, 0.95)
     auroc = sklearn.metrics.auc(fprs, tprs)
+
+    precision, recall, _ = sklearn.metrics.precision_recall_curve(_test_labels, _test_scores, pos_label=1)
+    precision_out, recall_out, _ = sklearn.metrics.precision_recall_curve(_test_labels, _test_scores, pos_label=0)
     aupr_in = sklearn.metrics.auc(recall, precision)
     aupr_out = sklearn.metrics.auc(recall_out, precision_out)
+    f1 = sklearn.metrics.f1_score(_test_labels, _test_scores > thr)
 
     pos_ratio = np.mean(_test_labels == 1)
     detection_error = minimum_detection_error(fprs, tprs, pos_ratio)
 
-    aufnr, aufpr, autc = aufnr_aufpr_autc(fprs, tprs, thrs)
+    # aufnr, aufpr, autc = aufnr_aufpr_autc(fprs, tprs, thrs)
 
     results = {
         "fpr_at_0.95_tpr": fpr,
-        "tnr_at_0.95_tpr": 1 - fpr,
+        # "tnr_at_0.95_tpr": 1 - fpr,
         "detection_error": detection_error,
         "auroc": auroc,
         "aupr_in": aupr_in,
         "aupr_out": aupr_out,
-        "aufnr": aufnr,
-        "aufpr": aufpr,
-        "autc": autc,
+        "f1": f1,
+        # "aufnr": aufnr,
+        # "aufpr": aufpr,
+        # "autc": autc,
         "thr": thr,
     }
     return results
+
+
+METRICS_NAMES_PRETTY = {
+    "fpr_at_0.95_tpr": "FPR at 95% TPR",
+    "tnr_at_0.95_tpr": "TNR at 95% TPR",
+    "detection_error": "Detection error",
+    "auroc": "AUROC",
+    "aupr_in": "AUPR in",
+    "aupr_out": "AUPR out",
+    "f1": "F1",
+    "aufnr": "AUFNR",
+    "aufpr": "AUFPR",
+    "autc": "AUTC",
+    "thr": "Threshold",
+    "time": "Time",
+}

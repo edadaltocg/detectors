@@ -10,7 +10,7 @@ from typing import Callable, List, Optional, Type
 from torch.utils.data import Dataset
 from torchvision.datasets import STL10, SVHN, ImageNet, OxfordIIITPet, StanfordCars
 
-from .ninco_ssb_clean import NINCO, NINCOFull, SSBEasy, SSBHard, TexturesClean
+from detectors.data.imagenetlt import ImageNet1kLT
 
 from ..config import DATA_DIR, IMAGENET_ROOT
 from .cifar_wrapper import CIFAR10Wrapped, CIFAR100Wrapped
@@ -23,6 +23,7 @@ from .lsun_r_c import LSUNCroped, LSUNResized
 from .mnist_wrapped import FashionMNISTWrapped, MNISTWrapped
 from .mnistc import MNISTC
 from .mos import MOSSUN, MOSiNaturalist, MOSPlaces365
+from .ninco_ssb_clean import NINCO, NINCOFull, SSBEasy, SSBHard, TexturesClean
 from .noise import Blobs, Gaussian, Rademacher, Uniform
 from .openimage_o import OpenImageO
 from .places365 import Places365
@@ -67,7 +68,8 @@ datasets_registry = {
     "textures_clean": TexturesClean,
     "cifar10_lt": None,
     "cifar100_lt": None,
-    "imagenet1k_lt": None,
+    "imagenet1k_lt": ImageNet1kLT,
+    "imagenet_lt": ImageNet1kLT,
     "cifar10_c": CIFAR10_C,
     "cifar100_c": CIFAR100_C,
     "imagenet": ImageNet,
@@ -155,7 +157,7 @@ def create_dataset(
         Dataset: Dataset object.
     """
     try:
-        if dataset_name in ["imagenet", "imagenet1k", "ilsvrc2012"]:
+        if dataset_name in ["imagenet", "imagenet1k", "ilsvrc2012", "imagenet1k_lt", "imagenet_lt"]:
             return datasets_registry[dataset_name](root=IMAGENET_ROOT, split=split, transform=transform, **kwargs)
         return datasets_registry[dataset_name](root=root, split=split, transform=transform, download=download, **kwargs)
     except KeyError as e:

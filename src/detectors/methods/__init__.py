@@ -6,6 +6,7 @@ import types
 from enum import Enum
 from functools import partial
 from typing import Any, Dict, List
+from detectors.methods.argmax import argm
 
 from detectors.methods.templates import Detector, DetectorWrapper
 
@@ -50,6 +51,7 @@ detectors_registry = {
     "mcdropout": mcdropout,
     "maxcosine": MaxCosineSimilarity,
     "entropy": entropy,
+    "argm": argm,
     # hyperparameter detectors
     "odin": odin,
     "doctor": doctor,
@@ -108,7 +110,7 @@ def register_detector(name: str):
     return decorator
 
 
-def create_detector(detector_name: str, **kwargs) -> Detector:
+def create_detector(detector_name: str, **kwargs) -> DetectorWrapper:
     """Create detector factory.
 
     Args:

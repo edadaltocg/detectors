@@ -25,6 +25,7 @@ class Projection(DetectorWithFeatureExtraction):
         model: torch.nn.Module,
         features_nodes: Optional[List[str]] = None,
         pooling_op_name: str = "max_or_getitem",
+        aggregation_method_name="innerprod",
         **kwargs
     ):
         super().__init__(
@@ -33,7 +34,7 @@ class Projection(DetectorWithFeatureExtraction):
             pooling_op_name=pooling_op_name,
             all_blocks=True,
             last_layer=True,
-            aggregation_method_name="innerprod",
+            aggregation_method_name=aggregation_method_name,
             **kwargs
         )
 

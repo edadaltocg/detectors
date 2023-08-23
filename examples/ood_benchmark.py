@@ -71,12 +71,15 @@ if __name__ == "__main__":
     parser.add_argument("--pipeline", type=str, default="ood_benchmark_cifar10")
     parser.add_argument("--model", type=str, default="resnet18_cifar10")
     parser.add_argument("--batch_size", type=int, default=256)
-    parser.add_argument("--limit_fit", type=float, default=1)
+    parser.add_argument("--limit_fit", type=float, default=0.1)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
     _logger.info(json.dumps(args.__dict__, indent=2))
-
+    if args.method == "react_projection":
+        args.method_kwargs["features_nodes"] = ["layer1", "layer2", "layer3", "clip", "fc"]
+    if "vit" in args.model and "projection" in args.method:
+        args.method_kwargs["features_nodes"] = [f"blocks.{l}" for l in range(1, 12)] + ["fc_norm", "head"]
     main(args)

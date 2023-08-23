@@ -1,8 +1,10 @@
 import argparse
 import logging
 import os
+import random
 from typing import Any, Dict
 
+import numpy as np
 import timm
 import timm.data
 import torch
@@ -28,6 +30,15 @@ def main(
     seed=42,
     debug=False,
 ):
+    # set seed
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    # benchmarking True
+    torch.backends.cudnn.benchmark = True
+    torch.backends.cudnn.deterministic = True
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model = timm.create_model(model_name, pretrained=True)
     data_config = timm.data.resolve_data_config(model.default_cfg)
@@ -53,9 +64,10 @@ def main(
 
     if not debug:
         pipeline.report(results, subsample=subsample)
-
+        fileversion = "v5"
         # save results to csv file
-        path = os.path.join(RESULTS_DIR, pipeline_name, "results.csv")
+        # make unique id
+        path = os.path.join(RESULTS_DIR, pipeline_name, f"results_{fileversion}.csv")
         save_results = {
             "model": model_name,
             "method": method_name,
@@ -70,6 +82,7 @@ def main(
             "fpr_mistakes": results["fpr_mistakes"],
             "first_drift": results["first_drift"],
             "splits": results["splits"],
+            "window_size": results["window_size"],
             "seed": seed,
         }
         append_results_to_csv_file(save_results, path)
@@ -78,22 +91,33 @@ def main(
         labels = results["labels"]
         preds = results["preds"]
         targets = results["targets"]
+        drift_labels = results["drift_labels"]
+        mistakes = results["mistakes"]
+        moving_accuracy = results["moving_accuracy"]
+        moving_average = results["moving_average"]
 
         results = {
             "model": model_name,
             "method": method_name,
             "method_kwargs": method_kwargs,
+            "corruption": corruption,
+            "intensities": intensities,
             "scores": scores.numpy().tolist(),
             "labels": labels.numpy().tolist(),
             "preds": preds.numpy().tolist(),
             "targets": targets.numpy().tolist(),
+            "drift_labels": drift_labels.numpy().tolist(),
+            "mistakes": mistakes.numpy().tolist(),
+            "moving_accuracy": moving_accuracy.numpy().tolist(),
+            "moving_average": moving_average.numpy().tolist(),
+            "window_size": results["window_size"],
+            "seed": seed,
         }
-        filename = os.path.join(RESULTS_DIR, args.pipeline, "scores.csv")
+        filename = os.path.join(RESULTS_DIR, args.pipeline, f"scores_{fileversion}.csv")
         append_results_to_csv_file(results, filename)
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=str, default="resnet18_cifar10")
     parser.add_argument("--method", type=str, default="msp")

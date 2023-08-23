@@ -23,8 +23,8 @@ class KnnEuclides(DetectorWithFeatureExtraction):
         all_blocks (bool, optional): If True, use all blocks of the model. Defaults to False.
         last_layer (bool, optional): If True, use also the last layer of the model. Defaults to False.
         pooling_op_name (str, optional): Pooling operation to be applied to the features.
-            Can be one of ["max", "avg", "flatten", "getitem", "none"]. Defaults to "avg".
-        aggregation_method_name (str, optional): Aggregation method to be applied to the features. Defaults to None.
+            Can be one of ["max", "avg", "flatten", "getitem", "none"]. Defaults to "avg_or_getitem".
+        aggregation_method_name (str, optional): Aggregation method to be applied to the features. Defaults to "mean".
         alpha (float, optional): Alpha parameter for the input pre-processing. Defaults to 1.
         k (int, optional): Number of nearest neighbors to be considered. Defaults to 10.
         avg_topk (bool, optional): If True, average the top-k scores. Defaults to False.
@@ -39,7 +39,7 @@ class KnnEuclides(DetectorWithFeatureExtraction):
         features_nodes: Optional[List[str]] = None,
         all_blocks: bool = False,
         last_layer: bool = False,
-        pooling_op_name: str = "avg",
+        pooling_op_name: str = "avg_or_getitem",
         aggregation_method_name="mean",
         alpha: float = 1,
         k: int = 10,

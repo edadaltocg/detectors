@@ -16,9 +16,16 @@ from .basics import (
     none_aggregation,
     topk_aggregation,
 )
+from .blahut_arimoto import BlahutArimotoAggregation
 from .cosine import CosineAggregation
-from .innerprod import InnerProductAggregation
+from .innerprod import (
+    InnerProductAggregation,
+    InnerProductIntegralAggregation,
+    InnerProductMeanAggregation,
+    InnerProductMinAggregation,
+)
 from .mahalanobis import MahalanobisAggregation
+from .power import PowerAggregation
 from .quantile import QuantileAggregation
 
 _logger = logging.getLogger(__name__)
@@ -37,8 +44,13 @@ aggregations_registry = {
     "layer_idx": layer_idx,
     "mahalanobis": MahalanobisAggregation,
     "innerprod": InnerProductAggregation,
+    "innerprod_mean": InnerProductMeanAggregation,
+    "innerprod_min": InnerProductMinAggregation,
+    "innerprod_integral": InnerProductIntegralAggregation,
     "cosine": CosineAggregation,
     "quantile": QuantileAggregation,
+    "power": PowerAggregation,
+    "blahut_arimoto": BlahutArimotoAggregation,
 }
 
 

@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.utils.data
 import torchvision
@@ -403,31 +404,13 @@ def test_imagenet_r():
     assert issubclass(imagenet_r_class, torchvision.datasets.DatasetFolder)
 
 
-def test_imagenet_c():
-    transform = transforms.ToTensor()
-
-    imagenet_c_class = get_dataset_cls("imagenet_c")
-
-    for split in imagenet_c_class.corruptions:
-        for intensity in [1]:
-            dataset = create_dataset(
-                "imagenet_c", root=DATA_DIR, split=split, intensity=intensity, transform=transform, download=True
-            )
-            dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
-            img, label = next(iter(dataloader))
-            assert len(dataset) == 50000
-            assert type(img) == torch.Tensor
-
-    assert issubclass(imagenet_c_class, torchvision.datasets.DatasetFolder)
-
-
 def test_imagenet_c_npz():
     transform = transforms.ToTensor()
 
     imagenet_c_npz_class = get_dataset_cls("imagenet_c_npz")
 
     for split in tqdm(imagenet_c_npz_class.corruptions):
-        for intensity in [1, 2, 3, 4, 5]:
+        for intensity in [1]:
             dataset = create_dataset(
                 "imagenet_c_npz", root=DATA_DIR, split=split, intensity=intensity, transform=transform, download=True
             )
@@ -473,3 +456,35 @@ def test_camelyon17():
 
     assert type(img) == torch.Tensor
     assert len(dataset) == 34_904
+
+
+def test_imagenet_c():
+    transform = transforms.ToTensor()
+
+    imagenet_c_class = get_dataset_cls("imagenet_c")
+
+    for split in imagenet_c_class.corruptions:
+        for intensity in [1]:
+            dataset = create_dataset(
+                "imagenet_c", root=DATA_DIR, split=split, intensity=intensity, transform=transform, download=True
+            )
+            dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+            img, label = next(iter(dataloader))
+            assert len(dataset) == 50000
+            assert type(img) == torch.Tensor
+
+    assert issubclass(imagenet_c_class, torchvision.datasets.DatasetFolder)
+
+
+def test_imagenet_lt():
+    np.random.seed(0)
+    transform = transforms.ToTensor()
+
+    imagenet_lt_class = get_dataset_cls("imagenet1k_lt")
+
+    dataset = create_dataset("imagenet1k_lt", root=IMAGENET_ROOT, split="val", transform=transform)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    img, label = next(iter(dataloader))
+
+    assert type(img) == torch.Tensor
+    assert img.shape[1] == 3

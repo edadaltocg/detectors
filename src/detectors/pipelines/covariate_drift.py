@@ -58,7 +58,6 @@ class CovariateDriftPipeline(Pipeline):
         # shuffle fit dataset
         limit_fit = limit_fit or 1
         limit_fit = min(int(limit_fit * len(fit_dataset)), len(fit_dataset))
-        indices = range(len(fit_dataset))[:limit_fit]
         indices = torch.randperm(len(fit_dataset)).numpy()[:limit_fit]
         fit_dataset = torch.utils.data.Subset(fit_dataset, indices)
         in_dataset = create_dataset(dataset_name, split=dataset_splits[1], transform=transform)
@@ -153,7 +152,6 @@ class CovariateDriftPipeline(Pipeline):
             range(len(self.test_dataloader)), desc="Inference", disable=not self.accelerator.is_local_main_process
         )
         for x, y, labels in self.test_dataloader:
-
             scores = method(x)
             with torch.no_grad():
                 logits = model(x)
@@ -177,34 +175,38 @@ class CovariateDriftPipeline(Pipeline):
         acc_threshold = kwargs.get("acc_threshold", 0.90)
         stride = kwargs.get("stride", 1)
         metrics = self.postprocess(
-            test_scores, test_preds, test_targets, test_labels, acc_threshold=acc_threshold, stride=stride
+            test_scores,
+            test_preds,
+            test_targets,
+            test_labels,
+            self.batch_size,
+            self.warmup_size,
+            self.splits,
+            acc_threshold=acc_threshold,
+            stride=stride,
         )
 
-        return {
-            "method": method,
-            "scores": test_scores,
-            "preds": test_preds,
-            "targets": test_targets,
-            "labels": test_labels,
-            **metrics,
-        }
+        return {"method": method, **metrics}
 
+    @staticmethod
     def postprocess(
-        self,
         test_scores: Tensor,
         test_preds: Tensor,
         test_targets: Tensor,
         test_labels: Tensor,
+        win_size: int,
+        warmup_size: int,
+        splits: List,
         stride=1,
         alpha=0.99,
         acc_threshold=0.90,
+        moving_average=None,
         **kwargs,
     ) -> Dict[str, Any]:
-        win_size = self.batch_size
-
-        avg_warmup = test_scores[: self.warmup_size].mean().item()
+        avg_warmup = test_scores[:warmup_size].mean().item()
         data_padded = F.pad(test_scores.unsqueeze(0), (win_size - 1, 0), "constant", avg_warmup).squeeze(0)
-        moving_average = data_padded.unfold(0, win_size, stride).mean(dim=1)
+        if moving_average is None:
+            moving_average = data_padded.unfold(0, win_size, stride).mean(dim=1)
 
         ema = test_scores.clone()
         ema[0] = avg_warmup
@@ -216,7 +218,7 @@ class CovariateDriftPipeline(Pipeline):
         moving_accuracy = 1 - mistakes_padded.unfold(0, win_size, stride).mean(dim=1)
 
         # define real drift event: when moving accuracy is below threshold compared to training accuracy
-        acc = moving_accuracy[self.splits[1] : self.splits[1] + (self.splits[2] - self.splits[1]) // 2].mean().item()
+        acc = moving_accuracy[splits[1] : splits[1] + (splits[2] - splits[1]) // 2].mean().item()
         ref = acc_threshold * acc
         _logger.info("Original accuracy: %s", acc)
         _logger.info("Reference accuracy to detect drift: %s", ref)
@@ -229,24 +231,28 @@ class CovariateDriftPipeline(Pipeline):
         if len(np.unique(drift_labels.numpy())) == 1:
             auroc_drift = 1.0
         else:
-            auroc_drift = float(sklearn.metrics.roc_auc_score(drift_labels, -test_scores))
+            auroc_drift = float(sklearn.metrics.roc_auc_score(drift_labels, -moving_average))
+
+        fprs, tprs, thresholds = sklearn.metrics.roc_curve(drift_labels, -moving_average)
+        fpr_drift, _, _ = detectors.eval.fpr_at_fixed_tpr(fprs, tprs, thresholds, 0.95)
 
         if len(np.unique(mistakes.numpy())) == 1:
             auroc_mistakes = 1.0
         else:
             auroc_mistakes = float(sklearn.metrics.roc_auc_score(mistakes, -test_scores))
 
-        fprs, tprs, thresholds = sklearn.metrics.roc_curve(drift_labels, -test_scores)
-        fpr_drift, _, _ = detectors.eval.fpr_at_fixed_tpr(fprs, tprs, thresholds, 0.95)
-
         fprs, tprs, thresholds = sklearn.metrics.roc_curve(mistakes, -test_scores)
         fpr_mistakes, _, _ = detectors.eval.fpr_at_fixed_tpr(fprs, tprs, thresholds, 0.95)
 
         return dict(
+            scores=test_scores,
+            preds=test_preds,
+            targets=test_targets,
+            labels=test_labels,
             drift_labels=drift_labels,
             first_drift=torch.argmax(drift_labels).item(),
             ref_accuracy=ref,
-            splits=self.splits,
+            splits=splits,
             corr_acc=corr_acc,
             corr_drift=corr_drift,
             auroc_drift=auroc_drift,
@@ -257,9 +263,11 @@ class CovariateDriftPipeline(Pipeline):
             ema=ema,
             moving_accuracy=moving_accuracy,
             mistakes=mistakes,
+            window_size=win_size,
         )
 
-    def report(self, results: Dict[str, Any], subsample=1):
+    @staticmethod
+    def report(results: Dict[str, Any], subsample=10, warmup_size=2000, **kwargs):
         print("Results:")
         print("\tCorr. Acc:", results["corr_acc"])
         print("\tCorr. Drift:", results["corr_drift"])
@@ -289,7 +297,7 @@ class CovariateDriftPipeline(Pipeline):
         ax1.grid()
 
         ax2.vlines(
-            self.warmup_size // subsample,
+            warmup_size // subsample,
             0,
             1,
             linestyle="--",

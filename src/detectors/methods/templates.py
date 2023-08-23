@@ -192,6 +192,7 @@ class DetectorWithFeatureExtraction(Detector):
     ):
         self.model = model
         self.model.eval()
+        self.device = next(self.model.parameters()).device
         self.features_nodes = features_nodes
         self.all_blocks = all_blocks
         self.pooling_op_name = pooling_op_name
@@ -284,13 +285,15 @@ class DetectorWithFeatureExtraction(Detector):
 
         self._fit_params()
 
-        _logger.debug("Fitting aggregator %s...", self.aggregation_method_name)
+        _logger.info("Fitting aggregator %s...", self.aggregation_method_name)
         self.batch_size = self.train_targets.shape[0]  # type: ignore
         all_scores = torch.zeros(self.train_targets.shape[0], len(self.train_features))
         for i, (k, v) in tqdm(enumerate(self.train_features.items())):
             idx = 0
-            for idx in range(0, v.shape[0], self.batch_size):
-                all_scores[:, i] = self._layer_score(v[idx : idx + self.batch_size], k, i).view(-1)
+            for idx in tqdm(range(0, v.shape[0], self.batch_size)):
+                all_scores[:, i] = self._layer_score(v[idx : idx + self.batch_size].to(self.device), k, i).view(-1)
+
+        _logger.info("Fit data shape: %s", all_scores.shape)
         self.aggregation_method.fit(all_scores, self.train_targets)
 
         # TODO: compile graph with _layer_score

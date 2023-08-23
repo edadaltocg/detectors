@@ -6,7 +6,7 @@ install_requires = [
     "optuna",
     "scikit-learn",
     "scikit-image",
-    "timm==0.8.19.dev0",
+    "timm>=0.8.19.dev0",
     "torch>=1.13.1",
     "torchvision",
     "tqdm",
