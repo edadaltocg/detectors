@@ -79,11 +79,27 @@ class SSBHard(NINCO):
 
 
 class SSBEasy(SSBHard):
-    base_folder = "ninco/NINCO/NINCO_popular_datasets_subsamples/SSB_hard"
+    base_folder = "ninco/NINCO/NINCO_popular_datasets_subsamples/SSB_easy"
 
 
 class TexturesClean(SSBHard):
     base_folder = "ninco/NINCO/NINCO_popular_datasets_subsamples/Textures"
+
+
+class PlacesClean(SSBHard):
+    base_folder = "ninco/NINCO/NINCO_popular_datasets_subsamples/Places"
+
+
+class INaturalistClean(SSBHard):
+    base_folder = "ninco/NINCO/NINCO_popular_datasets_subsamples/iNaturalist_OOD_Plants"
+
+
+class OpenImageOClean(SSBHard):
+    base_folder = "ninco/NINCO/NINCO_popular_datasets_subsamples/OpenImage_O"
+
+
+class SpeciesClean(SSBHard):
+    base_folder = "ninco/NINCO/NINCO_popular_datasets_subsamples/Species"
 
 
 # ninco/NINCO/NINCO_popular_datasets_subsamples/

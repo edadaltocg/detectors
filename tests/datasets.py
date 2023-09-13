@@ -488,3 +488,68 @@ def test_imagenet_lt():
 
     assert type(img) == torch.Tensor
     assert img.shape[1] == 3
+
+
+def test_places_clean():
+    transform = transforms.ToTensor()
+
+    dataset = create_dataset("places_clean", root=DATA_DIR, split=None, transform=transform, download=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    x = next(iter(dataloader))
+    img = x[0]
+    print(len(dataset))
+
+    assert type(img) == torch.Tensor
+    assert len(dataset) == 153
+
+
+def test_inaturalist_clean():
+    transform = transforms.ToTensor()
+
+    dataset = create_dataset("inaturalist_clean", root=DATA_DIR, split=None, transform=transform, download=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    x = next(iter(dataloader))
+    img = x[0]
+    print(len(dataset))
+
+    assert type(img) == torch.Tensor
+    assert len(dataset) == 383
+
+
+def test_textures_clean():
+    transform = transforms.ToTensor()
+
+    dataset = create_dataset("textures_clean", root=DATA_DIR, split=None, transform=transform, download=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    x = next(iter(dataloader))
+    img = x[0]
+    print(len(dataset))
+
+    assert type(img) == torch.Tensor
+    assert len(dataset) == 288
+
+
+def test_species_clean():
+    transform = transforms.ToTensor()
+
+    dataset = create_dataset("species_clean", root=DATA_DIR, split=None, transform=transform, download=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    x = next(iter(dataloader))
+    img = x[0]
+    print(len(dataset))
+
+    assert type(img) == torch.Tensor
+    assert len(dataset) == 172
+
+
+def test_openimage_o_clean():
+    transform = transforms.ToTensor()
+
+    dataset = create_dataset("openimage_o_clean", root=DATA_DIR, split=None, transform=transform, download=True)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=0)
+    x = next(iter(dataloader))
+    img = x[0]
+    print(len(dataset))
+
+    assert type(img) == torch.Tensor
+    assert len(dataset) == 368

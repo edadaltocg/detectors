@@ -23,7 +23,17 @@ from .lsun_r_c import LSUNCroped, LSUNResized
 from .mnist_wrapped import FashionMNISTWrapped, MNISTWrapped
 from .mnistc import MNISTC
 from .mos import MOSSUN, MOSiNaturalist, MOSPlaces365
-from .ninco_ssb_clean import NINCO, NINCOFull, SSBEasy, SSBHard, TexturesClean
+from .ninco_ssb_clean import (
+    NINCO,
+    INaturalistClean,
+    NINCOFull,
+    OpenImageOClean,
+    PlacesClean,
+    SSBEasy,
+    SSBHard,
+    SpeciesClean,
+    TexturesClean,
+)
 from .noise import Blobs, Gaussian, Rademacher, Uniform
 from .openimage_o import OpenImageO
 from .places365 import Places365
@@ -51,7 +61,6 @@ datasets_registry = {
     "tiny_imagenet_r": TinyImageNetResized,
     "tiny_imagenet": TinyImageNet,
     "textures": Textures,
-    "textures_curated": None,
     "gaussian": Gaussian,
     "uniform": Uniform,
     "blobs": Blobs,
@@ -66,6 +75,10 @@ datasets_registry = {
     "ssb_hard": SSBHard,
     "ssb_easy": SSBEasy,
     "textures_clean": TexturesClean,
+    "places_clean": PlacesClean,
+    "inaturalist_clean": INaturalistClean,
+    "openimage_o_clean": OpenImageOClean,
+    "species_clean": SpeciesClean,
     "cifar10_lt": None,
     "cifar100_lt": None,
     "imagenet1k_lt": ImageNet1kLT,
