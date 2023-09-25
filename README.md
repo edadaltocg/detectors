@@ -178,10 +178,11 @@ The detection of Out-of-Distribution (OOD) has created a new way of securing mac
 If you find this repository useful, please consider giving it a star 🌟 and citing it as below:
 
 ```bibtex
-@software{detectors,
-author = {},
+@software{detectors2022,
+author = {Dadalto, Eduardo},
 title = {Detectors: Generalized Out-Of-Distribution Detection Library},
 url = {https://github.com/edadaltocg/detectors},
+doi = {https://doi.org/10.5281/zenodo.7883596},
 month = {5},
 year = {2023}
 }
