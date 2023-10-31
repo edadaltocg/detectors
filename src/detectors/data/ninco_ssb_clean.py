@@ -4,7 +4,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 from torchvision.datasets import ImageFolder
 from torchvision.datasets.utils import check_integrity, download_and_extract_archive
 
-PAPER_URL = "https://arxiv.org/pdf/2306.00826.pdf"
+PAPER_URL = "https://arxiv.org/abs/2306.00826"
 
 
 class NINCOFull(ImageFolder):
@@ -26,6 +26,7 @@ class NINCOFull(ImageFolder):
     filename = "NINCO_all.tar.gz"
     file_md5 = "b9ffae324363cd900a81ce3c367cd834"
     url = "https://zenodo.org/record/8013288/files/NINCO_all.tar.gz"
+    paper_url = PAPER_URL
     # size: 15393
 
     def __init__(
@@ -70,6 +71,7 @@ class NINCO(NINCOFull):
 
 class SSBHard(NINCO):
     base_folder = "ninco/NINCO/NINCO_popular_datasets_subsamples/SSB_hard"
+    original_paper_url = "https://arxiv.org/abs/2110.06207"
 
     def find_classes(self, directory: str) -> Tuple[List[str], Dict[str, int]]:
         classes = [""]

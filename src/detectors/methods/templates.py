@@ -283,9 +283,12 @@ class DetectorWithFeatureExtraction(Detector):
         else:
             self.train_targets = self.train_targets[: self.idx]
 
+        for node_name, v in self.train_features.items():
+            _logger.info("Features shape: %s", v.shape)
+
         self._fit_params()
 
-        _logger.info("Fitting aggregator %s...", self.aggregation_method_name)
+        _logger.info("Fitting aggregator: %s...", self.aggregation_method_name)
         self.batch_size = self.train_targets.shape[0]  # type: ignore
         all_scores = torch.zeros(self.train_targets.shape[0], len(self.train_features))
         for i, (k, v) in tqdm(enumerate(self.train_features.items())):

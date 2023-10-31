@@ -43,6 +43,7 @@ from .tiny_imagenet_r_c import TinyImageNetCroped, TinyImageNetResized
 from .wilds_ds import make_wilds_dataset
 
 _logger = logging.getLogger(__name__)
+
 datasets_registry = {
     "cifar10": CIFAR10Wrapped,
     "cifar100": CIFAR100Wrapped,
@@ -70,6 +71,8 @@ datasets_registry = {
     "mos_inaturalist": MOSiNaturalist,
     "mos_places365": MOSPlaces365,
     "mos_sun": MOSSUN,
+    "inaturalist": MOSiNaturalist,
+    "sun": MOSSUN,
     "ninco_full": NINCOFull,
     "ninco": NINCO,
     "ssb_hard": SSBHard,

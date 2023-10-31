@@ -7,7 +7,7 @@ from torchvision.datasets.utils import check_integrity, extract_archive
 
 
 class iSUN(ImageFolder):
-    """`iSUN <ODIN_PAPER_URL>`_ Dataset subset.
+    """iSUN Dataset.
 
     Args:
         root (string): Root directory of dataset where directory
@@ -25,6 +25,9 @@ class iSUN(ImageFolder):
     filename = "iSUN.tar.gz"
     file_md5 = "be77b0f2c26fda898afac5f99645ee70"
     url = "https://www.dropbox.com/s/ssz7qxfqae0cca5/iSUN.tar.gz"
+    original_paper_url = "https://arxiv.org/abs/1507.01422"
+    paper_url = "https://arxiv.org/abs/1706.02690"
+    license = "unknown"
     # size 8925
 
     def __init__(
