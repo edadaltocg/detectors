@@ -3,7 +3,6 @@ OOD Pipelines.
 """
 import logging
 import time
-from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Literal, Tuple, Union
 
 import accelerate
@@ -28,7 +27,7 @@ from detectors.utils import ConcatDatasetsDim1, sync_tensor_across_gpus
 _logger = logging.getLogger(__name__)
 
 
-class OODBenchmarkPipeline(Pipeline, ABC):
+class OODBenchmarkPipeline(Pipeline):
     """OOD Benchmark pipeline.
 
     Args:
@@ -81,30 +80,31 @@ class OODBenchmarkPipeline(Pipeline, ABC):
         print("Setting up datasets...")
         self.setup()
 
-    @abstractmethod
     def _setup_datasets(self):
         """Setup `in_dataset`, `out_dataset`, `fit_dataset` and `out_datasets`."""
-        ...
+        raise NotImplementedError
 
     def _setup_dataloaders(self):
-        if self.fit_dataset is None or self.in_dataset is None or self.out_datasets is None or self.out_dataset is None:
+        if self.in_dataset is None or self.out_datasets is None or self.out_dataset is None:
             raise ValueError("Datasets are not set.")
 
-        if self.limit_fit is None:
-            self.limit_fit = 1.0
-        self.limit_fit = min(int(self.limit_fit * len(self.fit_dataset)), len(self.fit_dataset))
+        if self.limit_fit is None or self.limit_fit <= 0:
+            self.fit_dataset = None
+            self.fit_dataloader = None
+        else:
+            self.limit_fit = min(int(self.limit_fit * len(self.fit_dataset)), len(self.fit_dataset))
 
-        # random indices
-        subset = np.random.choice(np.arange(len(self.fit_dataset)), self.limit_fit, replace=False).tolist()
-        self.fit_dataset = torch.utils.data.Subset(self.fit_dataset, subset)
-        self.fit_dataloader = torch.utils.data.DataLoader(
-            self.fit_dataset,
-            batch_size=self.batch_size,
-            shuffle=True,
-            num_workers=self.num_workers,
-            pin_memory=self.pin_memory,
-            prefetch_factor=self.prefetch_factor,
-        )
+            # random indices
+            subset = np.random.choice(np.arange(len(self.fit_dataset)), self.limit_fit, replace=False).tolist()
+            self.fit_dataset = torch.utils.data.Subset(self.fit_dataset, subset)
+            self.fit_dataloader = torch.utils.data.DataLoader(
+                self.fit_dataset,
+                batch_size=self.batch_size,
+                shuffle=True,
+                num_workers=self.num_workers,
+                pin_memory=self.pin_memory,
+                prefetch_factor=self.prefetch_factor,
+            )
 
         self.test_dataset = torch.utils.data.ConcatDataset([self.in_dataset, self.out_dataset])
         test_labels = torch.utils.data.TensorDataset(
@@ -133,7 +133,8 @@ class OODBenchmarkPipeline(Pipeline, ABC):
             self.fit_dataloader = self.accelerator.prepare(self.fit_dataloader)
             self.test_dataloader = self.accelerator.prepare(self.test_dataloader)
 
-        _logger.info(f"Using {len(self.fit_dataset)} samples for fitting.")
+        if self.fit_dataset is not None:
+            _logger.info(f"Using {len(self.fit_dataset)} samples for fitting.")
         _logger.info(f"Using {len(self.test_dataset)} samples for testing.")
 
     def setup(self):
@@ -223,7 +224,6 @@ class OODBenchmarkPipeline(Pipeline, ABC):
             for k in results[self.out_datasets_names[0]].keys()
         }
         results["average"]["time"] = self.infer_times
-        ood_scores = test_scores[test_labels > 0]
 
         return results
 
@@ -327,16 +327,20 @@ class OODImageNetBenchmarkPipeline(OODBenchmarkPipeline):
         super().__init__(
             "ilsvrc2012",
             {
-                "mos_inaturalist": None,
-                "mos_sun": None,
-                "mos_places365": None,
-                "textures": None,
+                # "mos_inaturalist": None,
+                # "mos_sun": None,
+                # "mos_places365": None,
+                # "textures": None,
+                # "openimage_o": None,
                 "imagenet_o": None,
-                "openimage_o": None,
-                "imagenet_a": None,
-                "imagenet_r": None,
-                "uniform": None,
-                "gaussian": None,
+                "ninco": None,
+                "ssb_hard": None,
+                "ssb_easy": None,
+                "textures_clean": None,
+                "places_clean": None,
+                "inaturalist_clean": None,
+                "openimage_o_clean": None,
+                "species_clean": None,
             },
             limit_fit=limit_fit,
             limit_run=limit_run,
@@ -389,15 +393,82 @@ class OODImageNetBenchmarkPipelineReduced(OODBenchmarkPipeline):
         self.out_dataset = torch.utils.data.ConcatDataset(list(self.out_datasets.values()))
 
 
-@register_pipeline("ood_benchmark_imagenet_hard")
+@register_pipeline("ood_benchmark_imagenet_near")
 class OODImageNetBenchmarkPipelineHard(OODBenchmarkPipeline):
     def __init__(self, transform: Callable, limit_fit=1.0, limit_run=1.0, batch_size=64, seed=42, **kwargs) -> None:
         super().__init__(
             "ilsvrc2012",
             {
-                "openimage_o": None,
+                "imagenet_r": None,
                 "ninco": None,
                 "ssb_hard": None,
+            },
+            limit_fit=limit_fit,
+            limit_run=limit_run,
+            transform=transform,
+            batch_size=batch_size,
+            seed=seed,
+        )
+
+    def _setup_datasets(self):
+        _logger.info("Loading In-distribution dataset...")
+        self.fit_dataset = create_dataset(self.in_dataset_name, split="train", transform=self.transform)
+        self.in_dataset = create_dataset(self.in_dataset_name, split="val", transform=self.transform)
+
+        _logger.info("Loading OOD datasets...")
+        self.out_datasets = {
+            ds: create_dataset(ds, split=split, transform=self.transform, download=True)
+            for ds, split in self.out_datasets_names_splits.items()
+        }
+        self.out_dataset = torch.utils.data.ConcatDataset(list(self.out_datasets.values()))
+
+
+@register_pipeline("ood_benchmark_imagenet_all_2")
+class OODImageNetBenchmarkPipelineAll(OODBenchmarkPipeline):
+    def __init__(self, transform: Callable, limit_fit=1.0, limit_run=1.0, batch_size=64, seed=42, **kwargs) -> None:
+        super().__init__(
+            "ilsvrc2012",
+            {
+                "inaturalist_clean": None,
+                "species_clean": None,
+                "places_clean": None,
+                "openimage_o_clean": None,
+                "ssb_easy": None,
+                "textures_clean": None,
+                "ninco": None,
+                "ssb_hard": None,
+            },
+            limit_fit=limit_fit,
+            limit_run=limit_run,
+            transform=transform,
+            batch_size=batch_size,
+            seed=seed,
+        )
+
+    def _setup_datasets(self):
+        _logger.info("Loading In-distribution dataset...")
+        self.fit_dataset = create_dataset(self.in_dataset_name, split="train", transform=self.transform)
+        self.in_dataset = create_dataset(self.in_dataset_name, split="val", transform=self.transform)
+
+        _logger.info("Loading OOD datasets...")
+        self.out_datasets = {
+            ds: create_dataset(ds, split=split, transform=self.transform, download=True)
+            for ds, split in self.out_datasets_names_splits.items()
+        }
+        self.out_dataset = torch.utils.data.ConcatDataset(list(self.out_datasets.values()))
+
+
+@register_pipeline("ood_benchmark_imagenet_far")
+class OODImageNetBenchmarkPipelineEasy(OODBenchmarkPipeline):
+    def __init__(self, transform: Callable, limit_fit=1.0, limit_run=1.0, batch_size=64, seed=42, **kwargs) -> None:
+        super().__init__(
+            "ilsvrc2012",
+            {
+                "inaturalist_clean": None,
+                "species_clean": None,
+                "places_clean": None,
+                "openimage_o_clean": None,
+                "ssb_easy": None,
             },
             limit_fit=limit_fit,
             limit_run=limit_run,
@@ -450,7 +521,7 @@ class OODMNISTBenchmarkPipeline(OODBenchmarkPipeline):
         self.out_dataset = torch.utils.data.ConcatDataset(list(self.out_datasets.values()))
 
 
-class OODValidationPipeline(OODBenchmarkPipeline, ABC):
+class OODValidationPipeline(OODBenchmarkPipeline):
     """Pipeline for OOD validation.
 
     This pipeline is used to validate the performance of a model on OOD datasets.
