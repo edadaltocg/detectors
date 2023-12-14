@@ -112,6 +112,62 @@ def aufnr_aufpr_autc(fprs: np.ndarray, tprs: np.ndarray, thresholds: np.ndarray)
     return float(aufnr), float(aufpr), float(autc)
 
 
+def risks_coverages_selective_net(scores: Tensor, labels: Tensor, sort: bool = True, leq: bool = False, n=1001):
+    # this function is slow
+    risks = []
+    coverages = []
+    thrs = []
+    random_subsampled_scores = scores[torch.randperm(len(scores))[:n]]
+    for thr in random_subsampled_scores:
+        if leq:
+            covered_idx = scores <= thr
+        else:
+            covered_idx = scores > thr
+        risks.append(torch.sum(labels[covered_idx]) / torch.sum(covered_idx))
+        coverages.append(covered_idx.float().mean())
+        thrs.append(thr)
+    risks = torch.tensor(risks).float()
+    coverages = torch.tensor(coverages).float()
+    thrs = torch.tensor(thrs).float()
+    # clean nan and inf
+    nan_mask = torch.isnan(risks) | torch.isinf(risks)
+    risks = risks[~nan_mask]
+    coverages = coverages[~nan_mask]
+    thrs = thrs[~nan_mask]
+
+    # sort by coverages
+    if sort:
+        sorted_idx = torch.argsort(coverages)
+        risks = risks[sorted_idx]
+        coverages = coverages[sorted_idx]
+        thrs = thrs[sorted_idx]
+    return risks, coverages, thrs
+
+
+def aurc_selective_net(in_scores: Tensor, ood_scores: Tensor, sort: bool = True, leq: bool = False, n=1001):
+    if isinstance(in_scores, np.ndarray) or isinstance(in_scores, list):
+        in_scores = torch.tensor(in_scores)
+    if isinstance(ood_scores, np.ndarray) or isinstance(ood_scores, list):
+        ood_scores = torch.tensor(ood_scores)
+    in_labels = torch.zeros(len(in_scores))
+    ood_labels = torch.ones(len(ood_scores))
+
+    _test_scores = torch.cat([in_scores, ood_scores]).cpu()
+    _test_labels = torch.cat([in_labels, ood_labels]).cpu()
+
+    risks, coverages, thrs = risks_coverages_selective_net(_test_scores, _test_labels, sort=sort, leq=leq, n=n)
+
+    # compute AURC
+    aurc = torch.trapz(risks, coverages)
+
+    return {
+        "aurc": float(aurc),
+        "risks": risks.numpy().tolist(),
+        "coverages": coverages.numpy().tolist(),
+        "thrs": thrs.numpy().tolist(),
+    }
+
+
 def get_ood_results(in_scores: Union[Tensor, np.ndarray], ood_scores: Union[Tensor, np.ndarray]) -> Dict[str, float]:
     """Compute OOD detection metrics.
 
@@ -176,5 +232,8 @@ METRICS_NAMES_PRETTY = {
     "aufpr": "AUFPR",
     "autc": "AUTC",
     "thr": "Threshold",
+    "aurc": "AURC",
+    "aurc_pbb": "AURC PBB",
     "time": "Time",
+    "acc": "Accuracy",
 }

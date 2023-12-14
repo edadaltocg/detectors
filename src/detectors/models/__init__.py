@@ -9,6 +9,7 @@ from .resnet import *
 from .utils import *
 from .vgg import *
 from .vit import *
+from .dino import *
 
 
 def create_transform(model: torch.nn.Module, is_training: bool = False):

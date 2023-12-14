@@ -34,6 +34,9 @@ class CovariateDriftPipeline(Pipeline):
         limit_fit: float = 1.0,
         warmup_size=2000,
         seed=42,
+        num_workers: int = 3,
+        pin_memory: bool = True,
+        prefetch_factor: int = 2,
         **kwargs,
     ) -> None:
         """Covariate Drift Pipeline.
@@ -102,6 +105,9 @@ class CovariateDriftPipeline(Pipeline):
         self.batch_size = batch_size
         self.warmup_size = warmup_size
         self.limit_fit = limit_fit
+        self.num_workers = num_workers
+        self.pin_memory = pin_memory
+        self.prefetch_factor = prefetch_factor
 
         self.setup()
 
@@ -112,8 +118,22 @@ class CovariateDriftPipeline(Pipeline):
         )
 
         self.test_dataset = ConcatDatasetsDim1([test_dataset, test_labels])
-        self.test_dataloader = torch.utils.data.DataLoader(self.test_dataset, batch_size=self.batch_size, shuffle=False)
-        self.fit_dataloader = torch.utils.data.DataLoader(self.fit_dataset, batch_size=self.batch_size, shuffle=True)
+        self.test_dataloader = torch.utils.data.DataLoader(
+            self.test_dataset,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            prefetch_factor=self.prefetch_factor,
+        )
+        self.fit_dataloader = torch.utils.data.DataLoader(
+            self.fit_dataset,
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            prefetch_factor=self.prefetch_factor,
+        )
         self.fit_dataloader = self.accelerator.prepare(self.fit_dataloader)  # careful with this with multiple gpus
         self.test_dataloader = self.accelerator.prepare(self.test_dataloader)
 

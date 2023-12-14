@@ -5,6 +5,7 @@ import random
 from typing import Any, Dict
 
 import numpy as np
+import pandas as pd
 import timm
 import timm.data
 import torch
@@ -49,6 +50,7 @@ def main(
         pipeline_name,
         corruption=corruption,
         intensities=intensities,
+        num_workers=3,
         batch_size=batch_size,
         limit_fit=limit_fit,
         transform=transform,
@@ -64,7 +66,6 @@ def main(
 
     if not debug:
         pipeline.report(results, subsample=subsample)
-        fileversion = "v5"
         # save results to csv file
         # make unique id
         path = os.path.join(RESULTS_DIR, pipeline_name, f"results_{fileversion}.csv")
@@ -126,20 +127,29 @@ if __name__ == "__main__":
     parser.add_argument("-idx", "--corruption_idx", type=int, default=0)
     parser.add_argument("--intensities", nargs="+", type=int, default=[1, 2, 3, 4, 5])
     parser.add_argument("--batch_size", type=int, default=128)
-    parser.add_argument("--limit_fit", type=float, default=0.5)
+    parser.add_argument("--limit_fit", type=float, default=0.05)
     parser.add_argument("--subsample", type=int, default=10)
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
 
+    fileversion = "v5"
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
-
+    # load results file
+    df = pd.read_csv(os.path.join(RESULTS_DIR, args.pipeline, f"results_{fileversion}.csv"))
+    corruption = CORRUPTIONS[args.corruption_idx]
+    query = df.query(
+        "model==@args.model and method==@args.method and corruption==@corruption and window_size==@args.batch_size and seed==@args.seed"
+    )
+    if len(query) > 0:
+        _logger.info("Already exists, skipping...")
+        exit(0)
     main(
         model_name=args.model,
         method_name=args.method,
         method_kwargs=args.method_kwargs,
         pipeline_name=args.pipeline,
-        corruption=CORRUPTIONS[args.corruption_idx],
+        corruption=corruption,
         intensities=args.intensities,
         batch_size=args.batch_size,
         limit_fit=args.limit_fit,

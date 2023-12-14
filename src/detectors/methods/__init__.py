@@ -35,6 +35,7 @@ from .react_projection import ReActProjection
 from .relative_mahalanobis import RelativeMahalanobis
 from .ssd import SSD
 from .vim import ViM
+from .l1norm import L1Norm
 
 _logger = logging.getLogger(__name__)
 
@@ -52,6 +53,7 @@ detectors_registry = {
     "maxcosine": MaxCosineSimilarity,
     "entropy": entropy,
     "argm": argm,
+    "l1norm": L1Norm,
     # hyperparameter detectors
     "odin": odin,
     "doctor": doctor,

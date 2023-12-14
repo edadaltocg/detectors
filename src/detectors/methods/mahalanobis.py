@@ -100,7 +100,7 @@ class Mahalanobis(DetectorWithFeatureExtraction):
     """Mahalanobis OOD detector.
 
     Args:
-        model (nn.Module): Model to be used to extract features
+        model (nn.Module): Model to be used to extract features.
         features_nodes (Optional[List[str]]): List of strings that represent the feature nodes.
             Defaults to None.
         all_blocks (bool, optional): If True, use all blocks of the model. Defaults to False.

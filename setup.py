@@ -21,15 +21,15 @@ install_requires = [
 
 setup(
     name="detectors",
-    version="{{VERSION_PLACEHOLDER}}",
-    author="Eduardo Dadalto with the help of all our contributors.",
+    # version="{{VERSION_PLACEHOLDER}}",
+    author="Eduardo Dadalto",
     author_email="edadaltocg@gmail.com",
     description="Detectors: a python package to benchmark generalized out-of-distribution detection methods.",
     long_description=open("README.md", "r", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
     keywords="vision deep learning pytorch OOD",
     license="APACHE 2.0",
-    url="https://github.com/edadaltocg/detectors",
+    url="https:c/github.com/edadaltocg/detectors",
     package_dir={"": "src"},
     packages=find_packages("src"),
     include_package_data=True,
