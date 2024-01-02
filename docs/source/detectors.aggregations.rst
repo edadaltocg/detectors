@@ -20,14 +20,6 @@ detectors.aggregations.basics module
    :undoc-members:
    :show-inheritance:
 
-detectors.aggregations.blahut\_arimoto module
----------------------------------------------
-
-.. automodule:: detectors.aggregations.blahut_arimoto
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 detectors.aggregations.cosine module
 ------------------------------------
 

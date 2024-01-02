@@ -16,7 +16,6 @@ from .basics import (
     none_aggregation,
     topk_aggregation,
 )
-from .blahut_arimoto import BlahutArimotoAggregation
 from .cosine import CosineAggregation
 from .innerprod import (
     InnerProductAggregation,
@@ -50,7 +49,6 @@ aggregations_registry = {
     "cosine": CosineAggregation,
     "quantile": QuantileAggregation,
     "power": PowerAggregation,
-    "blahut_arimoto": BlahutArimotoAggregation,
 }
 
 
