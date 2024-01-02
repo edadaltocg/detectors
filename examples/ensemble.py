@@ -39,55 +39,6 @@ METHODS = [
 ]
 
 
-def blahut_arimoto(
-    channel: torch.Tensor, max_iter: int = int(1e3), threshold: float = 1e-12, device=torch.device("cpu"), verbose=True
-):
-    # C = number of classification labels, K = number of detectors, N = number of samples
-    # channel = N x K x C
-    # weights = N X K x 1
-    num_samples = channel.shape[0]
-    num_detectors = channel.shape[1]
-    num_classes = channel.shape[2]
-
-    if verbose:
-        print(f"Channel:\n {channel}")
-        print(f"\nChannel shape: {channel.shape}")
-
-    # assert that sum of channels along dim=2 is 1 for all samples and detectors
-    assert torch.allclose(
-        torch.sum(channel, dim=2), torch.ones(num_samples, num_detectors)
-    ), "Channel probabilities do not sum to 1"
-
-    # create a tensor for weights of shape N x K x 1 where each element is 1/K
-    weights = torch.ones(num_samples, num_detectors, 1) / num_detectors
-
-    weights = weights.to(device)
-    channel = channel.to(device)
-
-    if verbose:
-        print(f"\nWeight shape {weights.shape}")
-
-    for iter_id in range(max_iter):
-        # compute q as the product of weights and channel for each of the N samples
-        if verbose:
-            print(f"\nIteration {iter_id}")
-        q = torch.mul(weights, channel)
-        q = q / torch.sum(q, dim=1, keepdim=True)
-        if verbose:
-            print(f"\nq shape: {q.shape}")
-
-        w1 = torch.prod(torch.pow(q, channel), dim=2, keepdim=True)
-        w1 = w1 / torch.sum(w1, dim=1, keepdim=True)
-        if verbose:
-            print(f"\nw1 shape: {w1.shape}")
-
-        tolerance = torch.linalg.norm(w1 - weights)
-        weights = w1
-        if tolerance < threshold:
-            break
-    return weights.squeeze(dim=-1).detach().cpu()
-
-
 def score_to_probability(score):
     return 1 / (1 + np.exp(-score))
 
