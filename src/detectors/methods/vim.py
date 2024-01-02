@@ -42,6 +42,7 @@ class ViM:
         if self.penultimate_layer_name is None:
             self.penultimate_layer_name = list(self.model._modules.keys())[-2]
         self.feature_extractor = create_feature_extractor(self.model, [self.penultimate_layer_name])
+        _logger.info("Penultimate layer name: %s", self.penultimate_layer_name)
 
         # get the model weights of the last layer
         if last_layer_name is None:
@@ -49,13 +50,12 @@ class ViM:
                 last_layer_name = self.model.default_cfg["classifier"]
             else:
                 last_layer_name = list(model._modules.keys())[-1]
-            _logger.info("Last layer name: %s", last_layer_name)
+        _logger.info("Last layer name: %s", last_layer_name)
         # last_layer = model._modules[last_layer_name]
         last_layer = get_composed_attr(model, last_layer_name.split("."))
-        assert isinstance(last_layer, nn.Linear), "Last layer must be a linear layer"
 
-        self.w = last_layer.weight.data.clone()
-        self.b = last_layer.bias.data.clone()
+        self.w = last_layer.weight.data.squeeze().clone()
+        self.b = last_layer.bias.data.squeeze().clone()
 
         _logger.debug("w shape: %s", self.w.shape)
         _logger.debug("b shape: %s", self.b.shape)

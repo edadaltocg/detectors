@@ -59,7 +59,6 @@ datasets_info = {
 def make_wilds_dataset(
     dataset_name, root, split="train", transform: Optional[Callable] = None, download=False, **kwargs
 ):
-
     dataset = wilds.get_dataset(dataset_name, root_dir=root, download=download)
     assert dataset is not None
     dataset = dataset.get_subset(split, transform=transform)

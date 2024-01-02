@@ -44,6 +44,14 @@ detectors.aggregations.mahalanobis module
    :undoc-members:
    :show-inheritance:
 
+detectors.aggregations.power module
+-----------------------------------
+
+.. automodule:: detectors.aggregations.power
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 detectors.aggregations.quantile module
 --------------------------------------
 

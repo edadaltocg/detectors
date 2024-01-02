@@ -7,7 +7,7 @@ from torchvision.datasets.utils import check_integrity, extract_archive
 
 
 class LSUNResized(ImageFolder):
-    """`LSUN (r) <ODIN_PAPER_URL>`_ Dataset subset.
+    """LSUN (r) Dataset.
 
     Args:
         root (string): Root directory of dataset where directory
@@ -25,6 +25,8 @@ class LSUNResized(ImageFolder):
     filename = "LSUN_resize.tar.gz"
     file_md5 = "278b7b31c8cb7e804a1465a8ce03a2dc"
     url = "https://www.dropbox.com/s/moqh2wh8696c3yl/LSUN_resize.tar.gz"
+    original_paper_url = "https://arxiv.org/abs/1610.01119"
+    paper_url = "https://arxiv.org/abs/1706.02690"
 
     def __init__(
         self, root: str, split=None, transform: Optional[Callable] = None, download: bool = False, **kwargs
@@ -59,7 +61,7 @@ class LSUNResized(ImageFolder):
 
 
 class LSUNCroped(LSUNResized):
-    """`LSUN (c) <ODIN_PAPER_URL>`_ Dataset subset.
+    """LSUN (c) Dataset.
 
     Args:
         root (string): Root directory of dataset where directory
@@ -77,3 +79,5 @@ class LSUNCroped(LSUNResized):
     filename = "LSUN.tar.gz"
     file_md5 = "458a0a0ab8e5f1cb4516d7400568e460"
     url = "https://www.dropbox.com/s/fhtsw1m3qxlwj6h/LSUN.tar.gz"
+    original_paper_url = "https://arxiv.org/abs/1610.01119"
+    paper_url = "https://arxiv.org/abs/1706.02690"

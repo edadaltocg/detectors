@@ -45,6 +45,11 @@ class Gaussian(CustomTensorDataset):
         seed (int): seed for the random number generator.
     """
 
+    url = ""
+    paper_url = "https://arxiv.org/pdf/1610.02136.pdf"
+    original_paper_url = ""
+    license = "mit"
+
     def __init__(
         self,
         root: Optional[str] = None,
@@ -75,6 +80,11 @@ class Uniform(CustomTensorDataset):
         seed (int): seed for the random number generator.
     """
 
+    url = ""
+    paper_url = "https://arxiv.org/pdf/1610.02136.pdf"
+    original_paper_url = ""
+    license = "mit"
+
     def __init__(
         self,
         root: Optional[str] = None,
@@ -93,6 +103,26 @@ class Uniform(CustomTensorDataset):
 
 
 class Blobs(CustomTensorDataset):
+    """
+    Blobs: amorphous shapes with definite edges.
+
+    Args:
+        root (str): root directory.
+        split (str, optional): not used.
+        transform (callable, optional): transform to apply.
+        download (bool, optional): not used.
+        nb_samples (int): number of samples.
+        shape (tuple[int, int, int]): shape of the samples.
+        seed (int): seed for the random number generator.
+
+    Reference:
+        [1] https://github.com/hendrycks/outlier-exposure
+    """
+
+    url = ""
+    paper_url = "https://arxiv.org/abs/1812.04606"
+    original_paper_url = ""
+
     def __init__(
         self,
         root: Optional[str] = None,
@@ -104,22 +134,6 @@ class Blobs(CustomTensorDataset):
         seed=1,
         **kwargs,
     ):
-        """
-        Blobs: amorphous shapes with definite edges.
-
-        Args:
-            root (str): root directory.
-            split (str, optional): not used.
-            transform (callable, optional): transform to apply.
-            download (bool, optional): not used.
-            nb_samples (int): number of samples.
-            shape (tuple[int, int, int]): shape of the samples.
-            seed (int): seed for the random number generator.
-
-        Reference:
-            [1] https://github.com/hendrycks/outlier-exposure
-        """
-
         imgs = np.float32(np.random.binomial(n=1, p=0.7, size=(nb_samples, *shape)))
         for i in range(nb_samples):
             imgs[i] = gblur(imgs[i], sigma=1.5, channel_axis=-1)
@@ -132,6 +146,26 @@ class Blobs(CustomTensorDataset):
 
 
 class Rademacher(CustomTensorDataset):
+    """
+    Blobs: amorphous shapes with definite edges.
+
+    Args:
+        root (str): root directory.
+        split (str, optional): not used.
+        transform (callable, optional): transform to apply.
+        download (bool, optional): not used.
+        nb_samples (int): number of samples.
+        shape (tuple[int, int, int]): shape of the samples.
+        seed (int): seed for the random number generator.
+
+    Reference:
+        [1] https://github.com/hendrycks/outlier-exposure
+    """
+
+    url = ""
+    paper_url = "https://arxiv.org/abs/1812.04606"
+    original_paper_url = ""
+
     def __init__(
         self,
         root: Optional[str] = None,
@@ -143,22 +177,6 @@ class Rademacher(CustomTensorDataset):
         seed=1,
         **kwargs,
     ):
-        """
-        Blobs: amorphous shapes with definite edges.
-
-        Args:
-            root (str): root directory.
-            split (str, optional): not used.
-            transform (callable, optional): transform to apply.
-            download (bool, optional): not used.
-            nb_samples (int): number of samples.
-            shape (tuple[int, int, int]): shape of the samples.
-            seed (int): seed for the random number generator.
-
-        Reference:
-            [1] https://github.com/hendrycks/outlier-exposure
-        """
-
         imgs = np.float32(np.random.binomial(n=1, p=0.5, size=(nb_samples, *shape)))
 
         # transform imgs in integers

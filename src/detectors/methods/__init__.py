@@ -7,7 +7,8 @@ from enum import Enum
 from functools import partial
 from typing import Any, Dict, List
 
-from detectors.methods.templates import Detector, DetectorWrapper
+from detectors.methods.argmax import argm
+from detectors.methods.templates import DetectorWrapper
 
 from .csi import CSI
 from .dice import Dice
@@ -21,6 +22,7 @@ from .kl_matching import KLMatching
 from .knn_cosine import KnnCosine
 from .knn_euclides import KnnEuclides
 from .knn_projection import KnnProjection
+from .l1norm import L1Norm
 from .mahalanobis import Mahalanobis
 from .max_logits import max_logits
 from .maxcosine import MaxCosineSimilarity
@@ -35,8 +37,6 @@ from .relative_mahalanobis import RelativeMahalanobis
 from .ssd import SSD
 from .vim import ViM
 
-_logger = logging.getLogger(__name__)
-
 detectors_registry = {
     # naive detectors
     "random": random_score,
@@ -50,6 +50,8 @@ detectors_registry = {
     "mcdropout": mcdropout,
     "maxcosine": MaxCosineSimilarity,
     "entropy": entropy,
+    "argm": argm,
+    "l1norm": L1Norm,
     # hyperparameter detectors
     "odin": odin,
     "doctor": doctor,
@@ -108,16 +110,17 @@ def register_detector(name: str):
     return decorator
 
 
-def create_detector(detector_name: str, **kwargs) -> Detector:
+# str(detectors.create_detector()).replace("'", "`")
+def create_detector(detector_name: str, **kwargs) -> DetectorWrapper:
     """Create detector factory.
 
     Args:
         detector_name (string): Name of the detector.
             Already implemented:
-                `random`, `msp`, `odin`, `energy`, `mahalanobis`, `react`, `dice`, `knn_euclides`, `igeood_logits`,
-                `projection`, `react_projection`, `gradnorm`, `maxcosine`, `mcdropout`, `max_logits`, `kl_matching`,
-                `gmm`, `relative_mahalanobis`, `doctor`, `always_one`, `always_zero`, `random_score`, `vim`,
-                `entropy`, `ssd`, `csi`, `knn_cosine`, `knn_projection`.
+                `random`, `always_one`, `always_zero`, `msp`, `max_logits`, `kl_matching`, `vim`, `mcdropout`,
+                `maxcosine`, `entropy`, `argm`, `l1norm`, `odin`, `doctor`, `energy`, `dice`, `react`, `igeood_logits`,
+                `gradnorm`, `knn_euclides`, `knn_cosine`, `knn_projection`, `mahalanobis`, `gmm`,
+                `relative_mahalanobis`, `projection`, `react_projection`, `ssd`, `csi`.
 
         **kwargs: Additional arguments for the detector.
 

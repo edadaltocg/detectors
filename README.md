@@ -29,7 +29,6 @@ Please follow the instructions [here](https://pytorch.org/get-started/locally/) 
 
 ```bash
 pip install detectors
-pip install -q git+https://github.com/edadaltocg/detectors.git
 ```
 
 To install the latest version from the source:
@@ -144,6 +143,10 @@ print(detectors.list_pipelines())
 
 - [Documentation](https://detectors.readthedocs.io/en/latest/use_cases/)
 
+**Pypi**
+
+- [Website](https://pypi.org/project/detectors)
+
 ## Contributing
 
 As an open-source project in a rapidly developing field, we are open to contributions, whether in the form of a new feature, improved infra, or better documentation.
@@ -178,10 +181,11 @@ The detection of Out-of-Distribution (OOD) has created a new way of securing mac
 If you find this repository useful, please consider giving it a star 🌟 and citing it as below:
 
 ```bibtex
-@software{detectors,
-author = {},
-title = {Detectors: Generalized Out-Of-Distribution Detection Library},
+@software{detectors2023,
+author = {Eduardo Dadalto},
+title = {Detectors: a Python Library for Generalized Out-Of-Distribution Detection},
 url = {https://github.com/edadaltocg/detectors},
+doi = {https://doi.org/10.5281/zenodo.7883596},
 month = {5},
 year = {2023}
 }

@@ -12,6 +12,7 @@ Subpackages
    detectors.methods
    detectors.models
    detectors.pipelines
+   detectors.preprocessing
 
 Submodules
 ----------
@@ -32,10 +33,26 @@ detectors.criterions module
    :undoc-members:
    :show-inheritance:
 
+detectors.ensemble module
+-------------------------
+
+.. automodule:: detectors.ensemble
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 detectors.eval module
 ---------------------
 
 .. automodule:: detectors.eval
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+detectors.scod\_eval module
+---------------------------
+
+.. automodule:: detectors.scod_eval
    :members:
    :undoc-members:
    :show-inheritance:

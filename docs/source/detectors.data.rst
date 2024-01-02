@@ -4,6 +4,14 @@ detectors.data package
 Submodules
 ----------
 
+detectors.data.300k\_random\_images module
+------------------------------------------
+
+.. automodule:: detectors.data.300k_random_images
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 detectors.data.cifar\_wrapper module
 ------------------------------------
 
@@ -100,6 +108,14 @@ detectors.data.mos module
    :undoc-members:
    :show-inheritance:
 
+detectors.data.ninco\_ssb\_clean module
+---------------------------------------
+
+.. automodule:: detectors.data.ninco_ssb_clean
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 detectors.data.noise module
 ---------------------------
 
@@ -144,6 +160,14 @@ detectors.data.tiny\_imagenet\_r\_c module
 ------------------------------------------
 
 .. automodule:: detectors.data.tiny_imagenet_r_c
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+detectors.data.utils module
+---------------------------
+
+.. automodule:: detectors.data.utils
    :members:
    :undoc-members:
    :show-inheritance:

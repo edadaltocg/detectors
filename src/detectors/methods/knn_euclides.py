@@ -23,8 +23,8 @@ class KnnEuclides(DetectorWithFeatureExtraction):
         all_blocks (bool, optional): If True, use all blocks of the model. Defaults to False.
         last_layer (bool, optional): If True, use also the last layer of the model. Defaults to False.
         pooling_op_name (str, optional): Pooling operation to be applied to the features.
-            Can be one of ["max", "avg", "flatten", "getitem", "none"]. Defaults to "avg".
-        aggregation_method_name (str, optional): Aggregation method to be applied to the features. Defaults to None.
+            Can be one of ["max", "avg", "flatten", "getitem", "none"]. Defaults to "avg_or_getitem".
+        aggregation_method_name (str, optional): Aggregation method to be applied to the features. Defaults to "mean".
         alpha (float, optional): Alpha parameter for the input pre-processing. Defaults to 1.
         k (int, optional): Number of nearest neighbors to be considered. Defaults to 10.
         avg_topk (bool, optional): If True, average the top-k scores. Defaults to False.
@@ -39,7 +39,7 @@ class KnnEuclides(DetectorWithFeatureExtraction):
         features_nodes: Optional[List[str]] = None,
         all_blocks: bool = False,
         last_layer: bool = False,
-        pooling_op_name: str = "avg",
+        pooling_op_name: str = "avg_or_getitem",
         aggregation_method_name="mean",
         alpha: float = 1,
         k: int = 10,
@@ -60,17 +60,7 @@ class KnnEuclides(DetectorWithFeatureExtraction):
 
         assert 0 < self.alpha <= 1, "alpha must be in the interval (0, 1]"
 
-    def _layer_score(self, x: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None):
-        x = x / torch.norm(x, p=2, dim=-1, keepdim=True)  # type: ignore
-        topk, _ = self.index[layer_name].search(x.cpu().numpy().astype(np.float32), k=self.k)
-        topk = torch.from_numpy(topk).to(x.device)
-        # pairwise = torch.cdist(x, self.ref[layer_name].to(x.device), p=2)
-        # topk, _ = torch.topk(pairwise, k=self.k, dim=-1, largest=False)
-        if self.mean_op:
-            return -topk.mean(dim=-1)
-        else:
-            return -topk[:, -1]
-
+    @torch.no_grad()
     def _fit_params(self) -> None:
         self.ref = {}
         self.index = {}
@@ -84,3 +74,15 @@ class KnnEuclides(DetectorWithFeatureExtraction):
             )
             self.index[layer_name] = faiss.IndexFlatL2(self.ref[layer_name].shape[1])
             self.index[layer_name].add(self.ref[layer_name].cpu().numpy().astype(np.float32))
+
+    @torch.no_grad()
+    def _layer_score(self, x: Tensor, layer_name: Optional[str] = None, index: Optional[int] = None):
+        x = x / torch.norm(x, p=2, dim=-1, keepdim=True)  # type: ignore
+        topk, _ = self.index[layer_name].search(x.cpu().numpy().astype(np.float32), k=self.k)
+        topk = torch.from_numpy(topk).to(x.device)
+        # pairwise = torch.cdist(x, self.ref[layer_name].to(x.device), p=2)
+        # topk, _ = torch.topk(pairwise, k=self.k, dim=-1, largest=False)
+        if self.mean_op:
+            return -topk.mean(dim=-1)
+        else:
+            return -topk[:, -1]

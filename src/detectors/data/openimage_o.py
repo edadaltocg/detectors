@@ -42,7 +42,7 @@ class OpenImageO(ImageFolder):
         super().__init__(self.dataset_folder, transform=transform, **kwargs)
 
     def _check_integrity(self) -> bool:
-        # assert number of iumages in folder is equal to 17632
+        # assert number of images in folder is equal to 17632
         if not self._check_exists():
             return False
 
@@ -52,7 +52,7 @@ class OpenImageO(ImageFolder):
             # check if current path is a file
             if os.path.isfile(os.path.join(self.dataset_folder, self.base_folder, path)):
                 count += 1
-        return count >= 16_000
+        return count >= 10_000
 
     def _check_exists(self) -> bool:
         return os.path.exists(self.dataset_folder)

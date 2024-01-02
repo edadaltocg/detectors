@@ -2,7 +2,6 @@ import logging
 import types
 from functools import partial
 
-
 from sklearn.preprocessing import (
     MaxAbsScaler,
     MinMaxScaler,
@@ -47,7 +46,7 @@ class Preprocessing:
         x = x.detach().cpu().numpy()
         try:
             return self.method.transform(x, *args, **kwargs)
-        except Exception as e:
+        except Exception:
             return self.method(x, *args, **kwargs)
 
     def __call__(self, x: Tensor, *args, **kwargs):

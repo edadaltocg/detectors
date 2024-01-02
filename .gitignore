@@ -140,9 +140,6 @@ dmypy.json
 # data
 /data
 
-# cluster
-/cluster
-
 # logs
 /results
 /storage

@@ -6,7 +6,7 @@ from torch import Tensor
 class QuantileAggregation:
     def fit(self, stack: Tensor, *args, **kwargs):
         stack = stack.detach().cpu().numpy()
-        self.method = QuantileTransformer(n_quantiles=100, output_distribution="uniform")
+        self.method = QuantileTransformer(n_quantiles=1000, output_distribution="normal")
         self.method.fit(stack)
 
     def __call__(self, scores: Tensor, *args, **kwargs):

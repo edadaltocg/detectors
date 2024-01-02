@@ -6,8 +6,6 @@ from torch import Tensor
 
 from detectors.methods.templates import DetectorWithFeatureExtraction
 
-_logger = logging.getLogger(__name__)
-
 
 def max_cosine_sim_layer_score(x: Tensor, mus: Union[Tensor, List[Tensor]], eps=1e-7):
     if isinstance(mus, list):

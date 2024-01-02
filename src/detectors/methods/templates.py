@@ -192,6 +192,7 @@ class DetectorWithFeatureExtraction(Detector):
     ):
         self.model = model
         self.model.eval()
+        self.device = next(self.model.parameters()).device
         self.features_nodes = features_nodes
         self.all_blocks = all_blocks
         self.pooling_op_name = pooling_op_name
@@ -215,10 +216,10 @@ class DetectorWithFeatureExtraction(Detector):
             self.last_layer_name = list(self.model._modules.keys())[-1]
             if self.features_nodes is None:
                 self.features_nodes = [self.last_layer_name]
-            else:
+            elif self.last_layer_name not in self.features_nodes:
                 self.features_nodes.append(self.last_layer_name)
-        # remove duplicates
-        self.features_nodes = list(set(self.features_nodes))
+        # remove duplicates maintaining order
+        self.features_nodes = list(dict.fromkeys(self.features_nodes))
         _logger.info("Using features nodes: %s", self.features_nodes)
 
         self.feature_extractor = create_feature_extractor(self.model, self.features_nodes)
@@ -282,15 +283,20 @@ class DetectorWithFeatureExtraction(Detector):
         else:
             self.train_targets = self.train_targets[: self.idx]
 
+        for node_name, v in self.train_features.items():
+            _logger.info("Features shape: %s", v.shape)
+
         self._fit_params()
 
-        _logger.debug("Fitting aggregator %s...", self.aggregation_method_name)
+        _logger.info("Fitting aggregator: %s...", self.aggregation_method_name)
         self.batch_size = self.train_targets.shape[0]  # type: ignore
         all_scores = torch.zeros(self.train_targets.shape[0], len(self.train_features))
         for i, (k, v) in tqdm(enumerate(self.train_features.items())):
             idx = 0
-            for idx in range(0, v.shape[0], self.batch_size):
-                all_scores[:, i] = self._layer_score(v[idx : idx + self.batch_size], k, i).view(-1)
+            for idx in tqdm(range(0, v.shape[0], self.batch_size)):
+                all_scores[:, i] = self._layer_score(v[idx : idx + self.batch_size].to(self.device), k, i).view(-1)
+
+        _logger.info("Fit data shape: %s", all_scores.shape)
         self.aggregation_method.fit(all_scores, self.train_targets)
 
         # TODO: compile graph with _layer_score
@@ -298,7 +304,6 @@ class DetectorWithFeatureExtraction(Detector):
         del self.train_features
         del self.train_targets
 
-    @abstractmethod
     def _fit_params(self) -> None:
         """Fit the data to the parameters of the detector."""
         pass
