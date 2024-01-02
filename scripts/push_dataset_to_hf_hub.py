@@ -9,12 +9,13 @@
 import argparse
 import os
 
+from huggingface_hub.hf_api import create_repo
+from huggingface_hub.repocard import DatasetCard, DatasetCardData
+
 import datasets
 import detectors
 import parse_arxiv
 from datasets import Dataset
-from huggingface_hub.hf_api import create_repo
-from huggingface_hub.repocard import DatasetCard, DatasetCardData
 
 
 def main(

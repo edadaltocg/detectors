@@ -1,8 +1,8 @@
-import sys
 import argparse
 import json
 import logging
 import os
+import sys
 
 import timm
 import timm.data

@@ -12,6 +12,14 @@ detectors.models.densenet module
    :undoc-members:
    :show-inheritance:
 
+detectors.models.dino module
+----------------------------
+
+.. automodule:: detectors.models.dino
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 detectors.models.resnet module
 ------------------------------
 

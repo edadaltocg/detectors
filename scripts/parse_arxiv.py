@@ -1,14 +1,14 @@
 """Requirements
     - feedparser installed: pip install feedparser
 """
-import os
 import argparse
-import urllib
-import urllib.request
-import feedparser
 import json
 import logging
+import os
+import urllib
+import urllib.request
 
+import feedparser
 
 logging.basicConfig(
     format="%(asctime)s:%(levelname)s:%(filename)s:%(lineno)s-%(funcName)s: %(message)s",

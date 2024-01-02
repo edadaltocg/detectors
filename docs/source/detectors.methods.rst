@@ -12,6 +12,22 @@ detectors.methods.ae module
    :undoc-members:
    :show-inheritance:
 
+detectors.methods.argmax module
+-------------------------------
+
+.. automodule:: detectors.methods.argmax
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+detectors.methods.ash module
+----------------------------
+
+.. automodule:: detectors.methods.ash
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 detectors.methods.bats module
 -----------------------------
 
@@ -100,6 +116,14 @@ detectors.methods.gram module
    :undoc-members:
    :show-inheritance:
 
+detectors.methods.igeood\_features module
+-----------------------------------------
+
+.. automodule:: detectors.methods.igeood_features
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 detectors.methods.igeood\_logits module
 ---------------------------------------
 
@@ -116,10 +140,34 @@ detectors.methods.kl\_matching module
    :undoc-members:
    :show-inheritance:
 
+detectors.methods.knn\_cosine module
+------------------------------------
+
+.. automodule:: detectors.methods.knn_cosine
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 detectors.methods.knn\_euclides module
 --------------------------------------
 
 .. automodule:: detectors.methods.knn_euclides
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+detectors.methods.knn\_projection module
+----------------------------------------
+
+.. automodule:: detectors.methods.knn_projection
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+detectors.methods.l1norm module
+-------------------------------
+
+.. automodule:: detectors.methods.l1norm
    :members:
    :undoc-members:
    :show-inheritance:
@@ -136,6 +184,14 @@ detectors.methods.mahalanobis module
 ------------------------------------
 
 .. automodule:: detectors.methods.mahalanobis
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+detectors.methods.masf module
+-----------------------------
+
+.. automodule:: detectors.methods.masf
    :members:
    :undoc-members:
    :show-inheritance:
@@ -204,6 +260,22 @@ detectors.methods.openmax module
    :undoc-members:
    :show-inheritance:
 
+detectors.methods.plugin\_bb module
+-----------------------------------
+
+.. automodule:: detectors.methods.plugin_bb
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+detectors.methods.pnml module
+-----------------------------
+
+.. automodule:: detectors.methods.pnml
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 detectors.methods.projection module
 -----------------------------------
 
@@ -240,6 +312,22 @@ detectors.methods.relative\_mahalanobis module
 ----------------------------------------------
 
 .. automodule:: detectors.methods.relative_mahalanobis
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+detectors.methods.residual module
+---------------------------------
+
+.. automodule:: detectors.methods.residual
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+detectors.methods.she module
+----------------------------
+
+.. automodule:: detectors.methods.she
    :members:
    :undoc-members:
    :show-inheritance:

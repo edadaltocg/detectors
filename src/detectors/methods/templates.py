@@ -216,7 +216,7 @@ class DetectorWithFeatureExtraction(Detector):
             self.last_layer_name = list(self.model._modules.keys())[-1]
             if self.features_nodes is None:
                 self.features_nodes = [self.last_layer_name]
-            else:
+            elif self.last_layer_name not in self.features_nodes:
                 self.features_nodes.append(self.last_layer_name)
         # remove duplicates maintaining order
         self.features_nodes = list(dict.fromkeys(self.features_nodes))
@@ -304,7 +304,6 @@ class DetectorWithFeatureExtraction(Detector):
         del self.train_features
         del self.train_targets
 
-    @abstractmethod
     def _fit_params(self) -> None:
         """Fit the data to the parameters of the detector."""
         pass

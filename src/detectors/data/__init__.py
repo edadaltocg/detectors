@@ -29,9 +29,9 @@ from .ninco_ssb_clean import (
     NINCOFull,
     OpenImageOClean,
     PlacesClean,
+    SpeciesClean,
     SSBEasy,
     SSBHard,
-    SpeciesClean,
     TexturesClean,
 )
 from .noise import Blobs, Gaussian, Rademacher, Uniform

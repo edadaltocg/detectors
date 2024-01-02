@@ -6,8 +6,8 @@ import types
 from enum import Enum
 from functools import partial
 from typing import Any, Dict, List
-from detectors.methods.argmax import argm
 
+from detectors.methods.argmax import argm
 from detectors.methods.templates import Detector, DetectorWrapper
 
 from .csi import CSI
@@ -22,6 +22,7 @@ from .kl_matching import KLMatching
 from .knn_cosine import KnnCosine
 from .knn_euclides import KnnEuclides
 from .knn_projection import KnnProjection
+from .l1norm import L1Norm
 from .mahalanobis import Mahalanobis
 from .max_logits import max_logits
 from .maxcosine import MaxCosineSimilarity
@@ -35,7 +36,6 @@ from .react_projection import ReActProjection
 from .relative_mahalanobis import RelativeMahalanobis
 from .ssd import SSD
 from .vim import ViM
-from .l1norm import L1Norm
 
 _logger = logging.getLogger(__name__)
 

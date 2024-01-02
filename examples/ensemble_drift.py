@@ -1,13 +1,15 @@
-import os
 import json
+import logging
+import os
+
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+
 import detectors
-from detectors.ensemble import fisher_tau_method, p_value_fn, get_combine_p_values_fn, ensemble_names
-import logging
-from drift_cpu import main as drift_cpu_main
 from detectors.config import RESULTS_DIR
+from detectors.ensemble import ensemble_names, fisher_tau_method, get_combine_p_values_fn, p_value_fn
+from drift_cpu import main as drift_cpu_main
 
 _logger = logging.getLogger(__name__)
 

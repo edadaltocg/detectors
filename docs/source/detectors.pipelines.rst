@@ -20,6 +20,22 @@ detectors.pipelines.covariate\_drift module
    :undoc-members:
    :show-inheritance:
 
+detectors.pipelines.drift module
+--------------------------------
+
+.. automodule:: detectors.pipelines.drift
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+detectors.pipelines.misclassif module
+-------------------------------------
+
+.. automodule:: detectors.pipelines.misclassif
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 detectors.pipelines.ood module
 ------------------------------
 
@@ -36,10 +52,18 @@ detectors.pipelines.osr module
    :undoc-members:
    :show-inheritance:
 
-detectors.pipelines.ttoodda module
-----------------------------------
+detectors.pipelines.sc module
+-----------------------------
 
-.. automodule:: detectors.pipelines.ttoodda
+.. automodule:: detectors.pipelines.sc
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+detectors.pipelines.scod module
+-------------------------------
+
+.. automodule:: detectors.pipelines.scod
    :members:
    :undoc-members:
    :show-inheritance:

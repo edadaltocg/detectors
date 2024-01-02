@@ -1,6 +1,6 @@
-import torch
 from typing import List, Literal, Optional
 
+import torch
 from torch import Tensor, nn
 
 from detectors.methods.templates import DetectorWithFeatureExtraction

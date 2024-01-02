@@ -85,8 +85,8 @@ def list_pipeline_args(name: str) -> List[Tuple[str, Any]]:
 
 
 from .covariate_drift import *
-from .ood import *
 from .drift import *
+from .ood import *
 from .sc import *
 from .scod import *
 

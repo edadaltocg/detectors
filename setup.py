@@ -21,7 +21,7 @@ install_requires = [
 
 setup(
     name="detectors",
-    # version="{{VERSION_PLACEHOLDER}}",
+    version="{{VERSION_PLACEHOLDER}}",
     author="Eduardo Dadalto",
     author_email="edadaltocg@gmail.com",
     description="Detectors: a python package to benchmark generalized out-of-distribution detection methods.",
