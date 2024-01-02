@@ -8,7 +8,7 @@ from functools import partial
 from typing import Any, Dict, List
 
 from detectors.methods.argmax import argm
-from detectors.methods.templates import Detector, DetectorWrapper
+from detectors.methods.templates import DetectorWrapper
 
 from .csi import CSI
 from .dice import Dice
@@ -36,8 +36,6 @@ from .react_projection import ReActProjection
 from .relative_mahalanobis import RelativeMahalanobis
 from .ssd import SSD
 from .vim import ViM
-
-_logger = logging.getLogger(__name__)
 
 detectors_registry = {
     # naive detectors
