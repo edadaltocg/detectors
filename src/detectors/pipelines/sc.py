@@ -12,7 +12,7 @@ from torch import Tensor
 from tqdm import tqdm
 
 from detectors.data import create_dataset
-from detectors.eval import METRICS_NAMES_PRETTY, get_ood_results, risks_coverages_selective_net
+from detectors.eval import get_ood_results, risks_coverages_selective_net
 from detectors.methods.templates import Detector, DetectorWrapper
 from detectors.pipelines import register_pipeline
 from detectors.pipelines.base import Pipeline

@@ -27,6 +27,7 @@ def register_pipeline(name: str, dataset_name: Optional[str] = None):
     return decorator
 
 
+## str(detectors.create_pipeline()).replace("'", "`")
 def create_pipeline(name: str, dataset_name: Optional[str] = None, **kwargs) -> Pipeline:
     """
     Utility factory method to build a Pipeline.
@@ -36,11 +37,14 @@ def create_pipeline(name: str, dataset_name: Optional[str] = None, **kwargs) -> 
             The name defining which pipeline will be returned. Currently accepted pipeline names are:
                 `ood_benchmark`, `ood_validation`, `ood_validation_noise`, `covariate_drift`, `osr`
             Complete list:
-                `ood_benchmark_cifar10`, `ood_benchmark_cifar100`, `ood_benchmark_imagenet`, `ood_mnist_benchmark`,
-                `ood_validation_cifar10`, `ood_validation_cifar100`, `ood_validation_imagenet`, `ood_validation_mnist`,
-                `ood_validation_noise_cifar10`, `ood_validation_noise_cifar100`, `ood_validation_noise_imagenet`,
-                `covariate_drift_cifar10`, `covariate_drift_cifar100`, `covariate_drift_imagenet`.
-
+                `covariate_drift_cifar10`, `covariate_drift_cifar100`, `covariate_drift_imagenet`,
+                `drift_benchmark_imagenet_r`, `drift_benchmark_imagenet_lt`, `drift_benchmark_openimage_o`,
+                `ood_benchmark_cifar10`, `ood_benchmark_cifar100`, `ood_benchmark_imagenet`,
+                `ood_benchmark_imagenet_reduced`, `ood_benchmark_imagenet_near`, `ood_benchmark_imagenet_all_2`,
+                `ood_benchmark_imagenet_far`, `ood_mnist_benchmark`, `ood_validation_cifar10`,
+                `ood_validation_noise_cifar10`, `ood_validation_cifar100`, `ood_validation_noise_cifar100`,
+                `ood_validation_imagenet`, `sc_benchmark_cifar10`, `sc_benchmark_cifar100`,
+                `sc_benchmark_imagenet`, `scod_benchmark_cifar10`, `scod_benchmark_cifar100`
         **kwargs:
             Additional arguments to pass to the pipeline.
 

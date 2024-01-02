@@ -112,16 +112,17 @@ def register_detector(name: str):
     return decorator
 
 
+# str(detectors.create_detector()).replace("'", "`")
 def create_detector(detector_name: str, **kwargs) -> DetectorWrapper:
     """Create detector factory.
 
     Args:
         detector_name (string): Name of the detector.
             Already implemented:
-                `random`, `msp`, `odin`, `energy`, `mahalanobis`, `react`, `dice`, `knn_euclides`, `igeood_logits`,
-                `projection`, `react_projection`, `gradnorm`, `maxcosine`, `mcdropout`, `max_logits`, `kl_matching`,
-                `gmm`, `relative_mahalanobis`, `doctor`, `always_one`, `always_zero`, `random_score`, `vim`,
-                `entropy`, `ssd`, `csi`, `knn_cosine`, `knn_projection`.
+                `random`, `always_one`, `always_zero`, `msp`, `max_logits`, `kl_matching`, `vim`, `mcdropout`,
+                `maxcosine`, `entropy`, `argm`, `l1norm`, `odin`, `doctor`, `energy`, `dice`, `react`, `igeood_logits`,
+                `gradnorm`, `knn_euclides`, `knn_cosine`, `knn_projection`, `mahalanobis`, `gmm`,
+                `relative_mahalanobis`, `projection`, `react_projection`, `ssd`, `csi`.
 
         **kwargs: Additional arguments for the detector.
 

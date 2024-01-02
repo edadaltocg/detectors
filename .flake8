@@ -14,6 +14,7 @@ max-line-length = 120
 max-complexity = 10
 extend-ignore =
     E203,
+    F401,
 per-file-ignores =
     # imported but unused
     __init__.py: F401,F403,E402

@@ -19,9 +19,25 @@ install_requires = [
     "matplotlib",
 ]
 
+dev_requires = [
+    "black",
+    "isort",
+    "flake8",
+    "pytest",
+    "pytest-cov",
+    "pytest-timeout",
+    "pytest-xdist",
+    "twine",
+    "sphinx",
+    "sphinx_rtd_theme",
+    "myst-parser",
+    "six",
+]
+
 setup(
     name="detectors",
-    version="{{VERSION_PLACEHOLDER}}",
+    # version="{{VERSION_PLACEHOLDER}}",
+    version="0.1.0",
     author="Eduardo Dadalto",
     author_email="edadaltocg@gmail.com",
     description="Detectors: a python package to benchmark generalized out-of-distribution detection methods.",
@@ -36,20 +52,7 @@ setup(
     python_requires=">=3.8.0",
     install_requires=install_requires,
     extras_require={
-        "dev": [
-            "black",
-            "isort",
-            "flake8",
-            "pytest",
-            "pytest-cov",
-            "pytest-timeout",
-            "pytest-xdist",
-            "twine",
-            "sphinx",
-            "sphinx_rtd_theme",
-            "myst-parser",
-            "six",
-        ]
+        "dev": dev_requires,
     },
     classifiers=[
         "Intended Audience :: Developers",

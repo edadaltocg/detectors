@@ -134,6 +134,7 @@ def register_dataset(dataset_name: str):
     return register_model_cls
 
 
+# str(detectors.list_datasets()).replace("'", "`")
 def create_dataset(
     dataset_name: str,
     root: str = DATA_DIR,
@@ -147,16 +148,15 @@ def create_dataset(
     Args:
         dataset_name (string): Name of the dataset.
             Already implemented:
-                `cifar10`, `cifar100`, `stl10`, `svhn`, `mnist`, `fashion_mnist`,
-                `kmnist`, `emnist`, `mnist_c`, `english_chars`, `isun`, `lsun_c`, `lsun_r`,
-                `tiny_imagenet_c`, `tiny_imagenet_r`, `tiny_imagenet`, `textures`, `gaussian`,
-                `uniform`, `places365`, `stanford_cars`, `imagenet`, `imagenet1k`, `ilsvrc2012`,
-                `mos_inaturalist`, `mos_places365`, `mos_sun`, `cifar10_lt`, `cifar100_lt`,
-                `imagenet1k_lt`, `cifar10_c`, `cifar100_c`, `imagenet_c`, `imagenet_c_npz`,
-                `imagenet_a`, `imagenet_r`, `imagenet_o`, `openimage_o`, `oxford_pets`,
-                `oxford_flowers`, `cub200`, `imagenet1k_c`, `blobs`, `rademacher`,
-                `wilds_iwildcam`, `wilds_fmow`, `wilds_camelyon17`, `wilds_rxrx1`,
-                `wilds_poverty`, `wilds_globalwheat`, `ninco`.
+                `blobs`, `cifar10`, `cifar100`, `cifar100_c`, `cifar10_c`, `english_chars`, `fashion_mnist`,
+                `gaussian`, `ilsvrc2012`, `imagenet`, `imagenet1k`, `imagenet1k_c`, `imagenet1k_lt`,
+                `imagenet_a`, `imagenet_c`, `imagenet_c_npz`, `imagenet_lt`, `imagenet_o`, `imagenet_r`,
+                `inaturalist`, `inaturalist_clean`, `isun`, `lsun_c`, `lsun_r`, `mnist`, `mnist_c`,
+                `mos_inaturalist`, `mos_places365`, `mos_sun`, `ninco`, `ninco_full`, `openimage_o`,
+                `openimage_o_clean`, `oxford_pets`, `places365`, `places_clean`, `rademacher`, `species_clean`,
+                `ssb_easy`, `ssb_hard`, `stanford_cars`, `stl10`, `sun`, `svhn`, `textures`, `textures_clean`,
+                `tiny_imagenet`, `tiny_imagenet_c`, `tiny_imagenet_r`, `uniform`, `wilds_camelyon17`, `wilds_fmow`,
+                `wilds_globalwheat`, `wilds_iwildcam`, `wilds_poverty`, `wilds_rxrx1`.
         root (string): Root directory of dataset.
         split (string, optional): Depends on the selected dataset.
         transform (callable, optional): A function/transform that  takes in an PIL image

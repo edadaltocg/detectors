@@ -19,7 +19,6 @@ from detectors.methods import DetectorWrapper
 from detectors.methods.templates import Detector
 from detectors.pipelines import register_pipeline
 from detectors.pipelines.base import Pipeline
-from detectors.utils import ConcatDatasetsDim1
 
 _logger = logging.getLogger(__name__)
 
