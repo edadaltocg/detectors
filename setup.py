@@ -45,7 +45,7 @@ setup(
     long_description_content_type="text/markdown",
     keywords="vision deep learning pytorch OOD",
     license="APACHE 2.0",
-    url="https:c/github.com/edadaltocg/detectors",
+    url="https://github.com/edadaltocg/detectors",
     package_dir={"": "src"},
     packages=find_packages("src"),
     include_package_data=True,
