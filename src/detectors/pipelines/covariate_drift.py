@@ -57,37 +57,25 @@ class CovariateDriftPipeline(Pipeline):
 
         _logger.info("Creating datasets...")
 
-        fit_dataset = create_dataset(
-            dataset_name, split=dataset_splits[0], transform=transform
-        )
+        fit_dataset = create_dataset(dataset_name, split=dataset_splits[0], transform=transform)
         # shuffle fit dataset
         limit_fit = limit_fit or 1
         limit_fit = min(int(limit_fit * len(fit_dataset)), len(fit_dataset))
         indices = torch.randperm(len(fit_dataset)).numpy()[:limit_fit]
         fit_dataset = torch.utils.data.Subset(fit_dataset, indices)
-        in_dataset = create_dataset(
-            dataset_name, split=dataset_splits[1], transform=transform
-        )
+        in_dataset = create_dataset(dataset_name, split=dataset_splits[1], transform=transform)
         # shuffle in dataset
         indices = torch.randperm(len(in_dataset)).numpy()
         max_dataset_size = len(in_dataset) // (len(corruptions) * len(intensities) + 1)
         self.splits = torch.arange(0, len(in_dataset), max_dataset_size)
-        in_dataset = torch.utils.data.Subset(
-            in_dataset, indices[np.arange(0, self.splits[1].item())]
-        )
-        warmup_dataset = torch.utils.data.Subset(
-            fit_dataset, range(len(fit_dataset))[:warmup_size]
-        )
+        in_dataset = torch.utils.data.Subset(in_dataset, indices[np.arange(0, self.splits[1].item())])
+        warmup_dataset = torch.utils.data.Subset(fit_dataset, range(len(fit_dataset))[:warmup_size])
         in_dataset = torch.utils.data.ConcatDataset([warmup_dataset, in_dataset])
         out_datasets = {}
         for i, corruption in enumerate(corruptions):
             out_datasets[corruption] = []
             for j, intensity in enumerate(intensities):
-                _indices = indices[
-                    torch.arange(
-                        self.splits[i + j + 1].item(), self.splits[i + j + 2].item()
-                    )
-                ]
+                _indices = indices[torch.arange(self.splits[i + j + 1].item(), self.splits[i + j + 2].item())]
                 out_datasets[corruption].append(
                     torch.utils.data.Subset(
                         create_dataset(
@@ -108,9 +96,7 @@ class CovariateDriftPipeline(Pipeline):
         for i, intensity in enumerate(intensities):
             # shuffle corruptions?
             out_dataset.append(
-                torch.utils.data.ConcatDataset(
-                    [out_datasets[corruption][i] for corruption in corruptions]
-                )
+                torch.utils.data.ConcatDataset([out_datasets[corruption][i] for corruption in corruptions])
             )
         out_dataset = torch.utils.data.ConcatDataset(out_dataset)
 
@@ -131,14 +117,9 @@ class CovariateDriftPipeline(Pipeline):
         self.setup()
 
     def setup(self, *args):
-        test_dataset = torch.utils.data.ConcatDataset(
-            [self.in_dataset, self.out_dataset]
-        )
+        test_dataset = torch.utils.data.ConcatDataset([self.in_dataset, self.out_dataset])
         test_labels = torch.utils.data.TensorDataset(
-            torch.cat(
-                [torch.zeros(len(self.in_dataset))]
-                + [torch.ones(len(self.out_dataset))]
-            ).long()  # type: ignore
+            torch.cat([torch.zeros(len(self.in_dataset))] + [torch.ones(len(self.out_dataset))]).long()  # type: ignore
         )
 
         self.test_dataset = ConcatDatasetsDim1([test_dataset, test_labels])
@@ -158,9 +139,7 @@ class CovariateDriftPipeline(Pipeline):
             pin_memory=self.pin_memory,
             prefetch_factor=self.prefetch_factor,
         )
-        self.fit_dataloader = self.accelerator.prepare(
-            self.fit_dataloader
-        )  # careful with this with multiple gpus
+        self.fit_dataloader = self.accelerator.prepare(self.fit_dataloader)  # careful with this with multiple gpus
         self.test_dataloader = self.accelerator.prepare(self.test_dataloader)
 
     def preprocess(self, method: DetectorWrapper) -> DetectorWrapper:
@@ -206,9 +185,7 @@ class CovariateDriftPipeline(Pipeline):
             with torch.no_grad():
                 logits = model(x)
 
-            labels, y, scores, logits = self.accelerator.gather_for_metrics(
-                (labels, y, scores, logits)
-            )
+            labels, y, scores, logits = self.accelerator.gather_for_metrics((labels, y, scores, logits))
 
             test_labels[idx : idx + len(x)] = labels.detach().cpu()
             test_targets[idx : idx + len(x)] = y.detach().cpu()
@@ -221,13 +198,7 @@ class CovariateDriftPipeline(Pipeline):
         progress_bar.close()
         self.accelerator.wait_for_everyone()
 
-        assert (
-            len(test_labels)
-            == len(test_targets)
-            == len(test_scores)
-            == len(test_preds)
-            == idx
-        )
+        assert len(test_labels) == len(test_targets) == len(test_scores) == len(test_preds) == idx
 
         _logger.info("Computing metrics...")
         acc_threshold = kwargs.get("acc_threshold", 0.90)
@@ -262,9 +233,7 @@ class CovariateDriftPipeline(Pipeline):
         **kwargs,
     ) -> Dict[str, Any]:
         avg_warmup = test_scores[:warmup_size].mean().item()
-        data_padded = F.pad(
-            test_scores.unsqueeze(0), (win_size - 1, 0), "constant", avg_warmup
-        ).squeeze(0)
+        data_padded = F.pad(test_scores.unsqueeze(0), (win_size - 1, 0), "constant", avg_warmup).squeeze(0)
         if moving_average is None:
             moving_average = data_padded.unfold(0, win_size, stride).mean(dim=1)
 
@@ -274,17 +243,11 @@ class CovariateDriftPipeline(Pipeline):
             ema[i] = alpha * ema[i - 1] + (1 - alpha) * test_scores[i]
 
         mistakes = (test_preds != test_targets).float()
-        mistakes_padded = F.pad(
-            mistakes.unsqueeze(0), (win_size - 1, 0), "constant", 0
-        ).squeeze(0)
+        mistakes_padded = F.pad(mistakes.unsqueeze(0), (win_size - 1, 0), "constant", 0).squeeze(0)
         moving_accuracy = 1 - mistakes_padded.unfold(0, win_size, stride).mean(dim=1)
 
         # define real drift event: when moving accuracy is below threshold compared to training accuracy
-        acc = (
-            moving_accuracy[splits[1] : splits[1] + (splits[2] - splits[1]) // 2]
-            .mean()
-            .item()
-        )
+        acc = moving_accuracy[splits[1] : splits[1] + (splits[2] - splits[1]) // 2].mean().item()
         ref = acc_threshold * acc
         _logger.info("Original accuracy: %s", acc)
         _logger.info("Reference accuracy to detect drift: %s", ref)
@@ -297,26 +260,18 @@ class CovariateDriftPipeline(Pipeline):
         if len(np.unique(drift_labels.numpy())) == 1:
             auroc_drift = 1.0
         else:
-            auroc_drift = float(
-                sklearn.metrics.roc_auc_score(drift_labels, -moving_average)
-            )
+            auroc_drift = float(sklearn.metrics.roc_auc_score(drift_labels, -moving_average))
 
-        fprs, tprs, thresholds = sklearn.metrics.roc_curve(
-            drift_labels, -moving_average
-        )
+        fprs, tprs, thresholds = sklearn.metrics.roc_curve(drift_labels, -moving_average)
         fpr_drift, _, _ = detectors.eval.fpr_at_fixed_tpr(fprs, tprs, thresholds, 0.95)
 
         if len(np.unique(mistakes.numpy())) == 1:
             auroc_mistakes = 1.0
         else:
-            auroc_mistakes = float(
-                sklearn.metrics.roc_auc_score(mistakes, -test_scores)
-            )
+            auroc_mistakes = float(sklearn.metrics.roc_auc_score(mistakes, -test_scores))
 
         fprs, tprs, thresholds = sklearn.metrics.roc_curve(mistakes, -test_scores)
-        fpr_mistakes, _, _ = detectors.eval.fpr_at_fixed_tpr(
-            fprs, tprs, thresholds, 0.95
-        )
+        fpr_mistakes, _, _ = detectors.eval.fpr_at_fixed_tpr(fprs, tprs, thresholds, 0.95)
 
         return dict(
             scores=test_scores,

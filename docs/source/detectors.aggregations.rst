@@ -20,6 +20,15 @@ detectors.aggregations.basics module
    :undoc-members:
    :show-inheritance:
 
+
+detectors.aggregations.combine\_and\_conquer module
+---------------------------------------------------
+
+.. automodule:: detectors.aggregations.combine_and_conquer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 detectors.aggregations.cosine module
 ------------------------------------
 

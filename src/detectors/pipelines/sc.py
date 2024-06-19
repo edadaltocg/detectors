@@ -73,7 +73,12 @@ class SelectiveClassificationPipeline(Pipeline):
             )
         else:
             self.fit_dataset = None
-        self.in_dataset = create_dataset(self.in_dataset_name, split="test", transform=self.transform, download=True)
+        try:
+            self.in_dataset = create_dataset(
+                self.in_dataset_name, split="test", transform=self.transform, download=True
+            )
+        except ValueError:
+            self.in_dataset = create_dataset(self.in_dataset_name, split="val", transform=self.transform, download=True)
 
     def _setup_dataloaders(self):
         if self.in_dataset is None:

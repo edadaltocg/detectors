@@ -28,14 +28,6 @@ detectors.pipelines.drift module
    :undoc-members:
    :show-inheritance:
 
-detectors.pipelines.misclassif module
--------------------------------------
-
-.. automodule:: detectors.pipelines.misclassif
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 detectors.pipelines.ood module
 ------------------------------
 

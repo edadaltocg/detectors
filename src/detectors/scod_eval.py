@@ -41,12 +41,6 @@ def plugin_bb(
 
     r_bb == 1 => reject (misclassified or OOD)
     """
-    # build rejector: need to compute c_in and c_out
-    # c_in = lbd * pi
-    # c_out = c_fn - lbd * (1 - pi)
-    # thr = 1 - 2 * c_in - c_out
-    # pi is asy to estimate
-    # lbd need to solve the lagragnian or solve Pr(r(x)=1) <= b_rej
 
     def r_bb_fn(c_in, c_out, thr):
         return (1 - c_in - c_out) * scores_sc + c_out * invert(scores_ood) < thr
@@ -183,5 +177,4 @@ def benchmark():
 
 
 if __name__ == "__main__":
-    # benchmark
     benchmark()

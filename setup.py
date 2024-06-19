@@ -43,7 +43,7 @@ setup(
     description="Detectors: a python package to benchmark generalized out-of-distribution detection methods.",
     long_description=open("README.md", "r", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
-    keywords="vision deep learning pytorch OOD",
+    keywords="computer vision, deep learning, pytorch, out-of-distribution detection, OOD",
     license="APACHE 2.0",
     url="https://github.com/edadaltocg/detectors",
     package_dir={"": "src"},

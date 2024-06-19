@@ -66,15 +66,7 @@ def sync_tensor_across_gpus(t: torch.Tensor) -> torch.Tensor:
     if group_size == 1:
         return t
     gather_t_tensor = [torch.zeros_like(t) for _ in range(group_size)]
-    dist.all_gather(gather_t_tensor, t)  # this works with nccl backend when tensors need to be on gpu.
-    # for gloo and mpi backends, tensors need to be on cpu. also this works single machine with
-    # multiple   gpus. for multiple nodes, you should use dist.all_gather_multigpu. both have the
-    # same definition... see [here](https://pytorch.org/docs/stable/distributed.html).
-    #  somewhere in the same page, it was mentioned that dist.all_gather_multigpu is more for
-    # multi-nodes. still dont see the benefit of all_gather_multigpu. the provided working case in
-    # the doc is  vague...
-    # move tensors to cpu
-    # gather_t_tensor = [t.cpu() for t in gather_t_tensor]
+    dist.all_gather(gather_t_tensor, t)
     gather_t_tensor = torch.cat(gather_t_tensor, dim=0)
 
     return gather_t_tensor
