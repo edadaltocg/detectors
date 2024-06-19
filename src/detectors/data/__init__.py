@@ -1,6 +1,7 @@
 """
 Datasets module.
 """
+
 import logging
 import os
 from enum import Enum
@@ -89,6 +90,7 @@ datasets_registry = {
     "cifar10_c": CIFAR10_C,
     "cifar100_c": CIFAR100_C,
     "imagenet": ImageNet,
+    "imagenet_train": ImageNet,
     "imagenet1k": ImageNet,
     "ilsvrc2012": ImageNet,
     "imagenet_c": ImageNetCnpz,
@@ -173,7 +175,7 @@ def create_dataset(
         Dataset: Dataset object.
     """
     try:
-        if dataset_name in ["imagenet", "imagenet1k", "ilsvrc2012", "imagenet1k_lt", "imagenet_lt"]:
+        if dataset_name in ["imagenet", "imagenet1k", "ilsvrc2012", "imagenet1k_lt", "imagenet_lt", "imagenet_train"]:
             return datasets_registry[dataset_name](root=IMAGENET_ROOT, split=split, transform=transform, **kwargs)
         return datasets_registry[dataset_name](root=root, split=split, transform=transform, download=download, **kwargs)
     except KeyError as e:

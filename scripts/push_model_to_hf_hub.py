@@ -4,6 +4,7 @@
 - Jinja2 installed
 - Git LFS installed
 """
+
 import argparse
 import json
 import logging

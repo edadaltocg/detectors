@@ -1,6 +1,7 @@
 """
 Detection methods.
 """
+
 import logging
 import types
 from enum import Enum

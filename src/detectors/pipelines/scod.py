@@ -281,3 +281,27 @@ class SCODCifar100BenchmarkPipeline(SCODPipeline):
             seed=seed,
             **kwargs
         )
+
+
+@register_pipeline("scod_benchmark_imagenet")
+class SCODImagenetBenchmarkPipeline(SCODPipeline):
+    def __init__(self, transform: Callable, limit_fit=0.0, limit_run=1.0, batch_size=128, seed=42, **kwargs) -> None:
+        super().__init__(
+            "ilsvrc2012",
+            {
+                "inaturalist_clean": None,
+                "species_clean": None,
+                "places_clean": None,
+                "openimage_o_clean": None,
+                "ssb_easy": None,
+                "textures_clean": None,
+                "ninco": None,
+                "ssb_hard": None,
+            },
+            transform=transform,
+            batch_size=batch_size,
+            limit_fit=limit_fit,
+            limit_run=limit_run,
+            seed=seed,
+            **kwargs
+        )

@@ -78,7 +78,12 @@ class CovariateDriftPipeline(Pipeline):
                 _indices = indices[torch.arange(self.splits[i + j + 1].item(), self.splits[i + j + 2].item())]
                 out_datasets[corruption].append(
                     torch.utils.data.Subset(
-                        create_dataset(dataset_name + "_c", split=corruption, intensity=intensity, transform=transform),
+                        create_dataset(
+                            dataset_name + "_c",
+                            split=corruption,
+                            intensity=intensity,
+                            transform=transform,
+                        ),
                         _indices,
                     )
                 )
@@ -111,7 +116,7 @@ class CovariateDriftPipeline(Pipeline):
 
         self.setup()
 
-    def setup(self):
+    def setup(self, *args):
         test_dataset = torch.utils.data.ConcatDataset([self.in_dataset, self.out_dataset])
         test_labels = torch.utils.data.TensorDataset(
             torch.cat([torch.zeros(len(self.in_dataset))] + [torch.ones(len(self.out_dataset))]).long()  # type: ignore
@@ -149,7 +154,9 @@ class CovariateDriftPipeline(Pipeline):
             method.detector.model = self.accelerator.prepare(method.detector.model)
 
         progress_bar = tqdm(
-            range(len(self.fit_dataloader)), desc="Fitting", disable=not self.accelerator.is_local_main_process
+            range(len(self.fit_dataloader)),
+            desc="Fitting",
+            disable=not self.accelerator.is_local_main_process,
         )
         method.start()
         for x, y in self.fit_dataloader:
@@ -169,7 +176,9 @@ class CovariateDriftPipeline(Pipeline):
         test_preds = torch.empty(len(self.test_dataset), dtype=torch.long)
         idx = 0
         progress_bar = tqdm(
-            range(len(self.test_dataloader)), desc="Inference", disable=not self.accelerator.is_local_main_process
+            range(len(self.test_dataloader)),
+            desc="Inference",
+            disable=not self.accelerator.is_local_main_process,
         )
         for x, y, labels in self.test_dataloader:
             scores = method(x)
@@ -326,12 +335,37 @@ class CovariateDriftPipeline(Pipeline):
             linewidth=3,
             label="begin test set",
         )
-        ax2.plot(drift_labels.numpy(), alpha=0.5, c=mpl_colors[2], linestyle="--", label="drift", linewidth=3)
-        ax2.scatter(range(len(mistakes)), mistakes.numpy(), alpha=0.5, marker="*", c=mpl_colors[3], label="mistakes")
-        ax2.plot(moving_accuracy.numpy(), alpha=0.5, c=mpl_colors[3], label="moving accuracy", linewidth=2)
+        ax2.plot(
+            drift_labels.numpy(),
+            alpha=0.5,
+            c=mpl_colors[2],
+            linestyle="--",
+            label="drift",
+            linewidth=3,
+        )
+        ax2.scatter(
+            range(len(mistakes)),
+            mistakes.numpy(),
+            alpha=0.5,
+            marker="*",
+            c=mpl_colors[3],
+            label="mistakes",
+        )
+        ax2.plot(
+            moving_accuracy.numpy(),
+            alpha=0.5,
+            c=mpl_colors[3],
+            label="moving accuracy",
+            linewidth=2,
+        )
         # plot reference accuracy
         ax2.axhline(
-            results["ref_accuracy"], linestyle=":", color="black", alpha=0.5, linewidth=3, label="drift accuracy ref"
+            results["ref_accuracy"],
+            linestyle=":",
+            color="black",
+            alpha=0.5,
+            linewidth=3,
+            label="drift accuracy ref",
         )
         ax1.set_xlabel("Sample index")
         ax1.set_ylabel("Scores")
@@ -346,17 +380,62 @@ class CovariateDriftPipeline(Pipeline):
 
 @register_pipeline("covariate_drift_cifar10")
 class OneCorruptionCovariateDriftCifar10Pipeline(CovariateDriftPipeline):
-    def __init__(self, transform, corruption: str, intensities: List[int], batch_size: int = 128, **kwargs) -> None:
-        super().__init__("cifar10", ["train", "test"], transform, [corruption], intensities, batch_size, **kwargs)
+    def __init__(
+        self,
+        transform,
+        corruption: str,
+        intensities: List[int],
+        batch_size: int = 128,
+        **kwargs,
+    ) -> None:
+        super().__init__(
+            "cifar10",
+            ["train", "test"],
+            transform,
+            [corruption],
+            intensities,
+            batch_size,
+            **kwargs,
+        )
 
 
 @register_pipeline("covariate_drift_cifar100")
 class OneCorruptionCovariateDriftCifar100Pipeline(CovariateDriftPipeline):
-    def __init__(self, transform, corruption: str, intensities: List[int], batch_size: int = 128, **kwargs) -> None:
-        super().__init__("cifar100", ["train", "test"], transform, [corruption], intensities, batch_size, **kwargs)
+    def __init__(
+        self,
+        transform,
+        corruption: str,
+        intensities: List[int],
+        batch_size: int = 128,
+        **kwargs,
+    ) -> None:
+        super().__init__(
+            "cifar100",
+            ["train", "test"],
+            transform,
+            [corruption],
+            intensities,
+            batch_size,
+            **kwargs,
+        )
 
 
 @register_pipeline("covariate_drift_imagenet")
 class OneCorruptionCovariateDriftImagenetPipeline(CovariateDriftPipeline):
-    def __init__(self, transform, corruption: str, intensities: List[int], batch_size: int = 128, **kwargs) -> None:
-        super().__init__("imagenet", ["train", "val"], transform, [corruption], intensities, batch_size, **kwargs)
+    def __init__(
+        self,
+        transform,
+        corruption: str,
+        intensities: List[int],
+        batch_size: int = 128,
+        **kwargs,
+    ) -> None:
+        super().__init__(
+            "imagenet",
+            ["train", "val"],
+            transform,
+            [corruption],
+            intensities,
+            batch_size,
+            **kwargs,
+        )
