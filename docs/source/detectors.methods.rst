@@ -260,6 +260,14 @@ detectors.methods.openmax module
    :undoc-members:
    :show-inheritance:
 
+detectors.methods.plugin\_bb module
+-----------------------------------
+
+.. automodule:: detectors.methods.plugin_bb
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 detectors.methods.pnml module
 -----------------------------
 

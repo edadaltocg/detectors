@@ -33,6 +33,14 @@ detectors.criterions module
    :undoc-members:
    :show-inheritance:
 
+detectors.ensemble module
+-------------------------
+
+.. automodule:: detectors.ensemble
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 detectors.eval module
 ---------------------
 
