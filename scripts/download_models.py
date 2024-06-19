@@ -7,7 +7,7 @@ models = [
     "vit_tiny_patch16_224.augreg_in21k_ft_in1k",
     "vit_small_patch16_224.augreg_in21k_ft_in1k",
     "vit_base_patch16_224.augreg_in21k_ft_in1k",
-    "vit_large_patch16_224.augreg_in21k_ft_in1k"
+    "vit_large_patch16_224.augreg_in21k_ft_in1k",
     "densenet121.tv_in1k",
     "vgg16.tv_in1k",
     "mobilenetv3_small_100.lamb_in1k",

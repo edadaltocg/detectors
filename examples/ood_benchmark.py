@@ -94,7 +94,7 @@ if __name__ == "__main__":
         "igeood_logits",
         "max_logits",
         "react",
-        "dice",
+        "dice   ",
         "vim",
         "gradnorm",
         "mahalanobis",
