@@ -25,7 +25,15 @@ def p_value_fn(test_statistic: np.ndarray, X: np.ndarray, w=None):
     y_ecdf = np.concatenate([np.arange(1, X.shape[0] + 1).reshape(-1, 1) / X.shape[0]] * X.shape[1], axis=1)
     if w is not None:
         y_ecdf = y_ecdf * w.reshape(1, -1)
-    return np.concatenate(list(map(lambda xx: np.interp(*xx).reshape(-1, 1), zip(test_statistic.T, X.T, y_ecdf.T))), 1)
+    return np.concatenate(
+        list(
+            map(
+                lambda xx: np.interp(*xx).reshape(-1, 1),
+                zip(test_statistic.T, X.T, y_ecdf.T),
+            )
+        ),
+        1,
+    )
 
 
 def fisher_method(p_values: np.ndarray):
@@ -153,7 +161,10 @@ def simes_tau_method(p_values: np.ndarray):
     Returns:
         np.ndarray (n,): combined p-values
     """
-    tau = np.min(np.sort(p_values, axis=1) / np.arange(1, p_values.shape[1] + 1) * p_values.shape[1], 1)
+    tau = np.min(
+        np.sort(p_values, axis=1) / np.arange(1, p_values.shape[1] + 1) * p_values.shape[1],
+        1,
+    )
     return tau
 
 
@@ -169,6 +180,7 @@ def geometric_mean_tau_method(p_values: np.ndarray):
     tau = np.prod(p_values, axis=1) ** (1 / p_values.shape[1])
     return tau
 
+
 def rho(p_values):
     k = p_values.shape[1]
     phi = stats.norm.ppf(p_values)
@@ -178,7 +190,8 @@ def rho(p_values):
 def hartung(p_values, r):
     k = p_values.shape[1]
     t = stats.norm.ppf(p_values)
-    return np.sum(t, axis=1) / np.sqrt((1 - r) * k + r * k**2
+    return np.sum(t, axis=1) / np.sqrt((1 - r) * k + r * k**2)
+
 
 def get_combine_p_values_fn(method_name: str):
     method_name = method_name.lower()
@@ -202,4 +215,13 @@ def get_combine_p_values_fn(method_name: str):
         raise NotImplementedError(f"method {method_name} not implemented")
 
 
-ensemble_names = ["fisher", "stouffer", "tippet", "wilkinson", "edgington", "pearson", "simes", "geometric_mean"]
+ensemble_names = [
+    "fisher",
+    "stouffer",
+    "tippet",
+    "wilkinson",
+    "edgington",
+    "pearson",
+    "simes",
+    "geometric_mean",
+]

@@ -1,6 +1,7 @@
 """
 Generalized detection methods templates.
 """
+
 import logging
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional

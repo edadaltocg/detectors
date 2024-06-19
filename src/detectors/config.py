@@ -10,6 +10,7 @@ Constants:
 - `CHECKPOINTS_DIR`: The directory where the checkpoints are stored.
 - `RESULTS_DIR`: The directory where the results are stored.
 """
+
 import os
 
 HOME = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))

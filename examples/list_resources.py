@@ -1,4 +1,5 @@
 """Example on how to list all resources available in `detectors` package."""
+
 import detectors
 
 if __name__ == "__main__":
