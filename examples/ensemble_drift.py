@@ -4,12 +4,12 @@ import os
 
 import numpy as np
 import pandas as pd
+from drift_cpu import main as drift_cpu_main
 from tqdm import tqdm
 
 import detectors
 from detectors.config import RESULTS_DIR
 from detectors.ensemble import ensemble_names, fisher_tau_method, get_combine_p_values_fn, p_value_fn
-from drift_cpu import main as drift_cpu_main
 
 _logger = logging.getLogger(__name__)
 
