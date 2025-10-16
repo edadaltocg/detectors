@@ -167,3 +167,6 @@ def create_hyperparameters(detector_name: str) -> Dict[str, Any]:
 
 
 MethodsRegistry = Enum("MethodsRegistry", dict(zip(list_detectors(), list_detectors())))
+from .cf_ood import CFOOD_Detector
+
+detectors_registry["cf_ood"] = CFOOD_Detector

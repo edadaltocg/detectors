@@ -1,5 +1,5 @@
 """Requirements
-    - feedparser installed: pip install feedparser
+- feedparser installed: pip install feedparser
 """
 
 import argparse
